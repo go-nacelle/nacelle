@@ -6,3 +6,4 @@ import (
 
 type Logger = log.Logger
 type Fields = log.Fields
+type LoggingConfig = log.Config
