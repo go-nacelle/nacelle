@@ -195,7 +195,7 @@ func (s *ConfigSuite) TestPostLoadConfig(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("X must be positive")))
 }
 
-func (s *ConfigSuite) TestUnsettableFieldS(t sweet.T) {
+func (s *ConfigSuite) TestUnsettableFields(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestUnsettableConfig{}
