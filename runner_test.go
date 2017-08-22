@@ -1,15 +1,15 @@
-package process
+package nacelle
 
 import (
 	"errors"
-	"testing"
 
+	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
 )
 
 type RunnerSuite struct{}
 
-func (s *RunnerSuite) TestRunOrder(t *testing.T) {
+func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	var (
 		runner    = NewProcessRunner()
 		initChan  = make(chan string)
@@ -120,7 +120,7 @@ func (s *RunnerSuite) TestRunOrder(t *testing.T) {
 	Eventually(errChan).Should(BeClosed())
 }
 
-func (s *RunnerSuite) TestProcessError(t *testing.T) {
+func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	var (
 		runner   = NewProcessRunner()
 		stopChan = make(chan string)
@@ -192,7 +192,7 @@ func (s *RunnerSuite) TestProcessError(t *testing.T) {
 	Eventually(errChan).Should(BeClosed())
 }
 
-func (s *RunnerSuite) TestInitializationError(t *testing.T) {
+func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	var (
 		runner   = NewProcessRunner()
 		initChan = make(chan string)

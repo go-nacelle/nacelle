@@ -1,4 +1,4 @@
-package process
+package nacelle
 
 type (
 	Process interface {
