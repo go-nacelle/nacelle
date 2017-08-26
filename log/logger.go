@@ -1,9 +1,6 @@
 package log
 
-import (
-	"errors"
-	"strings"
-)
+import "time"
 
 type (
 	Logger interface {
@@ -17,40 +14,19 @@ type (
 	}
 
 	Fields map[string]interface{}
-
-	Config struct {
-		LogLevel      string `env:"LOG_LEVEL" default:"info"`
-		LogEncoding   string `env:"LOG_ENCODING" default:"console"`
-		DisableCaller bool   `env:"LOG_ENABLE_CALLER"`
-		InitialFields Fields `env:"LOG_FIELDS"`
-	}
 )
 
-var (
-	ErrIllegalLevel    = errors.New("illegal log level")
-	ErrIllegalEncoding = errors.New("illegal log encoding")
-)
+const TimeFormat = "2006-01-02 15:04:05.000"
 
-func (c *Config) PostLoad() error {
-	c.LogLevel = strings.ToLower(c.LogLevel)
-
-	if !isLegalLevel(c.LogLevel) {
-		return ErrIllegalLevel
-	}
-
-	if c.LogEncoding != "console" && c.LogEncoding != "json" {
-		return ErrIllegalEncoding
-	}
-
-	return nil
-}
-
-func isLegalLevel(level string) bool {
-	for _, whitelisted := range []string{"debug", "info", "warning", "error", "fatal"} {
-		if level == whitelisted {
-			return true
+func (f Fields) normalizeTimeValues() Fields {
+	for key, val := range f {
+		switch v := val.(type) {
+		case time.Time:
+			f[key] = v.Format(TimeFormat)
+		default:
+			f[key] = v
 		}
 	}
 
-	return false
+	return f
 }

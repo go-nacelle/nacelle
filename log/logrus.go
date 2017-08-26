@@ -1,9 +1,8 @@
 package log
 
 import (
-	"runtime"
-
 	"github.com/sirupsen/logrus"
+	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
 type LogrusShim struct {
@@ -21,15 +20,30 @@ func NewLogrusShim(c *Config) (Logger, error) {
 	logger.Level = level
 
 	if c.LogEncoding == "json" {
-		logger.Formatter = &logrus.JSONFormatter{}
+		logger.Formatter = &logrus.JSONFormatter{
+			TimestampFormat: TimeFormat,
+			FieldMap: logrus.FieldMap{
+				logrus.FieldKeyTime:  "timestamp",
+				logrus.FieldKeyLevel: "level",
+				logrus.FieldKeyMsg:   "msg",
+			},
+		}
+	} else {
+		formatter := &prefixed.TextFormatter{
+			FullTimestamp:    true,
+			TimestampFormat:  TimeFormat,
+			QuoteEmptyFields: true,
+		}
+
+		logger.Formatter = formatter
 	}
 
 	shim := &LogrusShim{
 		entry:         logger.WithFields(nil),
-		disableCaller: c.DisableCaller,
+		disableCaller: c.LogDisableCaller,
 	}
 
-	return shim.WithFields(c.InitialFields), nil
+	return shim.WithFields(c.LogInitialFields), nil
 }
 
 func (l *LogrusShim) WithFields(fields Fields) Logger {
@@ -72,7 +86,7 @@ func (l *LogrusShim) getEntry(fields Fields) *logrus.Entry {
 		return l.entry
 	}
 
-	return l.entry.WithFields(logrus.Fields(fields))
+	return l.entry.WithFields(logrus.Fields(fields.normalizeTimeValues()))
 }
 
 func (l *LogrusShim) decorateEntry(fields Fields) *logrus.Entry {
@@ -81,9 +95,7 @@ func (l *LogrusShim) decorateEntry(fields Fields) *logrus.Entry {
 		return entry
 	}
 
-	_, file, line, _ := runtime.Caller(2)
 	return entry.WithFields(logrus.Fields(map[string]interface{}{
-		"file": file,
-		"line": line,
+		"caller": getCaller(),
 	}))
 }

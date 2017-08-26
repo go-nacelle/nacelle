@@ -1,6 +1,8 @@
 package log
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -15,24 +17,29 @@ func NewZapShim(c *Config) (Logger, error) {
 		return nil, err
 	}
 
+	var encoder zapcore.LevelEncoder
+	if c.LogEncoding == "console" {
+		encoder = zapcore.CapitalColorLevelEncoder
+	} else {
+		encoder = zapcore.LowercaseLevelEncoder
+	}
+
 	config := zap.Config{
 		Level:             level,
-		DisableCaller:     c.DisableCaller,
+		DisableCaller:     c.LogDisableCaller,
 		Encoding:          c.LogEncoding,
 		Development:       false,
 		DisableStacktrace: true,
 		OutputPaths:       []string{"stderr"},
 		ErrorOutputPaths:  []string{"stderr"},
 		EncoderConfig: zapcore.EncoderConfig{
-			TimeKey:        "ts",
+			TimeKey:        "timestamp",
 			LevelKey:       "level",
-			NameKey:        "logger",
-			CallerKey:      "caller",
 			MessageKey:     "msg",
-			StacktraceKey:  "stacktrace",
+			CallerKey:      "caller",
 			LineEnding:     zapcore.DefaultLineEnding,
-			EncodeLevel:    zapcore.CapitalLevelEncoder,
-			EncodeTime:     zapcore.ISO8601TimeEncoder,
+			EncodeLevel:    encoder,
+			EncodeTime:     zapTimeEncoder,
 			EncodeDuration: zapcore.SecondsDurationEncoder,
 			EncodeCaller:   zapcore.ShortCallerEncoder,
 		},
@@ -44,7 +51,7 @@ func NewZapShim(c *Config) (Logger, error) {
 	}
 
 	sugaredLogger := logger.WithOptions(zap.AddCallerSkip(1)).Sugar()
-	return (&ZapShim{logger: sugaredLogger}).WithFields(c.InitialFields), nil
+	return (&ZapShim{logger: sugaredLogger}).WithFields(c.LogInitialFields), nil
 }
 
 func (z *ZapShim) WithFields(fields Fields) Logger {
@@ -97,4 +104,8 @@ func flatten(fields Fields) []interface{} {
 	}
 
 	return flattened
+}
+
+func zapTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format(TimeFormat))
 }

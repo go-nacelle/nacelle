@@ -8,34 +8,50 @@ import (
 )
 
 type GomolShim struct {
-	logger gomol.WrappableLogger
+	logger        gomol.WrappableLogger
+	disableCaller bool
 }
 
 func NewGomolShim(c *Config) (Logger, error) {
 	level, _ := gomol.ToLogLevel(c.LogLevel)
 	gomol.SetLogLevel(level)
 
-	if !c.DisableCaller {
-		cfg := gomol.NewConfig()
-		cfg.FilenameAttr = "filename"
-		cfg.LineNumberAttr = "line"
-		gomol.SetConfig(cfg)
-	}
-
 	if c.LogEncoding == "console" {
-		consoleCfg := console.NewConsoleLoggerConfig()
-		consoleLogger, _ := console.NewConsoleLogger(consoleCfg)
-		consoleLogger.SetTemplate(console.NewTemplateFull())
+		consoleLogger, err := console.NewConsoleLogger(&console.ConsoleLoggerConfig{
+			Colorize: true,
+			Writer:   os.Stderr,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		tpl, err := gomol.NewTemplate("" +
+			"[{{.Timestamp.Format \"2006-01-02 15:04:05.000\"}}] " +
+			`{{color}}{{printf "%5s" (ucase .LevelName)}}{{reset}} ` +
+			"{{.Message}}" +
+			"{{if .Attrs}}{{range $key, $val := .Attrs}} {{color}}{{$key}}{{reset}}={{$val}}{{end}}{{end}}")
+
+		if err != nil {
+			return nil, err
+		}
+
+		consoleLogger.SetTemplate(tpl)
 		gomol.AddLogger(consoleLogger)
 	} else {
-		// TODO - figure out how to get json into console
+		gomol.AddLogger(&jsonLogger{})
 	}
 
 	if err := gomol.InitLoggers(); err != nil {
 		return nil, err
 	}
 
-	return (&GomolShim{logger: gomol.NewLogAdapter(nil)}).WithFields(c.InitialFields), nil
+	shim := &GomolShim{
+		logger:        gomol.NewLogAdapter(nil),
+		disableCaller: c.LogDisableCaller,
+	}
+
+	return shim.WithFields(c.LogInitialFields), nil
 }
 
 func (g *GomolShim) WithFields(fields Fields) Logger {
@@ -44,7 +60,8 @@ func (g *GomolShim) WithFields(fields Fields) Logger {
 	}
 
 	return &GomolShim{
-		logger: gomol.NewLogAdapterFor(g.logger, gomol.NewAttrsFromMap(fields)),
+		logger:        gomol.NewLogAdapterFor(g.logger, gomol.NewAttrsFromMap(fields)),
+		disableCaller: g.disableCaller,
 	}
 }
 
@@ -75,5 +92,9 @@ func (g *GomolShim) Sync() error {
 }
 
 func (g *GomolShim) log(level gomol.LogLevel, fields Fields, format string, args ...interface{}) {
-	g.logger.Log(level, gomol.NewAttrsFromMap(fields), format, args...)
+	if !g.disableCaller {
+		fields["caller"] = getCaller()
+	}
+
+	g.logger.Log(level, gomol.NewAttrsFromMap(fields.normalizeTimeValues()), format, args...)
 }
