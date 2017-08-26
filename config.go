@@ -27,6 +27,7 @@ type (
 	EnvConfig struct {
 		prefix string
 		chunks map[interface{}]interface{}
+		loaded bool
 	}
 )
 
@@ -38,6 +39,8 @@ const (
 )
 
 var (
+	ErrAlreadyLoaded      = errors.New("config already loaded")
+	ErrNotLoaded          = errors.New("config not loaded")
 	ErrDuplicateConfigKey = errors.New("duplicate config key")
 	ErrUnregisteredKey    = errors.New("no config registered to key")
 
@@ -56,6 +59,10 @@ func NewEnvConfig(prefix string) Config {
 }
 
 func (c *EnvConfig) Register(key interface{}, config interface{}) error {
+	if c.loaded {
+		return ErrAlreadyLoaded
+	}
+
 	if _, ok := c.chunks[key]; ok {
 		return ErrDuplicateConfigKey
 	}
@@ -71,6 +78,10 @@ func (c *EnvConfig) MustRegister(key interface{}, config interface{}) {
 }
 
 func (c *EnvConfig) Get(key interface{}) (interface{}, error) {
+	if !c.loaded {
+		return nil, ErrNotLoaded
+	}
+
 	if config, ok := c.chunks[key]; ok {
 		return config, nil
 	}
@@ -88,6 +99,7 @@ func (c *EnvConfig) MustGet(key interface{}) interface{} {
 }
 
 func (c *EnvConfig) Load() []error {
+	c.loaded = true
 	errors := []error{}
 
 	for _, chunk := range c.chunks {

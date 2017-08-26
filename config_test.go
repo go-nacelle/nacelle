@@ -208,6 +208,13 @@ func (s *ConfigSuite) TestUnsettableFields(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("field 'x' can not be set")))
 }
 
+func (s *ConfigSuite) TestRegistrationAfterLoad(t sweet.T) {
+	config := NewEnvConfig("app")
+	config.Register("pre-load", struct{}{})
+	config.Load()
+	Expect(config.Register("post-load", nil)).To(Equal(ErrAlreadyLoaded))
+}
+
 func (s *ConfigSuite) TestDuplicateRegistration(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
@@ -227,15 +234,21 @@ func (s *ConfigSuite) TestMustRegisterPanics(t sweet.T) {
 	)
 
 	config.MustRegister("dup", chunk)
-	Expect(config.Get("dup")).To(BeIdenticalTo(chunk))
 
 	Expect(func() {
 		config.MustRegister("dup", &TestSimpleConfig{})
 	}).To(Panic())
 }
 
+func (s *ConfigSuite) TestGetBeforeLoad(t sweet.T) {
+	_, err := NewEnvConfig("app").Get("pre-load")
+	Expect(err).To(Equal(ErrNotLoaded))
+}
+
 func (s *ConfigSuite) TestGetUnregisteredKey(t sweet.T) {
-	_, err := NewEnvConfig("app").Get("unregistered")
+	config := NewEnvConfig("app")
+	config.Load()
+	_, err := config.Get("unregistered")
 	Expect(err).To(Equal(ErrUnregisteredKey))
 }
 
