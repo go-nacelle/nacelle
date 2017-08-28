@@ -5,13 +5,15 @@ import (
 
 	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
+
+	"github.com/efritz/nacelle/log"
 )
 
 type RunnerSuite struct{}
 
 func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	var (
-		runner    = NewProcessRunner()
+		runner    = NewProcessRunner(NewServiceContainer())
 		initChan  = make(chan string)
 		startChan = make(chan string)
 		errChan   = make(chan error)
@@ -61,7 +63,7 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil) {
+		for err := range runner.Run(nil, &log.NilLogger{}) {
 			errChan <- err
 		}
 	}()
@@ -122,7 +124,7 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 
 func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	var (
-		runner   = NewProcessRunner()
+		runner   = NewProcessRunner(NewServiceContainer())
 		stopChan = make(chan string)
 		errChan  = make(chan error)
 	)
@@ -171,7 +173,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil) {
+		for err := range runner.Run(nil, &log.NilLogger{}) {
 			errChan <- err
 		}
 	}()
@@ -194,7 +196,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 
 func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	var (
-		runner   = NewProcessRunner()
+		runner   = NewProcessRunner(NewServiceContainer())
 		initChan = make(chan string)
 		stopChan = make(chan string)
 		errChan  = make(chan error)
@@ -245,7 +247,7 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil) {
+		for err := range runner.Run(nil, &log.NilLogger{}) {
 			errChan <- err
 		}
 	}()

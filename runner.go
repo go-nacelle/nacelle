@@ -12,13 +12,15 @@ import (
 var ErrUrgentShutdown = errors.New("urgent shutdown requested")
 
 type ProcessRunner struct {
+	container    *ServiceContainer
 	initializers []Initializer
 	processes    map[int][]Process
 	numProcesses int
 }
 
-func NewProcessRunner() *ProcessRunner {
+func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
 	return &ProcessRunner{
+		container:    container,
 		initializers: []Initializer{},
 		processes:    map[int][]Process{},
 	}
@@ -37,12 +39,14 @@ func (pr *ProcessRunner) RegisterProcess(process Process, priority int) {
 	pr.processes[priority] = append(pr.processes[priority], process)
 }
 
-func (pr *ProcessRunner) Run(config Config) <-chan error {
+func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 	errChan := make(chan error, pr.numProcesses+1)
 
+	logger.Info(nil, "Running initializers")
+
 	if err := pr.runInitializers(config); err != nil {
-		errChan <- err
 		defer close(errChan)
+		errChan <- err
 		return errChan
 	}
 
@@ -52,10 +56,23 @@ func (pr *ProcessRunner) Run(config Config) <-chan error {
 		wg          = &sync.WaitGroup{}
 	)
 
+	logger.Info(nil, "Injecting services to process instances")
+
 	for i := range priorities {
-		if err := pr.initAndStartProcesses(pr.processes[priorities[i]], config, wg, startErrors); err != nil {
+		for _, process := range pr.processes[priorities[i]] {
+			if err := pr.container.Inject(process); err != nil {
+				defer close(errChan)
+				errChan <- err
+				return errChan
+			}
+		}
+	}
+
+	for i := range priorities {
+		if err := pr.initAndStartProcesses(pr.processes[priorities[i]], priorities[i], config, logger, wg, startErrors); err != nil {
+			logger.Error(nil, "Encountered error starting process at priority %d", priorities[i])
 			errChan <- err
-			pr.stopProcesessBelowPriority(priorities, i, errChan)
+			pr.stopProcesessBelowPriority(priorities, i, logger, errChan)
 			go closeAfterWait(wg, startErrors)
 
 			go func() {
@@ -76,6 +93,8 @@ func (pr *ProcessRunner) Run(config Config) <-chan error {
 
 	go closeAfterWait(wg, startErrors)
 
+	logger.Info(nil, "All processes have started")
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, syscall.SIGTERM)
@@ -95,10 +114,11 @@ func (pr *ProcessRunner) Run(config Config) <-chan error {
 			select {
 			case <-sigChan:
 				if urgent {
-					errChan <- ErrUrgentShutdown
+					logger.Info(nil, "Received second signal, shutting down NOW")
 					return
 				}
 
+				logger.Info(nil, "Received signal, starting graceful shutdown")
 				urgent = true
 
 			case err, ok := <-startErrors:
@@ -110,12 +130,13 @@ func (pr *ProcessRunner) Run(config Config) <-chan error {
 					continue
 				}
 
+				logger.Info(nil, "Encountered error, starting graceful shutdown")
 				errChan <- err
 			}
 
 			if !stopped {
 				stopped = true
-				pr.stopProcesessBelowPriority(priorities, len(priorities), errChan)
+				pr.stopProcesessBelowPriority(priorities, len(priorities), logger, errChan)
 			}
 		}
 	}()
@@ -143,12 +164,16 @@ func (pr *ProcessRunner) runInitializers(config Config) error {
 	return nil
 }
 
-func (pr *ProcessRunner) initAndStartProcesses(processes []Process, config Config, wg *sync.WaitGroup, errors chan<- error) error {
+func (pr *ProcessRunner) initAndStartProcesses(processes []Process, priority int, config Config, logger Logger, wg *sync.WaitGroup, errors chan<- error) error {
+	logger.Info(nil, "Initializing processes at priority %d", priority)
+
 	for _, process := range processes {
 		if err := process.Init(config); err != nil {
 			return err
 		}
 	}
+
+	logger.Info(nil, "Starting processes at priority %d", priority)
 
 	for _, process := range processes {
 		wg.Add(1)
@@ -165,13 +190,15 @@ func (pr *ProcessRunner) initAndStartProcesses(processes []Process, config Confi
 	return nil
 }
 
-func (pr *ProcessRunner) stopProcesessBelowPriority(priorities []int, p int, errChan chan<- error) {
+func (pr *ProcessRunner) stopProcesessBelowPriority(priorities []int, p int, logger Logger, errChan chan<- error) {
 	for i := p - 1; i >= 0; i-- {
-		pr.stopProcesses(pr.processes[priorities[i]], errChan)
+		pr.stopProcesses(pr.processes[priorities[i]], priorities[i], logger, errChan)
 	}
 }
 
-func (pr *ProcessRunner) stopProcesses(processes []Process, errChan chan<- error) {
+func (pr *ProcessRunner) stopProcesses(processes []Process, priority int, logger Logger, errChan chan<- error) {
+	logger.Info(nil, "Stopping processes at priority %d", priority)
+
 	for _, process := range processes {
 		if err := process.Stop(); err != nil {
 			errChan <- err
