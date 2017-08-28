@@ -143,7 +143,7 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 
 		name := strings.ToUpper(fmt.Sprintf("%s_%s", prefix, envTag))
 
-		err := loadField(
+		err := loadEnvField(
 			fieldType,
 			fieldValue,
 			name,
@@ -165,7 +165,7 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 	return errors
 }
 
-func loadField(fieldType reflect.StructField, fieldValue reflect.Value, envTag, defaultTag, requiredTag string) error {
+func loadEnvField(fieldType reflect.StructField, fieldValue reflect.Value, envTag, defaultTag, requiredTag string) error {
 	if !fieldValue.IsValid() {
 		return fmt.Errorf("field '%s' is invalid", fieldType.Name)
 	}
