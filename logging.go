@@ -2,11 +2,14 @@ package nacelle
 
 import "github.com/efritz/nacelle/log"
 
-type Logger = log.Logger
-type Fields = log.Fields
-type LoggingConfig = log.Config
+type (
+	Logger             = log.Logger
+	Fields             = log.Fields
+	LoggingConfig      = log.Config
+	loggingConfigToken struct{}
+)
 
-var LoggingConfigToken = struct{}{}
+var LoggingConfigToken = loggingConfigToken{}
 
 func InitLogging(config Config) (logger Logger, err error) {
 	cx, err := config.Get(LoggingConfigToken)
