@@ -1,8 +1,6 @@
 package nacelle
 
-import (
-	"github.com/efritz/nacelle/log"
-)
+import "github.com/efritz/nacelle/log"
 
 type Logger = log.Logger
 type Fields = log.Fields
@@ -28,4 +26,14 @@ func InitLogging(config Config) (logger Logger, err error) {
 	}
 
 	return
+}
+
+func emergencyLogger() Logger {
+	logger, _ := log.NewLogrusShim(&LoggingConfig{
+		LogLevel:         "DEBUG",
+		LogEncoding:      "json",
+		LogDisableCaller: true,
+	})
+
+	return logger
 }
