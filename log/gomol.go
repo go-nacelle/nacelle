@@ -39,7 +39,7 @@ func NewGomolShim(c *Config) (Logger, error) {
 		consoleLogger.SetTemplate(tpl)
 		gomol.AddLogger(consoleLogger)
 	} else {
-		gomol.AddLogger(&jsonLogger{})
+		gomol.AddLogger(newJSONLogger())
 	}
 
 	if err := gomol.InitLoggers(); err != nil {

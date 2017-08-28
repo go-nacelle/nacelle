@@ -3,6 +3,7 @@ package log
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -10,8 +11,15 @@ import (
 )
 
 type jsonLogger struct {
+	stream        io.Writer
 	base          *gomol.Base
 	isInitialized bool
+}
+
+func newJSONLogger() *jsonLogger {
+	return &jsonLogger{
+		stream: os.Stderr,
+	}
 }
 
 func (l *jsonLogger) SetBase(base *gomol.Base) {
@@ -54,6 +62,6 @@ func (l *jsonLogger) Logm(timestamp time.Time, level gomol.LogLevel, attrs map[s
 		return err
 	}
 
-	fmt.Fprint(os.Stderr, string(out)+"\n")
+	fmt.Fprint(l.stream, string(out)+"\n")
 	return nil
 }

@@ -30,7 +30,7 @@ func (c *Config) PostLoad() error {
 		return ErrIllegalLevel
 	}
 
-	if c.LogEncoding != "console" && c.LogEncoding != "json" {
+	if !isLegalEncoding(c.LogEncoding) {
 		return ErrIllegalEncoding
 	}
 
@@ -55,4 +55,8 @@ func isLegalLevel(level string) bool {
 	}
 
 	return false
+}
+
+func isLegalEncoding(encoding string) bool {
+	return encoding == "console" || encoding == "json"
 }
