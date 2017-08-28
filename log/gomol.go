@@ -92,6 +92,10 @@ func (g *GomolShim) Sync() error {
 }
 
 func (g *GomolShim) log(level gomol.LogLevel, fields Fields, format string, args ...interface{}) {
+	if fields == nil {
+		fields = map[string]interface{}{}
+	}
+
 	if !g.disableCaller {
 		fields["caller"] = getCaller()
 	}
