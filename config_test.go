@@ -249,7 +249,7 @@ func (s *ConfigSuite) TestGetUnregisteredKey(t sweet.T) {
 	config := NewEnvConfig("app")
 	config.Load()
 	_, err := config.Get("unregistered")
-	Expect(err).To(Equal(ErrUnregisteredKey))
+	Expect(err).To(Equal(ErrUnregisteredConfigKey))
 }
 
 func (s *ConfigSuite) TestMustGetPanics(t sweet.T) {

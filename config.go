@@ -39,10 +39,10 @@ const (
 )
 
 var (
-	ErrAlreadyLoaded      = errors.New("config already loaded")
-	ErrNotLoaded          = errors.New("config not loaded")
-	ErrDuplicateConfigKey = errors.New("duplicate config key")
-	ErrUnregisteredKey    = errors.New("no config registered to key")
+	ErrAlreadyLoaded         = errors.New("config already loaded")
+	ErrNotLoaded             = errors.New("config not loaded")
+	ErrDuplicateConfigKey    = errors.New("duplicate config key")
+	ErrUnregisteredConfigKey = errors.New("no config registered to key")
 
 	replacer = strings.NewReplacer(
 		"\n", `\n`,
@@ -86,7 +86,7 @@ func (c *EnvConfig) Get(key interface{}) (interface{}, error) {
 		return config, nil
 	}
 
-	return nil, ErrUnregisteredKey
+	return nil, ErrUnregisteredConfigKey
 }
 
 func (c *EnvConfig) MustGet(key interface{}) interface{} {
