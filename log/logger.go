@@ -16,13 +16,16 @@ type (
 	Fields map[string]interface{}
 )
 
-const TimeFormat = "2006-01-02 15:04:05.000"
+const (
+	ConsoleTimeFormat = "2006-01-02 15:04:05.000"
+	JSONTimeFormat    = "2006-01-02T15:04:05.000-0700"
+)
 
 func (f Fields) normalizeTimeValues() Fields {
 	for key, val := range f {
 		switch v := val.(type) {
 		case time.Time:
-			f[key] = v.Format(TimeFormat)
+			f[key] = v.Format(JSONTimeFormat)
 		default:
 			f[key] = v
 		}

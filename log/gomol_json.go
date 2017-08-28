@@ -53,8 +53,8 @@ func (l *jsonLogger) Logm(timestamp time.Time, level gomol.LogLevel, attrs map[s
 		mergedAttrs[key] = val
 	}
 
-	mergedAttrs["msg"] = msg
-	mergedAttrs["timestamp"] = timestamp.Format(TimeFormat)
+	mergedAttrs["message"] = msg
+	mergedAttrs["timestamp"] = timestamp.Format(JSONTimeFormat)
 	mergedAttrs["level"] = level.String()
 
 	out, err := json.Marshal(mergedAttrs)

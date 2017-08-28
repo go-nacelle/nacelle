@@ -19,23 +19,23 @@ func NewLogrusShim(c *Config) (Logger, error) {
 	logger := logrus.New()
 	logger.Level = level
 
-	if c.LogEncoding == "json" {
-		logger.Formatter = &logrus.JSONFormatter{
-			TimestampFormat: TimeFormat,
-			FieldMap: logrus.FieldMap{
-				logrus.FieldKeyTime:  "timestamp",
-				logrus.FieldKeyLevel: "level",
-				logrus.FieldKeyMsg:   "msg",
-			},
-		}
-	} else {
+	if c.LogEncoding == "console" {
 		formatter := &prefixed.TextFormatter{
 			FullTimestamp:    true,
-			TimestampFormat:  TimeFormat,
+			TimestampFormat:  ConsoleTimeFormat,
 			QuoteEmptyFields: true,
 		}
 
 		logger.Formatter = formatter
+	} else {
+		logger.Formatter = &logrus.JSONFormatter{
+			TimestampFormat: JSONTimeFormat,
+			FieldMap: logrus.FieldMap{
+				logrus.FieldKeyTime:  "timestamp",
+				logrus.FieldKeyLevel: "level",
+				logrus.FieldKeyMsg:   "message",
+			},
+		}
 	}
 
 	shim := &LogrusShim{

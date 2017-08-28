@@ -43,8 +43,8 @@ func (s *GomolJSONSuite) TestLogm(t sweet.T) {
 
 	Expect(string(buffer.Bytes())).To(MatchJSON(`{
 		"level": "fatal",
-		"msg": "test 1234",
-		"timestamp": "2017-08-28 12:04:41.000",
+		"message": "test 1234",
+		"timestamp": "2017-08-28T12:04:41.000-0500",
 		"attr1": 4321
 	}`))
 }
@@ -74,8 +74,8 @@ func (s *GomolJSONSuite) TestBaseAttrs(t sweet.T) {
 
 	Expect(string(buffer.Bytes())).To(MatchJSON(`{
 			"level": "debug",
-			"msg": "test 1234",
-			"timestamp": "2017-08-28 12:04:41.000",
+			"message": "test 1234",
+			"timestamp": "2017-08-28T12:04:41.000-0500",
 			"attr1": 4321,
 			"attr2": "val2",
 			"attr3": "val3"

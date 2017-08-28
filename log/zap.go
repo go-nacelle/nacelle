@@ -12,16 +12,22 @@ type ZapShim struct {
 }
 
 func NewZapShim(c *Config) (Logger, error) {
-	var level zap.AtomicLevel
+	var (
+		level        zap.AtomicLevel
+		levelEncoder zapcore.LevelEncoder
+		timeEncoder  zapcore.TimeEncoder
+	)
+
 	if err := level.UnmarshalText([]byte(c.LogLevel)); err != nil {
 		return nil, err
 	}
 
-	var encoder zapcore.LevelEncoder
 	if c.LogEncoding == "console" {
-		encoder = zapcore.CapitalColorLevelEncoder
+		levelEncoder = zapcore.CapitalColorLevelEncoder
+		timeEncoder = zapConsoleTimeEncoder
 	} else {
-		encoder = zapcore.LowercaseLevelEncoder
+		levelEncoder = zapcore.LowercaseLevelEncoder
+		timeEncoder = zapJSONTimeEncoder
 	}
 
 	config := zap.Config{
@@ -35,11 +41,11 @@ func NewZapShim(c *Config) (Logger, error) {
 		EncoderConfig: zapcore.EncoderConfig{
 			TimeKey:        "timestamp",
 			LevelKey:       "level",
-			MessageKey:     "msg",
+			MessageKey:     "message",
 			CallerKey:      "caller",
+			EncodeLevel:    levelEncoder,
+			EncodeTime:     timeEncoder,
 			LineEnding:     zapcore.DefaultLineEnding,
-			EncodeLevel:    encoder,
-			EncodeTime:     zapTimeEncoder,
 			EncodeDuration: zapcore.SecondsDurationEncoder,
 			EncodeCaller:   zapcore.ShortCallerEncoder,
 		},
@@ -106,6 +112,10 @@ func flatten(fields Fields) []interface{} {
 	return flattened
 }
 
-func zapTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.Format(TimeFormat))
+func zapConsoleTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format(ConsoleTimeFormat))
+}
+
+func zapJSONTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format(JSONTimeFormat))
 }

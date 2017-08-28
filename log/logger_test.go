@@ -25,8 +25,8 @@ func (s *LoggerSuite) TestNormalizeTimeValues(t sweet.T) {
 	Expect(fields["bonk"]).To(Equal([]bool{true, false, true}))
 
 	// Times converted to ISO 8601
-	Expect(fields["bar"]).To(Equal("2017-08-28 12:04:41.000"))
-	Expect(fields["baz"]).To(Equal("2017-08-28 12:04:51.000"))
+	Expect(fields["bar"]).To(Equal("2017-08-28T12:04:41.000-0500"))
+	Expect(fields["baz"]).To(Equal("2017-08-28T12:04:51.000-0500"))
 }
 
 func (s *LoggerSuite) TestNormalizeTimeValuesOnNilFields(t sweet.T) {
