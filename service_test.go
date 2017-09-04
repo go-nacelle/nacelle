@@ -74,6 +74,26 @@ func (s *ServiceSuite) TestInjectBadType(t sweet.T) {
 	Expect(err).To(MatchError("field 'Value' cannot be assigned a value of type *nacelle.IntWrapper"))
 }
 
+func (s *ServiceSuite) TestInjectOptional(t sweet.T) {
+	container := NewServiceContainer()
+	obj := &TestOptionalServiceProcess{}
+	err := container.Inject(obj)
+	Expect(err).To(BeNil())
+	Expect(obj.Value).To(BeNil())
+
+	container.Set("value", &IntWrapper{42})
+	err = container.Inject(obj)
+	Expect(err).To(BeNil())
+	Expect(obj.Value.val).To(Equal(42))
+}
+
+func (s *ServiceSuite) TestInjectBadOptional(t sweet.T) {
+	container := NewServiceContainer()
+	obj := &TestBadOptionalServiceProcess{}
+	err := container.Inject(obj)
+	Expect(err).To(MatchError("field 'Value' has an invalid optional tag"))
+}
+
 func (s *ServiceSuite) TestUnsettableFields(t sweet.T) {
 	container := NewServiceContainer()
 	container.Set("value", &IntWrapper{42})
@@ -127,5 +147,13 @@ type (
 
 	TestUnsettableService struct {
 		value *IntWrapper `service:"value"`
+	}
+
+	TestOptionalServiceProcess struct {
+		Value *IntWrapper `service:"value" optional:"true"`
+	}
+
+	TestBadOptionalServiceProcess struct {
+		Value *IntWrapper `service:"value" optional:"yup"`
 	}
 )

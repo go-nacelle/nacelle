@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 type (
@@ -14,7 +15,10 @@ type (
 	ServiceInitializerFunc func(config Config, container *ServiceContainer) error
 )
 
-const serviceTag = "service"
+const (
+	serviceTag  = "service"
+	optionalTag = "optional"
+)
 
 var (
 	ErrDuplicateServiceKey    = errors.New("duplicate service key")
@@ -95,16 +99,17 @@ func (c *ServiceContainer) Inject(obj interface{}) error {
 
 	for i := 0; i < ot.NumField(); i++ {
 		var (
-			fieldType  = ot.Field(i)
-			fieldValue = oi.Field(i)
-			serviceTag = fieldType.Tag.Get(serviceTag)
+			fieldType   = ot.Field(i)
+			fieldValue  = oi.Field(i)
+			serviceTag  = fieldType.Tag.Get(serviceTag)
+			optionalTag = fieldType.Tag.Get(optionalTag)
 		)
 
 		if serviceTag == "" {
 			continue
 		}
 
-		if err := loadServiceField(c, fieldType, fieldValue, serviceTag); err != nil {
+		if err := loadServiceField(c, fieldType, fieldValue, serviceTag, optionalTag); err != nil {
 			return err
 		}
 	}
@@ -112,7 +117,7 @@ func (c *ServiceContainer) Inject(obj interface{}) error {
 	return nil
 }
 
-func loadServiceField(container *ServiceContainer, fieldType reflect.StructField, fieldValue reflect.Value, serviceTag string) error {
+func loadServiceField(container *ServiceContainer, fieldType reflect.StructField, fieldValue reflect.Value, serviceTag, optionalTag string) error {
 	if !fieldValue.IsValid() {
 		return fmt.Errorf("field '%s' is invalid", fieldType.Name)
 	}
@@ -123,6 +128,17 @@ func loadServiceField(container *ServiceContainer, fieldType reflect.StructField
 
 	value, err := container.Get(serviceTag)
 	if err != nil {
+		if optionalTag != "" {
+			val, err := strconv.ParseBool(optionalTag)
+			if err != nil {
+				return fmt.Errorf("field '%s' has an invalid optional tag", fieldType.Name)
+			}
+
+			if val {
+				return nil
+			}
+		}
+
 		return err
 	}
 

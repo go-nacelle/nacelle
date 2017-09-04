@@ -69,6 +69,19 @@ func (s *ConfigSuite) TestRequired(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("no value supplied for field 'X'")))
 }
 
+func (s *ConfigSuite) TestRequiredBadTag(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestBadRequiredConfig{}
+	)
+
+	Expect(config.Register("required-config", chunk)).To(BeNil())
+
+	errors := config.Load()
+	Expect(errors).To(HaveLen(1))
+	Expect(errors).To(ContainElement(MatchError("field 'X' has an invalid required tag")))
+}
+
 func (s *ConfigSuite) TestDefault(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
@@ -281,6 +294,10 @@ type (
 
 	TestRequiredConfig struct {
 		X string `env:"x" required:"true"`
+	}
+
+	TestBadRequiredConfig struct {
+		X string `env:"x" required:"yup"`
 	}
 
 	TestDefaultConfig struct {
