@@ -2,6 +2,7 @@ package nacelle
 
 import (
 	"github.com/aphistic/sweet"
+	"github.com/efritz/nacelle/log"
 	. "github.com/onsi/gomega"
 )
 
@@ -24,6 +25,22 @@ func (s *ServiceSuite) TestGetAndSet(t sweet.T) {
 	value3, err3 := container.Get("c")
 	Expect(err3).To(BeNil())
 	Expect(value3).To(Equal(&IntWrapper{25}))
+}
+
+func (s *ServiceSuite) TestGetLogger(t sweet.T) {
+	container := NewServiceContainer()
+	logger, _ := log.NewGomolShim(&LoggingConfig{})
+	err := container.Set("logger", logger)
+	Expect(err).To(BeNil())
+	Expect(container.GetLogger()).To(Equal(logger))
+}
+
+func (s *ServiceSuite) TestGetUnregisteredLogger(t sweet.T) {
+	Expect(NewServiceContainer().GetLogger()).NotTo(BeNil())
+}
+
+func (s *ServiceSuite) TestSetBadLogger(t sweet.T) {
+	Expect(NewServiceContainer().Set("logger", struct{}{})).To(Equal(ErrIllegalLogger))
 }
 
 func (s *ServiceSuite) TestInject(t sweet.T) {

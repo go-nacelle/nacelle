@@ -19,6 +19,7 @@ const serviceTag = "service"
 var (
 	ErrDuplicateServiceKey    = errors.New("duplicate service key")
 	ErrUnregisteredServiceKey = errors.New("no service registered to key")
+	ErrIllegalLogger          = errors.New("logger instance is not a nacelle.Logger")
 )
 
 func WrapServiceInitializerFunc(f ServiceInitializerFunc, container *ServiceContainer) InitializerFunc {
@@ -42,6 +43,15 @@ func (c *ServiceContainer) Get(service interface{}) (interface{}, error) {
 	return value, nil
 }
 
+func (c *ServiceContainer) GetLogger() Logger {
+	if raw, err := c.Get("logger"); err == nil {
+		return raw.(Logger)
+
+	}
+
+	return emergencyLogger()
+}
+
 func (c *ServiceContainer) MustGet(service interface{}) interface{} {
 	value, err := c.Get(service)
 	if err != nil {
@@ -52,6 +62,12 @@ func (c *ServiceContainer) MustGet(service interface{}) interface{} {
 }
 
 func (c *ServiceContainer) Set(service, value interface{}) error {
+	if service == "logger" {
+		if _, ok := value.(Logger); !ok {
+			return ErrIllegalLogger
+		}
+	}
+
 	if _, ok := c.services[service]; ok {
 		return ErrDuplicateServiceKey
 	}
