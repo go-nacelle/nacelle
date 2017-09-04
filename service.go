@@ -73,6 +73,10 @@ func (c *ServiceContainer) Inject(obj interface{}) error {
 		ot = oi.Type()
 	)
 
+	if oi.Kind() != reflect.Struct {
+		return nil
+	}
+
 	for i := 0; i < ot.NumField(); i++ {
 		var (
 			fieldType  = ot.Field(i)

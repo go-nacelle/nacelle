@@ -35,6 +35,13 @@ func (s *ServiceSuite) TestInject(t sweet.T) {
 	Expect(obj.Value.val).To(Equal(42))
 }
 
+func (s *ServiceSuite) TestInjectNonStruct(t sweet.T) {
+	container := NewServiceContainer()
+	obj := func() error { return nil }
+	err := container.Inject(obj)
+	Expect(err).To(BeNil())
+}
+
 func (s *ServiceSuite) TestInjectMissingService(t sweet.T) {
 	container := NewServiceContainer()
 	obj := &TestSimpleProcess{}
