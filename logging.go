@@ -1,15 +1,23 @@
 package nacelle
 
-import "github.com/efritz/nacelle/log"
+import (
+	"errors"
+
+	"github.com/efritz/nacelle/log"
+)
 
 type (
-	Logger             = log.Logger
-	Fields             = log.Fields
-	LoggingConfig      = log.Config
+	Logger        = log.Logger
+	Fields        = log.Fields
+	LoggingConfig = log.Config
+
 	loggingConfigToken struct{}
 )
 
-var LoggingConfigToken = loggingConfigToken{}
+var (
+	LoggingConfigToken = loggingConfigToken{}
+	ErrBadConfig       = errors.New("logging config not registered properly")
+)
 
 func InitLogging(config Config) (logger Logger, err error) {
 	cx, err := config.Get(LoggingConfigToken)
@@ -17,7 +25,10 @@ func InitLogging(config Config) (logger Logger, err error) {
 		return nil, err
 	}
 
-	c := cx.(*LoggingConfig)
+	c, ok := cx.(*LoggingConfig)
+	if !ok {
+		return nil, ErrBadConfig
+	}
 
 	switch c.LogBackend {
 	case "gomol":
