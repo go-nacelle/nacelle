@@ -156,6 +156,10 @@ func (pr *ProcessRunner) getPriorities() []int {
 
 func (pr *ProcessRunner) runInitializers(config Config) error {
 	for _, initializer := range pr.initializers {
+		if err := pr.container.Inject(initializer); err != nil {
+			return err
+		}
+
 		if err := initializer.Init(config); err != nil {
 			return err
 		}
