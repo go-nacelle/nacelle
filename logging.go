@@ -12,6 +12,7 @@ type (
 	LoggingConfig = log.Config
 
 	loggingConfigToken struct{}
+	logFunc            func(log.Fields, string, ...interface{})
 )
 
 var (
@@ -50,4 +51,8 @@ func emergencyLogger() Logger {
 	})
 
 	return logger
+}
+
+func noopLogger(fields log.Fields, message string, args ...interface{}) {
+	// Silence is golden
 }
