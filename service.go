@@ -26,7 +26,7 @@ var (
 	ErrIllegalLogger          = errors.New("logger instance is not a nacelle.Logger")
 )
 
-func WrapServiceInitializerFunc(f ServiceInitializerFunc, container *ServiceContainer) InitializerFunc {
+func WrapServiceInitializerFunc(container *ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
 	return InitializerFunc(func(config Config) error {
 		return f(config, container)
 	})
