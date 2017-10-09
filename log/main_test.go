@@ -1,4 +1,4 @@
-package process
+package log
 
 import (
 	"testing"
@@ -14,7 +14,9 @@ func TestMain(m *testing.M) {
 	sweet.Run(m, func(s *sweet.S) {
 		s.RegisterPlugin(junit.NewPlugin())
 
+		s.AddSuite(&LoggerSuite{})
+		s.AddSuite(&CallerSuite{})
 		s.AddSuite(&ConfigSuite{})
-		s.AddSuite(&RunnerSuite{})
+		s.AddSuite(&GomolJSONSuite{})
 	})
 }

@@ -1,4 +1,4 @@
-package process
+package nacelle
 
 import (
 	"encoding/json"
@@ -27,6 +27,7 @@ type (
 	EnvConfig struct {
 		prefix string
 		chunks map[interface{}]interface{}
+		loaded bool
 	}
 )
 
@@ -38,8 +39,10 @@ const (
 )
 
 var (
-	ErrDuplicateConfigKey = errors.New("duplicate config key")
-	ErrUnregisteredKey    = errors.New("no config registered to key")
+	ErrAlreadyLoaded         = errors.New("config already loaded")
+	ErrNotLoaded             = errors.New("config not loaded")
+	ErrDuplicateConfigKey    = errors.New("duplicate config key")
+	ErrUnregisteredConfigKey = errors.New("no config registered to key")
 
 	replacer = strings.NewReplacer(
 		"\n", `\n`,
@@ -56,6 +59,10 @@ func NewEnvConfig(prefix string) Config {
 }
 
 func (c *EnvConfig) Register(key interface{}, config interface{}) error {
+	if c.loaded {
+		return ErrAlreadyLoaded
+	}
+
 	if _, ok := c.chunks[key]; ok {
 		return ErrDuplicateConfigKey
 	}
@@ -71,11 +78,15 @@ func (c *EnvConfig) MustRegister(key interface{}, config interface{}) {
 }
 
 func (c *EnvConfig) Get(key interface{}) (interface{}, error) {
+	if !c.loaded {
+		return nil, ErrNotLoaded
+	}
+
 	if config, ok := c.chunks[key]; ok {
 		return config, nil
 	}
 
-	return nil, ErrUnregisteredKey
+	return nil, ErrUnregisteredConfigKey
 }
 
 func (c *EnvConfig) MustGet(key interface{}) interface{} {
@@ -88,6 +99,7 @@ func (c *EnvConfig) MustGet(key interface{}) interface{} {
 }
 
 func (c *EnvConfig) Load() []error {
+	c.loaded = true
 	errors := []error{}
 
 	for _, chunk := range c.chunks {
@@ -131,7 +143,7 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 
 		name := strings.ToUpper(fmt.Sprintf("%s_%s", prefix, envTag))
 
-		err := loadField(
+		err := loadEnvField(
 			fieldType,
 			fieldValue,
 			name,
@@ -153,7 +165,7 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 	return errors
 }
 
-func loadField(fieldType reflect.StructField, fieldValue reflect.Value, envTag, defaultTag, requiredTag string) error {
+func loadEnvField(fieldType reflect.StructField, fieldValue reflect.Value, envTag, defaultTag, requiredTag string) error {
 	if !fieldValue.IsValid() {
 		return fmt.Errorf("field '%s' is invalid", fieldType.Name)
 	}

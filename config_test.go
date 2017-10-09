@@ -1,20 +1,20 @@
-package process
+package nacelle
 
 import (
 	"errors"
 	"os"
-	"testing"
 
+	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
 )
 
 type ConfigSuite struct{}
 
-func (s *ConfigSuite) SetUpTest(t *testing.T) {
+func (s *ConfigSuite) SetUpTest(t sweet.T) {
 	os.Clearenv()
 }
 
-func (s *ConfigSuite) TestSimpleConfig(t *testing.T) {
+func (s *ConfigSuite) TestSimpleConfig(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -36,7 +36,7 @@ func (s *ConfigSuite) TestSimpleConfig(t *testing.T) {
 	Expect(chunk.Z).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *ConfigSuite) TestNestedJSONDeserialization(t *testing.T) {
+func (s *ConfigSuite) TestNestedJSONDeserialization(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestEmbeddedJSONConfig{}
@@ -56,7 +56,7 @@ func (s *ConfigSuite) TestNestedJSONDeserialization(t *testing.T) {
 	Expect(chunk.P2).To(Equal(&TestJSONPayload{V1: 5, V2: 6.28, V3: false}))
 }
 
-func (s *ConfigSuite) TestRequired(t *testing.T) {
+func (s *ConfigSuite) TestRequired(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestRequiredConfig{}
@@ -69,7 +69,20 @@ func (s *ConfigSuite) TestRequired(t *testing.T) {
 	Expect(errors).To(ContainElement(MatchError("no value supplied for field 'X'")))
 }
 
-func (s *ConfigSuite) TestDefault(t *testing.T) {
+func (s *ConfigSuite) TestRequiredBadTag(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestBadRequiredConfig{}
+	)
+
+	Expect(config.Register("required-config", chunk)).To(BeNil())
+
+	errors := config.Load()
+	Expect(errors).To(HaveLen(1))
+	Expect(errors).To(ContainElement(MatchError("field 'X' has an invalid required tag")))
+}
+
+func (s *ConfigSuite) TestDefault(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestDefaultConfig{}
@@ -86,7 +99,7 @@ func (s *ConfigSuite) TestDefault(t *testing.T) {
 	Expect(chunk.Y).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *ConfigSuite) TestBadType(t *testing.T) {
+func (s *ConfigSuite) TestBadType(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -104,7 +117,7 @@ func (s *ConfigSuite) TestBadType(t *testing.T) {
 	Expect(errors).To(ContainElement(MatchError("value supplied for field 'Z' cannot be coerced into the expected type")))
 }
 
-func (s *ConfigSuite) TestBadDefaultType(t *testing.T) {
+func (s *ConfigSuite) TestBadDefaultType(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestBadDefaultConfig{}
@@ -117,7 +130,7 @@ func (s *ConfigSuite) TestBadDefaultType(t *testing.T) {
 	Expect(errors).To(ContainElement(MatchError("default value for field 'X' cannot be coerced into the expected type")))
 }
 
-func (s *ConfigSuite) TestToMap(t *testing.T) {
+func (s *ConfigSuite) TestToMap(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk1 = &TestSimpleConfig{}
@@ -145,7 +158,7 @@ func (s *ConfigSuite) TestToMap(t *testing.T) {
 	Expect(dump["P2"]).To(MatchJSON(`{"v_int": 5, "v_float": 6.28, "v_bool": false}`))
 }
 
-func (s *ConfigSuite) TestMask(t *testing.T) {
+func (s *ConfigSuite) TestMask(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestMaskConfig{}
@@ -165,7 +178,7 @@ func (s *ConfigSuite) TestMask(t *testing.T) {
 	Expect(dump["X"]).To(Equal("foo"))
 }
 
-func (s *ConfigSuite) TestBadMaskTag(t *testing.T) {
+func (s *ConfigSuite) TestBadMaskTag(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestBadMaskTagConfig{}
@@ -178,7 +191,7 @@ func (s *ConfigSuite) TestBadMaskTag(t *testing.T) {
 	Expect(err).To(MatchError("field 'X' has an invalid mask tag"))
 }
 
-func (s *ConfigSuite) TestPostLoadConfig(t *testing.T) {
+func (s *ConfigSuite) TestPostLoadConfig(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestPostLoadConfig{}
@@ -195,7 +208,7 @@ func (s *ConfigSuite) TestPostLoadConfig(t *testing.T) {
 	Expect(errors).To(ContainElement(MatchError("X must be positive")))
 }
 
-func (s *ConfigSuite) TestUnsettableFieldS(t *testing.T) {
+func (s *ConfigSuite) TestUnsettableFields(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestUnsettableConfig{}
@@ -208,7 +221,14 @@ func (s *ConfigSuite) TestUnsettableFieldS(t *testing.T) {
 	Expect(errors).To(ContainElement(MatchError("field 'x' can not be set")))
 }
 
-func (s *ConfigSuite) TestDuplicateRegistration(t *testing.T) {
+func (s *ConfigSuite) TestRegistrationAfterLoad(t sweet.T) {
+	config := NewEnvConfig("app")
+	config.Register("pre-load", struct{}{})
+	config.Load()
+	Expect(config.Register("post-load", nil)).To(Equal(ErrAlreadyLoaded))
+}
+
+func (s *ConfigSuite) TestDuplicateRegistration(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -220,26 +240,32 @@ func (s *ConfigSuite) TestDuplicateRegistration(t *testing.T) {
 	Expect(err2).To(Equal(ErrDuplicateConfigKey))
 }
 
-func (s *ConfigSuite) TestMustRegisterPanics(t *testing.T) {
+func (s *ConfigSuite) TestMustRegisterPanics(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
 	)
 
 	config.MustRegister("dup", chunk)
-	Expect(config.Get("dup")).To(BeIdenticalTo(chunk))
 
 	Expect(func() {
 		config.MustRegister("dup", &TestSimpleConfig{})
 	}).To(Panic())
 }
 
-func (s *ConfigSuite) TestGetUnregisteredKey(t *testing.T) {
-	_, err := NewEnvConfig("app").Get("unregistered")
-	Expect(err).To(Equal(ErrUnregisteredKey))
+func (s *ConfigSuite) TestGetBeforeLoad(t sweet.T) {
+	_, err := NewEnvConfig("app").Get("pre-load")
+	Expect(err).To(Equal(ErrNotLoaded))
 }
 
-func (s *ConfigSuite) TestMustGetPanics(t *testing.T) {
+func (s *ConfigSuite) TestGetUnregisteredKey(t sweet.T) {
+	config := NewEnvConfig("app")
+	config.Load()
+	_, err := config.Get("unregistered")
+	Expect(err).To(Equal(ErrUnregisteredConfigKey))
+}
+
+func (s *ConfigSuite) TestMustGetPanics(t sweet.T) {
 	Expect(func() {
 		NewEnvConfig("app").MustGet("unregistered")
 	}).To(Panic())
@@ -268,6 +294,10 @@ type (
 
 	TestRequiredConfig struct {
 		X string `env:"x" required:"true"`
+	}
+
+	TestBadRequiredConfig struct {
+		X string `env:"x" required:"yup"`
 	}
 
 	TestDefaultConfig struct {
