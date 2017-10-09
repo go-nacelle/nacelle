@@ -49,14 +49,14 @@ func (pr *ProcessRunner) Run(config Config) <-chan error {
 	var (
 		startErrors = make(chan error)
 		priorities  = pr.getPriorities()
-		wg          = &sync.WaitGroup{}
+		wg          = sync.WaitGroup{}
 	)
 
 	for i := range priorities {
-		if err := pr.initAndStartProcesses(pr.processes[priorities[i]], config, wg, startErrors); err != nil {
+		if err := pr.initAndStartProcesses(pr.processes[priorities[i]], config, &wg, startErrors); err != nil {
 			errChan <- err
 			pr.stopProcesessBelowPriority(priorities, i, errChan)
-			go closeAfterWait(wg, startErrors)
+			go closeAfterWait(&wg, startErrors)
 
 			go func() {
 				defer close(errChan)
@@ -74,7 +74,7 @@ func (pr *ProcessRunner) Run(config Config) <-chan error {
 		}
 	}
 
-	go closeAfterWait(wg, startErrors)
+	go closeAfterWait(&wg, startErrors)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
