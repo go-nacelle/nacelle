@@ -65,23 +65,43 @@ func (g *GomolShim) WithFields(fields Fields) Logger {
 	}
 }
 
-func (g *GomolShim) Debug(fields Fields, format string, args ...interface{}) {
+func (g *GomolShim) Debug(format string, args ...interface{}) {
+	g.DebugWithFields(nil, format, args...)
+}
+
+func (g *GomolShim) Info(format string, args ...interface{}) {
+	g.InfoWithFields(nil, format, args...)
+}
+
+func (g *GomolShim) Warning(format string, args ...interface{}) {
+	g.WarningWithFields(nil, format, args...)
+}
+
+func (g *GomolShim) Error(format string, args ...interface{}) {
+	g.ErrorWithFields(nil, format, args...)
+}
+
+func (g *GomolShim) Fatal(format string, args ...interface{}) {
+	g.FatalWithFields(nil, format, args...)
+}
+
+func (g *GomolShim) DebugWithFields(fields Fields, format string, args ...interface{}) {
 	g.log(gomol.LevelDebug, fields, format, args...)
 }
 
-func (g *GomolShim) Info(fields Fields, format string, args ...interface{}) {
+func (g *GomolShim) InfoWithFields(fields Fields, format string, args ...interface{}) {
 	g.log(gomol.LevelInfo, fields, format, args...)
 }
 
-func (g *GomolShim) Warning(fields Fields, format string, args ...interface{}) {
+func (g *GomolShim) WarningWithFields(fields Fields, format string, args ...interface{}) {
 	g.log(gomol.LevelWarning, fields, format, args...)
 }
 
-func (g *GomolShim) Error(fields Fields, format string, args ...interface{}) {
+func (g *GomolShim) ErrorWithFields(fields Fields, format string, args ...interface{}) {
 	g.log(gomol.LevelError, fields, format, args...)
 }
 
-func (g *GomolShim) Fatal(fields Fields, format string, args ...interface{}) {
+func (g *GomolShim) FatalWithFields(fields Fields, format string, args ...interface{}) {
 	g.log(gomol.LevelFatal, fields, format, args...)
 	g.logger.ShutdownLoggers()
 	os.Exit(1)
