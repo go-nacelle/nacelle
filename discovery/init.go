@@ -40,7 +40,7 @@ func InitHotBackup(name string, onDisconnect func(error)) nacelle.ServiceInitial
 		}
 
 		logger := container.GetLogger()
-		logger.Info(nil, "Starting election")
+		logger.Info("Starting election")
 
 		elector := reception.NewElector(
 			client,
@@ -52,7 +52,7 @@ func InitHotBackup(name string, onDisconnect func(error)) nacelle.ServiceInitial
 			return err
 		}
 
-		logger.Info(nil, "Won election")
+		logger.Info("Won election")
 		return nil
 	}
 }
