@@ -58,23 +58,23 @@ func (l *LogrusShim) WithFields(fields Fields) Logger {
 }
 
 func (l *LogrusShim) Debug(format string, args ...interface{}) {
-	l.DebugWithFields(nil, format, args...)
+	l.decorateEntry(nil).Debugf(format, args...)
 }
 
 func (l *LogrusShim) Info(format string, args ...interface{}) {
-	l.InfoWithFields(nil, format, args...)
+	l.decorateEntry(nil).Infof(format, args...)
 }
 
 func (l *LogrusShim) Warning(format string, args ...interface{}) {
-	l.WarningWithFields(nil, format, args...)
+	l.decorateEntry(nil).Warningf(format, args...)
 }
 
 func (l *LogrusShim) Error(format string, args ...interface{}) {
-	l.ErrorWithFields(nil, format, args...)
+	l.decorateEntry(nil).Errorf(format, args...)
 }
 
 func (l *LogrusShim) Fatal(format string, args ...interface{}) {
-	l.FatalWithFields(nil, format, args...)
+	l.decorateEntry(nil).Fatalf(format, args...)
 }
 
 func (l *LogrusShim) DebugWithFields(fields Fields, format string, args ...interface{}) {

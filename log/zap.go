@@ -71,23 +71,23 @@ func (z *ZapShim) WithFields(fields Fields) Logger {
 }
 
 func (z *ZapShim) Debug(format string, args ...interface{}) {
-	z.DebugWithFields(nil, format, args...)
+	z.logger.Debugf(format, args...)
 }
 
 func (z *ZapShim) Info(format string, args ...interface{}) {
-	z.InfoWithFields(nil, format, args...)
+	z.logger.Infof(format, args...)
 }
 
 func (z *ZapShim) Warning(format string, args ...interface{}) {
-	z.WarningWithFields(nil, format, args...)
+	z.logger.Warnf(format, args...)
 }
 
 func (z *ZapShim) Error(format string, args ...interface{}) {
-	z.ErrorWithFields(nil, format, args...)
+	z.logger.Errorf(format, args...)
 }
 
 func (z *ZapShim) Fatal(format string, args ...interface{}) {
-	z.FatalWithFields(nil, format, args...)
+	z.logger.Fatalf(format, args...)
 }
 
 func (z *ZapShim) DebugWithFields(fields Fields, format string, args ...interface{}) {

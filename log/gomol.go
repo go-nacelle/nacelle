@@ -66,23 +66,25 @@ func (g *GomolShim) WithFields(fields Fields) Logger {
 }
 
 func (g *GomolShim) Debug(format string, args ...interface{}) {
-	g.DebugWithFields(nil, format, args...)
+	g.log(gomol.LevelDebug, nil, format, args...)
 }
 
 func (g *GomolShim) Info(format string, args ...interface{}) {
-	g.InfoWithFields(nil, format, args...)
+	g.log(gomol.LevelInfo, nil, format, args...)
 }
 
 func (g *GomolShim) Warning(format string, args ...interface{}) {
-	g.WarningWithFields(nil, format, args...)
+	g.log(gomol.LevelWarning, nil, format, args...)
 }
 
 func (g *GomolShim) Error(format string, args ...interface{}) {
-	g.ErrorWithFields(nil, format, args...)
+	g.log(gomol.LevelError, nil, format, args...)
 }
 
 func (g *GomolShim) Fatal(format string, args ...interface{}) {
-	g.FatalWithFields(nil, format, args...)
+	g.log(gomol.LevelFatal, nil, format, args...)
+	g.logger.ShutdownLoggers()
+	os.Exit(1)
 }
 
 func (g *GomolShim) DebugWithFields(fields Fields, format string, args ...interface{}) {
