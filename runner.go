@@ -7,6 +7,7 @@ import (
 	"sort"
 	"sync"
 	"syscall"
+	"time"
 )
 
 var ErrUrgentShutdown = errors.New("urgent shutdown requested")
@@ -16,6 +17,8 @@ type ProcessRunner struct {
 	initializers []Initializer
 	processes    map[int][]Process
 	numProcesses int
+	done         chan struct{}
+	halt         chan struct{}
 }
 
 func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
@@ -23,6 +26,8 @@ func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
 		container:    container,
 		initializers: []Initializer{},
 		processes:    map[int][]Process{},
+		done:         make(chan struct{}),
+		halt:         make(chan struct{}),
 	}
 }
 
@@ -99,11 +104,9 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, syscall.SIGTERM)
 
-	halt := make(chan struct{})
-
 	go func() {
 		defer close(errChan)
-		defer close(halt)
+		defer close(pr.done)
 
 		var (
 			urgent  = false
@@ -132,6 +135,9 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 
 				logger.Info(nil, "Encountered error, starting graceful shutdown")
 				errChan <- err
+
+			case <-pr.halt:
+				logger.Info(nil, "Process requested shutdown")
 			}
 
 			if !stopped {
@@ -141,7 +147,19 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 		}
 	}()
 
-	return chainUntilHalt(errChan, halt)
+	return chainUntilHalt(errChan, pr.done)
+}
+
+func (pr *ProcessRunner) Shutdown(timeout time.Duration) error {
+	// TODO - make idempotent
+	close(pr.halt)
+
+	select {
+	case <-time.After(timeout):
+		return errors.New("process failed to stop in timeout")
+	case <-pr.done:
+		return nil
+	}
 }
 
 func (pr *ProcessRunner) getPriorities() []int {
