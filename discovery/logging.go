@@ -8,5 +8,5 @@ type logAdapter struct {
 
 func (l *logAdapter) Printf(format string, args ...interface{}) {
 	// TODO - these kinds of adapters have useless caller attributes
-	l.logger.Debug(nil, format, args...)
+	l.logger.Debug(format, args...)
 }

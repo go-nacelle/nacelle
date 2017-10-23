@@ -57,23 +57,43 @@ func (l *LogrusShim) WithFields(fields Fields) Logger {
 	}
 }
 
-func (l *LogrusShim) Debug(fields Fields, format string, args ...interface{}) {
+func (l *LogrusShim) Debug(format string, args ...interface{}) {
+	l.decorateEntry(nil).Debugf(format, args...)
+}
+
+func (l *LogrusShim) Info(format string, args ...interface{}) {
+	l.decorateEntry(nil).Infof(format, args...)
+}
+
+func (l *LogrusShim) Warning(format string, args ...interface{}) {
+	l.decorateEntry(nil).Warningf(format, args...)
+}
+
+func (l *LogrusShim) Error(format string, args ...interface{}) {
+	l.decorateEntry(nil).Errorf(format, args...)
+}
+
+func (l *LogrusShim) Fatal(format string, args ...interface{}) {
+	l.decorateEntry(nil).Fatalf(format, args...)
+}
+
+func (l *LogrusShim) DebugWithFields(fields Fields, format string, args ...interface{}) {
 	l.decorateEntry(fields).Debugf(format, args...)
 }
 
-func (l *LogrusShim) Info(fields Fields, format string, args ...interface{}) {
+func (l *LogrusShim) InfoWithFields(fields Fields, format string, args ...interface{}) {
 	l.decorateEntry(fields).Infof(format, args...)
 }
 
-func (l *LogrusShim) Warning(fields Fields, format string, args ...interface{}) {
+func (l *LogrusShim) WarningWithFields(fields Fields, format string, args ...interface{}) {
 	l.decorateEntry(fields).Warningf(format, args...)
 }
 
-func (l *LogrusShim) Error(fields Fields, format string, args ...interface{}) {
+func (l *LogrusShim) ErrorWithFields(fields Fields, format string, args ...interface{}) {
 	l.decorateEntry(fields).Errorf(format, args...)
 }
 
-func (l *LogrusShim) Fatal(fields Fields, format string, args ...interface{}) {
+func (l *LogrusShim) FatalWithFields(fields Fields, format string, args ...interface{}) {
 	l.decorateEntry(fields).Fatalf(format, args...)
 }
 
@@ -91,6 +111,7 @@ func (l *LogrusShim) getEntry(fields Fields) *logrus.Entry {
 
 func (l *LogrusShim) decorateEntry(fields Fields) *logrus.Entry {
 	entry := l.getEntry(fields)
+
 	if l.disableCaller {
 		return entry
 	}

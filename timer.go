@@ -65,7 +65,7 @@ func startTimer(logger Logger, clock glock.Clock, name string, configs ...TimerC
 		"timer_name": timer.name,
 	}
 
-	logger.Info(attrs, "Starting timer: %s", name)
+	logger.InfoWithFields(attrs, "Starting timer: %s", name)
 	return timer
 }
 
@@ -101,12 +101,12 @@ func getLogFunction(logger Logger, elapsed, dropThreshold, debugThreshold, infoT
 	if dropThreshold > 0 && elapsed < dropThreshold {
 		return noopLogger
 	} else if debugThreshold > 0 && elapsed < debugThreshold {
-		return logger.Debug
+		return logger.DebugWithFields
 	} else if infoThreshold > 0 && elapsed < infoThreshold {
-		return logger.Info
+		return logger.InfoWithFields
 	} else if warningThreshold > 0 && elapsed < warningThreshold {
-		return logger.Warning
+		return logger.WarningWithFields
 	} else {
-		return logger.Error
+		return logger.ErrorWithFields
 	}
 }

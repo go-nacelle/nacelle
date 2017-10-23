@@ -70,23 +70,43 @@ func (z *ZapShim) WithFields(fields Fields) Logger {
 	}
 }
 
-func (z *ZapShim) Debug(fields Fields, format string, args ...interface{}) {
+func (z *ZapShim) Debug(format string, args ...interface{}) {
+	z.logger.Debugf(format, args...)
+}
+
+func (z *ZapShim) Info(format string, args ...interface{}) {
+	z.logger.Infof(format, args...)
+}
+
+func (z *ZapShim) Warning(format string, args ...interface{}) {
+	z.logger.Warnf(format, args...)
+}
+
+func (z *ZapShim) Error(format string, args ...interface{}) {
+	z.logger.Errorf(format, args...)
+}
+
+func (z *ZapShim) Fatal(format string, args ...interface{}) {
+	z.logger.Fatalf(format, args...)
+}
+
+func (z *ZapShim) DebugWithFields(fields Fields, format string, args ...interface{}) {
 	z.getLogger(fields).Debugf(format, args...)
 }
 
-func (z *ZapShim) Info(fields Fields, format string, args ...interface{}) {
+func (z *ZapShim) InfoWithFields(fields Fields, format string, args ...interface{}) {
 	z.getLogger(fields).Infof(format, args...)
 }
 
-func (z *ZapShim) Warning(fields Fields, format string, args ...interface{}) {
+func (z *ZapShim) WarningWithFields(fields Fields, format string, args ...interface{}) {
 	z.getLogger(fields).Warnf(format, args...)
 }
 
-func (z *ZapShim) Error(fields Fields, format string, args ...interface{}) {
+func (z *ZapShim) ErrorWithFields(fields Fields, format string, args ...interface{}) {
 	z.getLogger(fields).Errorf(format, args...)
 }
 
-func (z *ZapShim) Fatal(fields Fields, format string, args ...interface{}) {
+func (z *ZapShim) FatalWithFields(fields Fields, format string, args ...interface{}) {
 	z.getLogger(fields).Fatalf(format, args...)
 }
 

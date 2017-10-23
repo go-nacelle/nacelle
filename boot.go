@@ -21,13 +21,13 @@ func boot(name string, configs map[interface{}]interface{}, initFunc AppInitFunc
 
 	for key, obj := range configs {
 		if err := config.Register(key, obj); err != nil {
-			emergencyLogger().Error(nil, err.Error())
+			emergencyLogger().Error(err.Error())
 			return 1
 		}
 	}
 
 	if err := config.Register(LoggingConfigToken, &LoggingConfig{}); err != nil {
-		emergencyLogger().Error(nil, err.Error())
+		emergencyLogger().Error(err.Error())
 		return 1
 	}
 
@@ -35,7 +35,7 @@ func boot(name string, configs map[interface{}]interface{}, initFunc AppInitFunc
 		logger := emergencyLogger()
 
 		for _, err := range errs {
-			logger.Error(nil, err.Error())
+			logger.Error(err.Error())
 		}
 
 		return 1
@@ -43,37 +43,37 @@ func boot(name string, configs map[interface{}]interface{}, initFunc AppInitFunc
 
 	logger, err := InitLogging(config)
 	if err != nil {
-		emergencyLogger().Error(nil, err.Error())
+		emergencyLogger().Error(err.Error())
 		return 1
 	}
 
 	defer logger.Sync()
-	logger.Info(nil, "Logging initialized")
+	logger.Info("Logging initialized")
 
 	if err := container.Set("logger", logger); err != nil {
-		logger.Error(nil, err.Error())
+		logger.Error(err.Error())
 		return 1
 	}
 
 	m, err := config.ToMap()
 	if err != nil {
-		logger.Error(nil, err.Error())
+		logger.Error(err.Error())
 		return 1
 	}
 
-	logger.Info(m, "Process starting")
+	logger.InfoWithFields(m, "Process starting")
 
 	if err := initFunc(runner, container); err != nil {
-		logger.Error(nil, err.Error())
+		logger.Error(err.Error())
 		return 1
 	}
 
 	statusCode := 0
 	for err := range runner.Run(config, logger) {
 		statusCode = 1
-		logger.Error(nil, err.Error())
+		logger.Error(err.Error())
 	}
 
-	logger.Info(nil, "All processes have stopped")
+	logger.Info("All processes have stopped")
 	return statusCode
 }
