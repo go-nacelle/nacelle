@@ -137,7 +137,7 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 				errChan <- err
 
 			case <-pr.halt:
-				logger.Info(nil, "Process requested shutdown")
+				logger.Info("Process requested shutdown")
 			}
 
 			if !stopped {
