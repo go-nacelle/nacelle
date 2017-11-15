@@ -130,6 +130,27 @@ func (s *ConfigSuite) TestBadDefaultType(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("default value for field 'X' cannot be coerced into the expected type")))
 }
 
+func (s *ConfigSuite) TestUnprefixed(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestSimpleConfig{}
+	)
+
+	os.Setenv("X", "foo")
+	os.Setenv("Y", "123")
+	os.Setenv("APP_Y", "456")
+
+	Expect(config.Register("simple", chunk)).To(BeNil())
+	Expect(config.Load()).To(BeEmpty())
+
+	loadedChunk, err := config.Get("simple")
+	Expect(err).To(BeNil())
+
+	Expect(loadedChunk).To(BeIdenticalTo(chunk))
+	Expect(chunk.X).To(Equal("foo"))
+	Expect(chunk.Y).To(Equal(456))
+}
+
 func (s *ConfigSuite) TestToMap(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")

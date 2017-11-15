@@ -141,12 +141,15 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 			continue
 		}
 
-		name := strings.ToUpper(fmt.Sprintf("%s_%s", prefix, envTag))
+		envTags := []string{
+			strings.ToUpper(fmt.Sprintf("%s_%s", prefix, envTag)),
+			strings.ToUpper(envTag),
+		}
 
 		err := loadEnvField(
 			fieldType,
 			fieldValue,
-			name,
+			envTags,
 			defaultTag,
 			requiredTag,
 		)
@@ -165,7 +168,7 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 	return errors
 }
 
-func loadEnvField(fieldType reflect.StructField, fieldValue reflect.Value, envTag, defaultTag, requiredTag string) error {
+func loadEnvField(fieldType reflect.StructField, fieldValue reflect.Value, envTags []string, defaultTag, requiredTag string) error {
 	if !fieldValue.IsValid() {
 		return fmt.Errorf("field '%s' is invalid", fieldType.Name)
 	}
@@ -174,7 +177,7 @@ func loadEnvField(fieldType reflect.StructField, fieldValue reflect.Value, envTa
 		return fmt.Errorf("field '%s' can not be set", fieldType.Name)
 	}
 
-	val, ok := os.LookupEnv(envTag)
+	val, ok := getFirst(envTags)
 	if ok {
 		if !toJSON([]byte(val), fieldValue.Addr().Interface()) {
 			return fmt.Errorf("value supplied for field '%s' cannot be coerced into the expected type", fieldType.Name)
@@ -203,6 +206,16 @@ func loadEnvField(fieldType reflect.StructField, fieldValue reflect.Value, envTa
 	}
 
 	return nil
+}
+
+func getFirst(envTags []string) (string, bool) {
+	for _, envTag := range envTags {
+		if val, ok := os.LookupEnv(envTag); ok {
+			return val, ok
+		}
+	}
+
+	return "", false
 }
 
 func toJSON(data []byte, v interface{}) bool {
