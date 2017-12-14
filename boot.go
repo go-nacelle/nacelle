@@ -2,24 +2,69 @@ package nacelle
 
 import "os"
 
-type AppInitFunc func(*ProcessRunner, *ServiceContainer) error
+type (
+	// Bootstrapper wraps the entrypoint to the program.
+	Bootstrapper struct {
+		name            string
+		configs         map[interface{}]interface{}
+		initFunc        AppInitFunc
+		loggingInitFunc LoggingInitFunc
+	}
 
-func Boot(name string, configs map[interface{}]interface{}, initFunc AppInitFunc) {
-	os.Exit(boot(name, configs, initFunc))
+	bootstrapperConfig struct {
+		loggingInitFunc LoggingInitFunc
+	}
+
+	AppInitFunc          func(*ProcessRunner, *ServiceContainer) error
+	BoostraperConfigFunc func(*bootstrapperConfig)
+	LoggingInitFunc      func(Config) (Logger, error)
+)
+
+// WithLoggingInitFunc sets the function that initializes logging.
+func WithLoggingInitFunc(loggingInitFunc LoggingInitFunc) BoostraperConfigFunc {
+	return func(c *bootstrapperConfig) { c.loggingInitFunc = loggingInitFunc }
 }
 
-func boot(name string, configs map[interface{}]interface{}, initFunc AppInitFunc) int {
-	var (
-		container = NewServiceContainer()
-		runner    = NewProcessRunner(container)
-		config    = NewEnvConfig(name)
-	)
-
+func NewBootstrapper(
+	name string,
+	configs map[interface{}]interface{},
+	initFunc AppInitFunc,
+	bootstrapperConfigs ...BoostraperConfigFunc,
+) *Bootstrapper {
 	if configs == nil {
 		configs = map[interface{}]interface{}{}
 	}
 
-	for key, obj := range configs {
+	config := &bootstrapperConfig{
+		loggingInitFunc: InitLogging,
+	}
+
+	for _, f := range bootstrapperConfigs {
+		f(config)
+	}
+
+	return &Bootstrapper{
+		name:            name,
+		configs:         configs,
+		initFunc:        initFunc,
+		loggingInitFunc: config.loggingInitFunc,
+	}
+}
+
+// Boot will initialize services and exit the process with a zero
+// on graceful shutdown and one on error.
+func (bs *Bootstrapper) Boot() {
+	os.Exit(bs.boot())
+}
+
+func (bs *Bootstrapper) boot() int {
+	var (
+		container = NewServiceContainer()
+		runner    = NewProcessRunner(container)
+		config    = NewEnvConfig(bs.name)
+	)
+
+	for key, obj := range bs.configs {
 		if err := config.Register(key, obj); err != nil {
 			emergencyLogger().Error(err.Error())
 			return 1
@@ -41,7 +86,7 @@ func boot(name string, configs map[interface{}]interface{}, initFunc AppInitFunc
 		return 1
 	}
 
-	logger, err := InitLogging(config)
+	logger, err := bs.loggingInitFunc(config)
 	if err != nil {
 		emergencyLogger().Error(err.Error())
 		return 1
@@ -63,7 +108,7 @@ func boot(name string, configs map[interface{}]interface{}, initFunc AppInitFunc
 
 	logger.InfoWithFields(m, "Process starting")
 
-	if err := initFunc(runner, container); err != nil {
+	if err := bs.initFunc(runner, container); err != nil {
 		logger.Error(err.Error())
 		return 1
 	}
