@@ -33,9 +33,12 @@ func WrapServiceInitializerFunc(container *ServiceContainer, f ServiceInitialize
 }
 
 func NewServiceContainer() *ServiceContainer {
-	return &ServiceContainer{
+	container := &ServiceContainer{
 		services: map[interface{}]interface{}{},
 	}
+
+	container.Set("container", container)
+	return container
 }
 
 func (c *ServiceContainer) Get(service interface{}) (interface{}, error) {
