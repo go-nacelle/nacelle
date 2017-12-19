@@ -33,18 +33,18 @@ func InitLogging(config Config) (logger Logger, err error) {
 
 	switch c.LogBackend {
 	case "gomol":
-		logger, err = log.NewGomolShim(c)
+		logger, err = log.InitGomolShim(c)
 	case "logrus":
-		logger, err = log.NewZapShim(c)
+		logger, err = log.InitZapShim(c)
 	case "zap":
-		logger, err = log.NewLogrusShim(c)
+		logger, err = log.InitLogrusShim(c)
 	}
 
 	return
 }
 
 func emergencyLogger() Logger {
-	logger, _ := log.NewLogrusShim(&LoggingConfig{
+	logger, _ := log.InitLogrusShim(&LoggingConfig{
 		LogLevel:         "DEBUG",
 		LogEncoding:      "json",
 		LogDisableCaller: true,

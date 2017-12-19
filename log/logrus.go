@@ -10,7 +10,7 @@ type LogrusShim struct {
 	disableCaller bool
 }
 
-func NewLogrusShim(c *Config) (Logger, error) {
+func InitLogrusShim(c *Config) (Logger, error) {
 	level, err := logrus.ParseLevel(c.LogLevel)
 	if err != nil {
 		return nil, err
@@ -38,12 +38,20 @@ func NewLogrusShim(c *Config) (Logger, error) {
 		}
 	}
 
+	return NewLogrusShim(
+		logger.WithFields(nil),
+		c.LogDisableCaller,
+		c.LogInitialFields,
+	), nil
+}
+
+func NewLogrusShim(logger *logrus.Entry, disableCaller bool, initialFields Fields) Logger {
 	shim := &LogrusShim{
-		entry:         logger.WithFields(nil),
-		disableCaller: c.LogDisableCaller,
+		entry:         logger,
+		disableCaller: disableCaller,
 	}
 
-	return shim.WithFields(c.LogInitialFields), nil
+	return shim.WithFields(initialFields)
 }
 
 func (l *LogrusShim) WithFields(fields Fields) Logger {

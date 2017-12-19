@@ -11,7 +11,7 @@ type ZapShim struct {
 	logger *zap.SugaredLogger
 }
 
-func NewZapShim(c *Config) (Logger, error) {
+func InitZapShim(c *Config) (Logger, error) {
 	var (
 		level        zap.AtomicLevel
 		levelEncoder zapcore.LevelEncoder
@@ -56,8 +56,18 @@ func NewZapShim(c *Config) (Logger, error) {
 		return nil, err
 	}
 
-	sugaredLogger := logger.WithOptions(zap.AddCallerSkip(1)).Sugar()
-	return (&ZapShim{logger: sugaredLogger}).WithFields(c.LogInitialFields), nil
+	return NewZapShim(
+		logger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
+		c.LogInitialFields,
+	), nil
+}
+
+func NewZapShim(logger *zap.SugaredLogger, initialFields Fields) Logger {
+	shim := &ZapShim{
+		logger: logger,
+	}
+
+	return shim.WithFields(initialFields)
 }
 
 func (z *ZapShim) WithFields(fields Fields) Logger {

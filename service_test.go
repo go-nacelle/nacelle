@@ -29,7 +29,7 @@ func (s *ServiceSuite) TestGetAndSet(t sweet.T) {
 
 func (s *ServiceSuite) TestGetLogger(t sweet.T) {
 	container := NewServiceContainer()
-	logger, _ := log.NewGomolShim(&LoggingConfig{})
+	logger, _ := log.InitGomolShim(&LoggingConfig{})
 	err := container.Set("logger", logger)
 	Expect(err).To(BeNil())
 	Expect(container.GetLogger()).To(Equal(logger))

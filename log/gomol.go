@@ -12,7 +12,7 @@ type GomolShim struct {
 	disableCaller bool
 }
 
-func NewGomolShim(c *Config) (Logger, error) {
+func InitGomolShim(c *Config) (Logger, error) {
 	level, _ := gomol.ToLogLevel(c.LogLevel)
 	gomol.SetLogLevel(level)
 
@@ -46,12 +46,20 @@ func NewGomolShim(c *Config) (Logger, error) {
 		return nil, err
 	}
 
+	return NewGomolShim(
+		gomol.NewLogAdapter(nil),
+		c.LogDisableCaller,
+		c.LogInitialFields,
+	), nil
+}
+
+func NewGomolShim(logger *gomol.LogAdapter, disableCaller bool, initialFields Fields) Logger {
 	shim := &GomolShim{
-		logger:        gomol.NewLogAdapter(nil),
-		disableCaller: c.LogDisableCaller,
+		logger:        logger,
+		disableCaller: disableCaller,
 	}
 
-	return shim.WithFields(c.LogInitialFields), nil
+	return shim.WithFields(initialFields)
 }
 
 func (g *GomolShim) WithFields(fields Fields) Logger {
