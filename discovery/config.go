@@ -10,7 +10,7 @@ type (
 	Config struct {
 		DiscoveryAddr        string `env:"DISCOVERY_ADDR" required:"true"`
 		DiscoveryBackend     string `env:"DISCOVERY_BACKEND" default:"consul"`
-		RawDiscoveryTTL      int    `env:"DISCOVERY_TTL" default:"60"`
+		RawDiscoveryTTL      int    `env:"DISCOVERY_TTL" default:"120"`
 		RawDiscoveryInterval int    `env:"DISCOVERY_INTERVAL" default:"60"`
 		DiscoveryPrefix      string `env:"DISCOVERY_PREFIX"`
 		DiscoveryHost        string `env:"DISCOVERY_HOST"`
