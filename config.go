@@ -36,6 +36,7 @@ const (
 	maskTag     = "mask"
 	defaultTag  = "default"
 	requiredTag = "required"
+	displayTag  = "display"
 )
 
 var (
@@ -130,28 +131,28 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 
 	for i := 0; i < ot.NumField(); i++ {
 		var (
-			fieldType   = ot.Field(i)
-			fieldValue  = oi.Field(i)
-			envTag      = fieldType.Tag.Get(envTag)
-			defaultTag  = fieldType.Tag.Get(defaultTag)
-			requiredTag = fieldType.Tag.Get(requiredTag)
+			fieldType        = ot.Field(i)
+			fieldValue       = oi.Field(i)
+			envTagValue      = fieldType.Tag.Get(envTag)
+			defaultTagValue  = fieldType.Tag.Get(defaultTag)
+			requiredTagValue = fieldType.Tag.Get(requiredTag)
 		)
 
-		if envTag == "" {
+		if envTagValue == "" {
 			continue
 		}
 
 		envTags := []string{
-			strings.ToUpper(fmt.Sprintf("%s_%s", prefix, envTag)),
-			strings.ToUpper(envTag),
+			strings.ToUpper(fmt.Sprintf("%s_%s", prefix, envTagValue)),
+			strings.ToUpper(envTagValue),
 		}
 
 		err := loadEnvField(
 			fieldType,
 			fieldValue,
 			envTags,
-			defaultTag,
-			requiredTag,
+			defaultTagValue,
+			requiredTagValue,
 		)
 
 		if err != nil {
@@ -247,18 +248,26 @@ func dumpChunk(obj interface{}, m map[string]interface{}) error {
 
 	for i := 0; i < ot.NumField(); i++ {
 		var (
-			fieldType  = ot.Field(i)
-			fieldValue = oi.Field(i)
-			envTag     = fieldType.Tag.Get(envTag)
-			maskTag    = fieldType.Tag.Get(maskTag)
+			fieldType       = ot.Field(i)
+			fieldValue      = oi.Field(i)
+			envTagValue     = fieldType.Tag.Get(envTag)
+			maskTagValue    = fieldType.Tag.Get(maskTag)
+			displayTagValue = fieldType.Tag.Get(displayTag)
+			displayName     = ""
 		)
 
-		if envTag == "" {
-			continue
+		if displayTagValue != "" {
+			displayName = displayTagValue
+		} else {
+			if envTagValue == "" {
+				continue
+			}
+
+			displayName = strings.ToLower(envTagValue)
 		}
 
-		if maskTag != "" {
-			val, err := strconv.ParseBool(maskTag)
+		if maskTagValue != "" {
+			val, err := strconv.ParseBool(maskTagValue)
 			if err != nil {
 				return fmt.Errorf("field '%s' has an invalid mask tag", fieldType.Name)
 			}
@@ -269,14 +278,14 @@ func dumpChunk(obj interface{}, m map[string]interface{}) error {
 		}
 
 		if fieldValue.Kind() == reflect.String {
-			m[fieldType.Name] = fmt.Sprintf("%s", fieldValue)
+			m[displayName] = fmt.Sprintf("%s", fieldValue)
 		} else {
 			data, err := json.Marshal(fieldValue.Interface())
 			if err != nil {
 				return err
 			}
 
-			m[fieldType.Name] = string(data)
+			m[displayName] = string(data)
 		}
 	}
 

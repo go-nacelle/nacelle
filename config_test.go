@@ -172,11 +172,11 @@ func (s *ConfigSuite) TestToMap(t sweet.T) {
 	Expect(err).To(BeNil())
 
 	Expect(dump).To(HaveLen(5))
-	Expect(dump["X"]).To(Equal("foo"))
-	Expect(dump["Y"]).To(Equal("123"))
-	Expect(dump["Z"]).To(MatchJSON(`["bar", "baz", "bonk"]`))
-	Expect(dump["P1"]).To(MatchJSON(`{"v_int": 3, "v_float": 3.14, "v_bool": true}`))
-	Expect(dump["P2"]).To(MatchJSON(`{"v_int": 5, "v_float": 6.28, "v_bool": false}`))
+	Expect(dump["x"]).To(Equal("foo"))
+	Expect(dump["y"]).To(Equal("123"))
+	Expect(dump["q"]).To(MatchJSON(`["bar", "baz", "bonk"]`))
+	Expect(dump["p1"]).To(MatchJSON(`{"v_int": 3, "v_float": 3.14, "v_bool": true}`))
+	Expect(dump["p2"]).To(MatchJSON(`{"v_int": 5, "v_float": 6.28, "v_bool": false}`))
 }
 
 func (s *ConfigSuite) TestMask(t sweet.T) {
@@ -196,7 +196,7 @@ func (s *ConfigSuite) TestMask(t sweet.T) {
 	Expect(err).To(BeNil())
 
 	Expect(dump).To(HaveLen(1))
-	Expect(dump["X"]).To(Equal("foo"))
+	Expect(dump["x"]).To(Equal("foo"))
 }
 
 func (s *ConfigSuite) TestBadMaskTag(t sweet.T) {
@@ -299,7 +299,7 @@ type (
 	TestSimpleConfig struct {
 		X string   `env:"x"`
 		Y int      `env:"y"`
-		Z []string `env:"w"`
+		Z []string `env:"w" display:"q"`
 	}
 
 	TestEmbeddedJSONConfig struct {
