@@ -1,10 +1,10 @@
 package nacelle
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/efritz/glock"
-	"github.com/satori/go.uuid"
 )
 
 type (
@@ -43,11 +43,18 @@ func WithWarningThreshold(duration time.Duration) TimerConfig {
 	return func(t *Timer) { t.warningThreshold = duration }
 }
 
+var hexadecimalRunes = []rune("0123456789abcdef")
+
 func startTimer(logger Logger, clock glock.Clock, name string, configs ...TimerConfig) *Timer {
+	id := make([]rune, 6)
+	for i := range id {
+		id[i] = hexadecimalRunes[rand.Intn(len(hexadecimalRunes))]
+	}
+
 	timer := &Timer{
 		logger:           logger,
 		clock:            clock,
-		id:               uuid.NewV4().String()[:6],
+		id:               string(id),
 		name:             name,
 		marks:            []time.Time{clock.Now()},
 		dropThreshold:    time.Millisecond,

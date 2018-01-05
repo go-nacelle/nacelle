@@ -17,8 +17,13 @@ func InitAnnouncer(name string, onDisconnect func(error)) nacelle.ServiceInitial
 			return err
 		}
 
+		id, err := uuid.NewV4().String()
+		if err != nil {
+			return err
+		}
+
 		service := &reception.Service{
-			ID:      uuid.NewV4().String(),
+			ID:      id.String(),
 			Name:    name,
 			Address: "", // TODO
 			Port:    0,  // TODO
