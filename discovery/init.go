@@ -17,7 +17,7 @@ func InitAnnouncer(name string, onDisconnect func(error)) nacelle.ServiceInitial
 			return err
 		}
 
-		id, err := uuid.NewV4().String()
+		id, err := uuid.NewV4()
 		if err != nil {
 			return err
 		}
