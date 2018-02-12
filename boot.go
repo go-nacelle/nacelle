@@ -66,13 +66,13 @@ func (bs *Bootstrapper) boot() int {
 
 	for key, obj := range bs.configs {
 		if err := config.Register(key, obj); err != nil {
-			emergencyLogger().Error(err.Error())
+			emergencyLogger().Error("failed to register configs (%s)", err.Error())
 			return 1
 		}
 	}
 
 	if err := config.Register(LoggingConfigToken, &LoggingConfig{}); err != nil {
-		emergencyLogger().Error(err.Error())
+		emergencyLogger().Error("failed to register logging config (%s)", err.Error())
 		return 1
 	}
 
@@ -80,7 +80,7 @@ func (bs *Bootstrapper) boot() int {
 		logger := emergencyLogger()
 
 		for _, err := range errs {
-			logger.Error(err.Error())
+			logger.Error("failed to load configuration (%s)", err.Error())
 		}
 
 		return 1
@@ -88,7 +88,7 @@ func (bs *Bootstrapper) boot() int {
 
 	logger, err := bs.loggingInitFunc(config)
 	if err != nil {
-		emergencyLogger().Error(err.Error())
+		emergencyLogger().Error("failed to initialize logging (%s)", err.Error())
 		return 1
 	}
 
@@ -96,27 +96,27 @@ func (bs *Bootstrapper) boot() int {
 	logger.Info("Logging initialized")
 
 	if err := container.Set("logger", logger); err != nil {
-		logger.Error(err.Error())
+		logger.Error("Failed to register logger to service container (%s)", err.Error())
 		return 1
 	}
 
 	m, err := config.ToMap()
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Failed to serialize config (%s)", err.Error())
 		return 1
 	}
 
 	logger.InfoWithFields(m, "Process starting")
 
 	if err := bs.initFunc(runner, container); err != nil {
-		logger.Error(err.Error())
+		logger.Error("Failed to run initialization function (%s)", err.Error())
 		return 1
 	}
 
 	statusCode := 0
 	for err := range runner.Run(config, logger) {
 		statusCode = 1
-		logger.Error(err.Error())
+		logger.Error("Encountered runtime error", err.Error())
 	}
 
 	logger.Info("All processes have stopped")
