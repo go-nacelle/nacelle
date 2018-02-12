@@ -40,10 +40,8 @@ const (
 )
 
 var (
-	ErrAlreadyLoaded         = errors.New("config already loaded")
-	ErrNotLoaded             = errors.New("config not loaded")
-	ErrDuplicateConfigKey    = errors.New("duplicate config key")
-	ErrUnregisteredConfigKey = errors.New("no config registered to key")
+	ErrAlreadyLoaded = errors.New("config already loaded")
+	ErrNotLoaded     = errors.New("config not loaded")
 
 	replacer = strings.NewReplacer(
 		"\n", `\n`,
@@ -65,7 +63,7 @@ func (c *EnvConfig) Register(key interface{}, config interface{}) error {
 	}
 
 	if _, ok := c.chunks[key]; ok {
-		return ErrDuplicateConfigKey
+		return fmt.Errorf("duplicate config key `%s`", serializeConfigKey(key))
 	}
 
 	c.chunks[key] = config
@@ -87,7 +85,7 @@ func (c *EnvConfig) Get(key interface{}) (interface{}, error) {
 		return config, nil
 	}
 
-	return nil, ErrUnregisteredConfigKey
+	return nil, fmt.Errorf("unregistered config key `%s`", serializeConfigKey(key))
 }
 
 func (c *EnvConfig) MustGet(key interface{}) interface{} {
@@ -290,4 +288,18 @@ func dumpChunk(obj interface{}, m map[string]interface{}) error {
 	}
 
 	return nil
+}
+
+func serializeConfigKey(v interface{}) string {
+	if str, ok := v.(string); ok {
+		return str
+	}
+
+	t := reflect.TypeOf(v)
+
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	return t.Name()
 }

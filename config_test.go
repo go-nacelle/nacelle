@@ -8,7 +8,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type ConfigSuite struct{}
+type (
+	ConfigSuite   struct{}
+	TestConfigKey struct{}
+)
 
 func (s *ConfigSuite) SetUpTest(t sweet.T) {
 	os.Clearenv()
@@ -258,7 +261,7 @@ func (s *ConfigSuite) TestDuplicateRegistration(t sweet.T) {
 	err1 := config.Register("dup", chunk)
 	err2 := config.Register("dup", chunk)
 	Expect(err1).To(BeNil())
-	Expect(err2).To(Equal(ErrDuplicateConfigKey))
+	Expect(err2).To(MatchError("duplicate config key `dup`"))
 }
 
 func (s *ConfigSuite) TestMustRegisterPanics(t sweet.T) {
@@ -283,13 +286,19 @@ func (s *ConfigSuite) TestGetUnregisteredKey(t sweet.T) {
 	config := NewEnvConfig("app")
 	config.Load()
 	_, err := config.Get("unregistered")
-	Expect(err).To(Equal(ErrUnregisteredConfigKey))
+	Expect(err).To(MatchError("unregistered config key `unregistered`"))
 }
 
 func (s *ConfigSuite) TestMustGetPanics(t sweet.T) {
 	Expect(func() {
 		NewEnvConfig("app").MustGet("unregistered")
 	}).To(Panic())
+}
+
+func (s *ConfigSuite) TestSerializeConfigKey(t sweet.T) {
+	Expect(serializeConfigKey("foo")).To(Equal("foo"))
+	Expect(serializeConfigKey(TestConfigKey{})).To(Equal("TestConfigKey"))
+	Expect(serializeConfigKey(&TestConfigKey{})).To(Equal("TestConfigKey"))
 }
 
 //
