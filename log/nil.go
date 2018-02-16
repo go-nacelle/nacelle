@@ -2,6 +2,10 @@ package log
 
 type NilLogger struct{}
 
+func NewNilLogger() Logger {
+	return &NilLogger{}
+}
+
 func (l *NilLogger) WithFields(fields Fields) Logger                                     { return l }
 func (l *NilLogger) Debug(format string, args ...interface{})                            {}
 func (l *NilLogger) Info(format string, args ...interface{})                             {}
