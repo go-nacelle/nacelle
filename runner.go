@@ -123,7 +123,16 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 	}
 
 	for i := range priorities {
-		if err := pr.initAndStartProcesses(pr.processes[priorities[i]], priorities[i], config, logger, &wg, startErrors); err != nil {
+		err := pr.initAndStartProcesses(
+			pr.processes[priorities[i]],
+			priorities[i],
+			config,
+			logger,
+			&wg,
+			startErrors,
+		)
+
+		if err != nil {
 			logger.Error("Encountered error starting process at priority %d", priorities[i])
 			errChan <- err
 			pr.stopProcesessBelowPriority(priorities, i, logger, errChan)
@@ -149,58 +158,70 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 
 	logger.Info("All processes have started")
 
+	go pr.watch(
+		priorities,
+		logger,
+		startErrors,
+		errChan,
+	)
+
+	return chainUntilHalt(errChan, pr.done)
+}
+
+func (pr *ProcessRunner) watch(
+	priorities []int,
+	logger Logger,
+	startErrors <-chan errMeta,
+	errChan chan<- error,
+) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, syscall.SIGTERM)
 
-	go func() {
-		defer close(errChan)
-		defer close(pr.done)
+	defer close(errChan)
+	defer close(pr.done)
 
-		var (
-			urgent  = false
-			stopped = false
-		)
+	var (
+		urgent  = false
+		stopped = false
+	)
 
-		for {
-			select {
-			case <-sigChan:
-				if urgent {
-					logger.Info("Received second signal, shutting down NOW")
-					return
-				}
-
-				logger.Info("Received signal, starting graceful shutdown")
-				urgent = true
-
-			case err, ok := <-startErrors:
-				if !ok {
-					return
-				}
-
-				if err.err == nil {
-					if err.process.silentExit {
-						continue
-					}
-
-					logger.Info("Process has stopped cleanly, starting graceful shutdown")
-				} else {
-					logger.Info("Encountered error, starting graceful shutdown")
-					errChan <- err.err
-				}
-
-			case <-pr.halt:
-				logger.Info("Process requested shutdown")
+	for {
+		select {
+		case <-sigChan:
+			if urgent {
+				logger.Info("Received second signal, shutting down NOW")
+				return
 			}
 
-			if !stopped {
-				stopped = true
-				pr.stopProcesessBelowPriority(priorities, len(priorities), logger, errChan)
+			logger.Info("Received signal, starting graceful shutdown")
+			urgent = true
+
+		case err, ok := <-startErrors:
+			if !ok {
+				return
 			}
+
+			if err.err == nil {
+				if err.process.silentExit {
+					continue
+				}
+
+				logger.Info("Process has stopped cleanly, starting graceful shutdown")
+			} else {
+				logger.Info("Encountered error, starting graceful shutdown")
+				errChan <- err.err
+			}
+
+		case <-pr.halt:
+			logger.Info("Process requested shutdown")
 		}
-	}()
 
-	return chainUntilHalt(errChan, pr.done)
+		if !stopped {
+			stopped = true
+			pr.stopProcesessBelowPriority(priorities, len(priorities), logger, errChan)
+		}
+	}
 }
 
 func (pr *ProcessRunner) Shutdown(timeout time.Duration) error {
@@ -246,7 +267,7 @@ func (pr *ProcessRunner) initAndStartProcesses(
 	config Config,
 	logger Logger,
 	wg *sync.WaitGroup,
-	errors chan<- errMeta,
+	errChan chan<- errMeta,
 ) error {
 	logger.Info("Initializing processes at priority %d", priority)
 
@@ -264,7 +285,7 @@ func (pr *ProcessRunner) initAndStartProcesses(
 		go func(process *processMeta) {
 			defer wg.Done()
 			err := process.Start()
-			errors <- errMeta{err, process}
+			errChan <- errMeta{err, process}
 		}(process)
 	}
 
