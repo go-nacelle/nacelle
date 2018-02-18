@@ -254,9 +254,9 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	)
 
 	runner.RegisterProcess(proc1, WithPriority(1))
-	runner.RegisterProcess(proc2, WithPriority(2))
+	runner.RegisterProcess(proc2, WithPriority(2), WithProcessName("foo"))
 	runner.RegisterProcess(proc3, WithPriority(3))
-	runner.RegisterProcess(proc4, WithPriority(4))
+	runner.RegisterProcess(proc4, WithPriority(4), WithProcessName("bar"))
 
 	go func() {
 		defer close(errChan)
@@ -267,7 +267,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	}()
 
 	// Whoops
-	Eventually(errChan).Should(Receive(Equal(startError)))
+	Eventually(errChan).Should(Receive(MatchError("process bar returned a fatal error (error in start)")))
 
 	// Processes stopped with reversed priority
 	Eventually(stopChan).Should(Receive(Equal("proc4")))
@@ -276,7 +276,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	Eventually(stopChan).Should(Receive(Equal("proc1")))
 
 	// Check additional errors on top
-	Eventually(errChan).Should(Receive(Equal(stopError)))
+	Eventually(errChan).Should(Receive(MatchError("process foo returned error from stop (error in stop)")))
 
 	// Unblocked
 	Eventually(errChan).Should(BeClosed())
@@ -329,7 +329,7 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	runner.RegisterProcess(proc1, WithPriority(1))
 	runner.RegisterProcess(proc2, WithPriority(2))
 	runner.RegisterProcess(proc3, WithPriority(3))
-	runner.RegisterProcess(proc4, WithPriority(3))
+	runner.RegisterProcess(proc4, WithPriority(3), WithProcessName("foo"))
 	runner.RegisterProcess(proc5, WithPriority(3))
 
 	go func() {
@@ -364,7 +364,7 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	Consistently(stopChan).ShouldNot(Receive())
 
 	// Check errors
-	Eventually(errChan).Should(Receive(Equal(initError)))
+	Eventually(errChan).Should(Receive(MatchError("failed to initialize process foo (error in init)")))
 	Eventually(errChan).Should(BeClosed())
 }
 
