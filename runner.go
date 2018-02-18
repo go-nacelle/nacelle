@@ -88,7 +88,7 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 		return errChan
 	}
 
-	logger.Info("All processes have started")
+	logger.Info("All processes running")
 
 	go pr.watch(priorities, logger, startErrors, errChan)
 	go closeAfterWait(wg, startErrors)
@@ -144,7 +144,7 @@ func (pr *ProcessRunner) runProcesses(
 	errChan chan error,
 	wg *sync.WaitGroup,
 ) bool {
-	logger.Info("Injecting services into process instances")
+	logger.Debug("Injecting services into process instances")
 
 	for i := range priorities {
 		for _, process := range pr.processes[priorities[i]] {
@@ -162,7 +162,7 @@ func (pr *ProcessRunner) runProcesses(
 		}
 	}
 
-	logger.Info("Running processes")
+	logger.Info("Initializing and starting processes")
 
 	for i := range priorities {
 		err := pr.initAndStartProcesses(
@@ -206,7 +206,7 @@ func (pr *ProcessRunner) initAndStartProcesses(
 	wg *sync.WaitGroup,
 	errChan chan<- errMeta,
 ) error {
-	logger.Info("Initializing processes at priority %d", priority)
+	logger.Debug("Initializing processes at priority %d", priority)
 
 	for _, process := range processes {
 		logger.Debug("Initializing %s", process.Name())
@@ -218,7 +218,7 @@ func (pr *ProcessRunner) initAndStartProcesses(
 		logger.Debug("Initialized %s", process.Name())
 	}
 
-	logger.Info("Starting processes at priority %d", priority)
+	logger.Debug("Starting processes at priority %d", priority)
 
 	for _, process := range processes {
 		wg.Add(1)
@@ -284,7 +284,7 @@ func (pr *ProcessRunner) watch(
 					err.process.Name(),
 				)
 			} else {
-				logger.Info(
+				logger.Error(
 					"%s returned a fatal error, starting graceful shutdown",
 					err.process.Name(),
 				)
@@ -323,7 +323,7 @@ func (pr *ProcessRunner) stopProcesessBelowPriority(priorities []int, p int, log
 }
 
 func (pr *ProcessRunner) stopProcesses(processes []*processMeta, priority int, logger Logger, errChan chan<- error) {
-	logger.Info("Stopping processes at priority %d", priority)
+	logger.Debug("Stopping processes at priority %d", priority)
 
 	for _, process := range processes {
 		logger.Debug("Stopping %s", process.Name())
