@@ -10,38 +10,87 @@ import (
 	"time"
 )
 
-var ErrUrgentShutdown = errors.New("urgent shutdown requested")
+var (
+	ErrCleanShutdown  = errors.New("process stopped cleanly")
+	ErrUrgentShutdown = errors.New("urgent shutdown requested")
+)
 
-type ProcessRunner struct {
-	container    *ServiceContainer
-	initializers []Initializer
-	processes    map[int][]Process
-	numProcesses int
-	done         chan struct{}
-	halt         chan struct{}
+type (
+	ProcessRunner struct {
+		container    *ServiceContainer
+		initializers []*initializerMeta
+		processes    map[int][]*processMeta
+		numProcesses int
+		done         chan struct{}
+		halt         chan struct{}
+		once         *sync.Once
+	}
+
+	initializerMeta struct {
+		Initializer
+	}
+
+	processMeta struct {
+		Process
+		priority   int
+		silentExit bool
+	}
+
+	errMeta struct {
+		err     error
+		process *processMeta
+	}
+
+	InitializerConfigFunc func(*initializerMeta)
+	ProcessConfigFunc     func(*processMeta)
+)
+
+func WithPriority(priority int) ProcessConfigFunc {
+	return func(meta *processMeta) { meta.priority = priority }
+}
+
+func WithSilentExit() ProcessConfigFunc {
+	return func(meta *processMeta) { meta.silentExit = true }
 }
 
 func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
 	return &ProcessRunner{
 		container:    container,
-		initializers: []Initializer{},
-		processes:    map[int][]Process{},
+		initializers: []*initializerMeta{},
+		processes:    map[int][]*processMeta{},
 		done:         make(chan struct{}),
 		halt:         make(chan struct{}),
+		once:         &sync.Once{},
 	}
 }
 
-func (pr *ProcessRunner) RegisterInitializer(initializer Initializer) {
-	pr.initializers = append(pr.initializers, initializer)
+func (pr *ProcessRunner) RegisterInitializer(initializer Initializer, initializerConfigs ...InitializerConfigFunc) {
+	meta := &initializerMeta{
+		Initializer: initializer,
+	}
+
+	for _, f := range initializerConfigs {
+		f(meta)
+	}
+
+	pr.initializers = append(pr.initializers, meta)
 }
 
-func (pr *ProcessRunner) RegisterProcess(process Process, priority int) {
-	if _, ok := pr.processes[priority]; !ok {
-		pr.processes[priority] = []Process{}
+func (pr *ProcessRunner) RegisterProcess(process Process, processConfigs ...ProcessConfigFunc) {
+	meta := &processMeta{
+		Process: process,
+	}
+
+	for _, f := range processConfigs {
+		f(meta)
+	}
+
+	if _, ok := pr.processes[meta.priority]; !ok {
+		pr.processes[meta.priority] = []*processMeta{}
 	}
 
 	pr.numProcesses++
-	pr.processes[priority] = append(pr.processes[priority], process)
+	pr.processes[meta.priority] = append(pr.processes[meta.priority], meta)
 }
 
 func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
@@ -56,7 +105,7 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 	}
 
 	var (
-		startErrors = make(chan error)
+		startErrors = make(chan errMeta)
 		priorities  = pr.getPriorities()
 		wg          = sync.WaitGroup{}
 	)
@@ -84,11 +133,11 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 				defer close(errChan)
 
 				for err := range startErrors {
-					if err == nil {
+					if err.err == nil {
 						continue
 					}
 
-					errChan <- err
+					errChan <- err.err
 				}
 			}()
 
@@ -129,12 +178,16 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 					return
 				}
 
-				if err == nil {
-					continue
-				}
+				if err.err == nil {
+					if err.process.silentExit {
+						continue
+					}
 
-				logger.Info("Encountered error, starting graceful shutdown")
-				errChan <- err
+					logger.Info("Process has stopped cleanly, starting graceful shutdown")
+				} else {
+					logger.Info("Encountered error, starting graceful shutdown")
+					errChan <- err.err
+				}
 
 			case <-pr.halt:
 				logger.Info("Process requested shutdown")
@@ -151,8 +204,9 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 }
 
 func (pr *ProcessRunner) Shutdown(timeout time.Duration) error {
-	// TODO - make idempotent
-	close(pr.halt)
+	pr.once.Do(func() {
+		close(pr.halt)
+	})
 
 	select {
 	case <-time.After(timeout):
@@ -186,7 +240,14 @@ func (pr *ProcessRunner) runInitializers(config Config) error {
 	return nil
 }
 
-func (pr *ProcessRunner) initAndStartProcesses(processes []Process, priority int, config Config, logger Logger, wg *sync.WaitGroup, errors chan<- error) error {
+func (pr *ProcessRunner) initAndStartProcesses(
+	processes []*processMeta,
+	priority int,
+	config Config,
+	logger Logger,
+	wg *sync.WaitGroup,
+	errors chan<- errMeta,
+) error {
 	logger.Info("Initializing processes at priority %d", priority)
 
 	for _, process := range processes {
@@ -200,12 +261,10 @@ func (pr *ProcessRunner) initAndStartProcesses(processes []Process, priority int
 	for _, process := range processes {
 		wg.Add(1)
 
-		go func(process Process) {
+		go func(process *processMeta) {
 			defer wg.Done()
-
-			if err := process.Start(); err != nil {
-				errors <- err
-			}
+			err := process.Start()
+			errors <- errMeta{err, process}
 		}(process)
 	}
 
@@ -218,17 +277,15 @@ func (pr *ProcessRunner) stopProcesessBelowPriority(priorities []int, p int, log
 	}
 }
 
-func (pr *ProcessRunner) stopProcesses(processes []Process, priority int, logger Logger, errChan chan<- error) {
+func (pr *ProcessRunner) stopProcesses(processes []*processMeta, priority int, logger Logger, errChan chan<- error) {
 	logger.Info("Stopping processes at priority %d", priority)
 
 	for _, process := range processes {
-		if err := process.Stop(); err != nil {
-			errChan <- err
-		}
+		errChan <- process.Stop()
 	}
 }
 
-func closeAfterWait(wg *sync.WaitGroup, ch chan error) {
+func closeAfterWait(wg *sync.WaitGroup, ch chan errMeta) {
 	wg.Wait()
 	close(ch)
 }

@@ -2,6 +2,7 @@ package nacelle
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
@@ -13,10 +14,11 @@ type RunnerSuite struct{}
 
 func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	var (
-		runner    = NewProcessRunner(NewServiceContainer())
-		initChan  = make(chan string)
-		startChan = make(chan string)
-		errChan   = make(chan error)
+		runner     = NewProcessRunner(NewServiceContainer())
+		initChan   = make(chan string)
+		startChan  = make(chan string)
+		errChan    = make(chan error)
+		numStopped = 0
 	)
 
 	makeProcess := func(name string) Process {
@@ -34,8 +36,14 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 			return nil
 		}
 
+		o := &sync.Once{}
+
 		p.stop = func() error {
-			close(c)
+			o.Do(func() {
+				numStopped++
+				close(c)
+			})
+
 			return nil
 		}
 
@@ -55,15 +63,15 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	runner.RegisterInitializer(makeProcess("init1"))
 	runner.RegisterInitializer(makeProcess("init2"))
 	runner.RegisterInitializer(makeProcess("init3"))
-	runner.RegisterProcess(proc1, 1)
-	runner.RegisterProcess(proc2, 2)
-	runner.RegisterProcess(proc3, 1)
-	runner.RegisterProcess(proc4, 2)
+	runner.RegisterProcess(proc1, WithPriority(1))
+	runner.RegisterProcess(proc2, WithPriority(2))
+	runner.RegisterProcess(proc3, WithPriority(1))
+	runner.RegisterProcess(proc4, WithPriority(2))
 
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, &log.NilLogger{}) {
+		for err := range runner.Run(nil, log.NewNilLogger()) {
 			errChan <- err
 		}
 	}()
@@ -111,15 +119,95 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	))
 
 	//
-	//  Blocks until all processes have stopped
-
-	proc1.Stop()
-	proc2.Stop()
-	proc3.Stop()
+	// Stopping one process stops all
 
 	Consistently(errChan).ShouldNot(BeClosed())
-	proc4.Stop()
+	proc1.Stop()
 	Eventually(errChan).Should(BeClosed())
+	Expect(numStopped).To(Equal(4))
+}
+
+func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
+	var (
+		runner     = NewProcessRunner(NewServiceContainer())
+		startChan  = make(chan string)
+		errChan    = make(chan error)
+		numStopped = 0
+	)
+
+	makeProcess := func(name string) Process {
+		p := &mockProcess{}
+		c := make(chan struct{})
+
+		p.init = func(config Config) error {
+			return nil
+		}
+
+		p.start = func() error {
+			startChan <- name
+			<-c
+			return nil
+		}
+
+		o := &sync.Once{}
+
+		p.stop = func() error {
+			o.Do(func() {
+				numStopped++
+				close(c)
+			})
+
+			return nil
+		}
+
+		return p
+	}
+
+	var (
+		proc1 = makeProcess("proc1")
+		proc2 = makeProcess("proc2")
+		proc3 = makeProcess("proc3")
+		proc4 = makeProcess("proc4")
+	)
+
+	runner.RegisterProcess(proc1, WithPriority(1), WithSilentExit())
+	runner.RegisterProcess(proc2, WithPriority(2), WithSilentExit())
+	runner.RegisterProcess(proc3, WithPriority(1))
+	runner.RegisterProcess(proc4, WithPriority(2))
+
+	go func() {
+		defer close(errChan)
+
+		for err := range runner.Run(nil, log.NewNilLogger()) {
+			errChan <- err
+		}
+	}()
+
+	//
+	// Wait for all processes to start
+
+	Eventually(startChan).Should(Receive())
+	Eventually(startChan).Should(Receive())
+	Eventually(startChan).Should(Receive())
+	Eventually(startChan).Should(Receive())
+
+	//
+	// Can shutdown processes marked with silent shutdown
+
+	proc1.Stop()
+	Consistently(errChan).ShouldNot(BeClosed())
+	Expect(numStopped).To(Equal(1))
+
+	proc2.Stop()
+	Consistently(errChan).ShouldNot(BeClosed())
+	Expect(numStopped).To(Equal(2))
+
+	//
+	// Other processes will stop the rest
+
+	proc3.Stop()
+	Eventually(errChan).Should(BeClosed())
+	Expect(numStopped).To(Equal(4))
 }
 
 func (s *RunnerSuite) TestProcessError(t sweet.T) {
@@ -165,15 +253,15 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 		proc4 = makeProcess("proc4", startError, nil)
 	)
 
-	runner.RegisterProcess(proc1, 1)
-	runner.RegisterProcess(proc2, 2)
-	runner.RegisterProcess(proc3, 3)
-	runner.RegisterProcess(proc4, 4)
+	runner.RegisterProcess(proc1, WithPriority(1))
+	runner.RegisterProcess(proc2, WithPriority(2))
+	runner.RegisterProcess(proc3, WithPriority(3))
+	runner.RegisterProcess(proc4, WithPriority(4))
 
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, &log.NilLogger{}) {
+		for err := range runner.Run(nil, log.NewNilLogger()) {
 			errChan <- err
 		}
 	}()
@@ -238,16 +326,16 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 		n2 string
 	)
 
-	runner.RegisterProcess(proc1, 1)
-	runner.RegisterProcess(proc2, 2)
-	runner.RegisterProcess(proc3, 3)
-	runner.RegisterProcess(proc4, 3)
-	runner.RegisterProcess(proc5, 3)
+	runner.RegisterProcess(proc1, WithPriority(1))
+	runner.RegisterProcess(proc2, WithPriority(2))
+	runner.RegisterProcess(proc3, WithPriority(3))
+	runner.RegisterProcess(proc4, WithPriority(3))
+	runner.RegisterProcess(proc5, WithPriority(3))
 
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, &log.NilLogger{}) {
+		for err := range runner.Run(nil, log.NewNilLogger()) {
 			errChan <- err
 		}
 	}()
