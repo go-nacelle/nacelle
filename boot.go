@@ -80,7 +80,7 @@ func (bs *Bootstrapper) boot() int {
 		logger := emergencyLogger()
 
 		for _, err := range errs {
-			logger.Error("failed to load configuration (%s)", err.Error())
+			logger.Error("Failed to load configuration (%s)", err.Error())
 		}
 
 		return 1
@@ -116,7 +116,7 @@ func (bs *Bootstrapper) boot() int {
 	statusCode := 0
 	for err := range runner.Run(config, logger) {
 		statusCode = 1
-		logger.Error("Encountered runtime error", err.Error())
+		logger.Error("Encountered runtime error (%s)", err.Error())
 	}
 
 	logger.Info("All processes have stopped")
