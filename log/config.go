@@ -9,6 +9,7 @@ type Config struct {
 	LogBackend       string `env:"LOG_BACKEND" default:"gomol"`
 	LogLevel         string `env:"LOG_LEVEL" default:"info"`
 	LogEncoding      string `env:"LOG_ENCODING" default:"console"`
+	LogColorize      bool   `env:"LOG_COLORIZE" default:"true"`
 	LogDisableCaller bool   `env:"LOG_DISABLE_CALLER"`
 	LogInitialFields Fields `env:"LOG_FIELDS"`
 }

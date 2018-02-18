@@ -2,6 +2,7 @@ package log
 
 import (
 	"os"
+	"strings"
 
 	"github.com/aphistic/gomol"
 	console "github.com/aphistic/gomol-console"
@@ -26,12 +27,7 @@ func InitGomolShim(c *Config) (Logger, error) {
 			return nil, err
 		}
 
-		tpl, err := gomol.NewTemplate("" +
-			"[{{.Timestamp.Format \"2006-01-02 15:04:05.000\"}}] " +
-			`{{color}}{{printf "%5s" (ucase .LevelName)}}{{reset}} ` +
-			"{{.Message}}" +
-			"{{if .Attrs}}{{range $key, $val := .Attrs}} {{color}}{{$key}}{{reset}}={{$val}}{{end}}{{end}}")
-
+		tpl, err := newGomolConsoleTemplate(c.LogColorize)
 		if err != nil {
 			return nil, err
 		}
@@ -131,4 +127,22 @@ func (g *GomolShim) log(level gomol.LogLevel, fields Fields, format string, args
 	}
 
 	g.logger.Log(level, gomol.NewAttrsFromMap(fields.normalizeTimeValues()), format, args...)
+}
+
+func newGomolConsoleTemplate(color bool) (*gomol.Template, error) {
+	text := "" +
+		`[{{.Timestamp.Format "2006-01-02 15:04:05.000"}}] ` +
+		`{{color}}{{printf "%5s" (ucase .LevelName)}}{{reset}} ` +
+		"{{.Message}}" +
+		"{{if .Attrs}}{{range $key, $val := .Attrs}} {{color}}{{$key}}{{reset}}={{$val}}{{end}}{{end}}"
+
+	if !color {
+		text = removeColor(text)
+	}
+
+	return gomol.NewTemplate(text)
+}
+
+func removeColor(text string) string {
+	return strings.NewReplacer("{{color}}", "", "{{reset}}", "").Replace(text)
 }

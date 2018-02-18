@@ -23,7 +23,12 @@ func InitZapShim(c *Config) (Logger, error) {
 	}
 
 	if c.LogEncoding == "console" {
-		levelEncoder = zapcore.CapitalColorLevelEncoder
+		if c.LogColorize {
+			levelEncoder = zapcore.CapitalColorLevelEncoder
+		} else {
+			levelEncoder = zapcore.CapitalLevelEncoder
+		}
+
 		timeEncoder = zapConsoleTimeEncoder
 	} else {
 		levelEncoder = zapcore.LowercaseLevelEncoder
