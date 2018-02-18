@@ -112,7 +112,7 @@ func (pr *ProcessRunner) runInitializers(config Config, logger Logger) error {
 	for _, initializer := range pr.initializers {
 		logger.Debug("Injecting services into %s", initializer.Name())
 
-		if err := pr.container.Inject(initializer); err != nil {
+		if err := pr.container.Inject(initializer.Initializer); err != nil {
 			return fmt.Errorf(
 				"failed to inject services into %s (%s)",
 				initializer.Name(),
@@ -148,7 +148,7 @@ func (pr *ProcessRunner) runProcesses(
 
 	for i := range priorities {
 		for _, process := range pr.processes[priorities[i]] {
-			if err := pr.container.Inject(process); err != nil {
+			if err := pr.container.Inject(process.Process); err != nil {
 				defer close(errChan)
 
 				errChan <- fmt.Errorf(
