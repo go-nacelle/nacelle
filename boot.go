@@ -1,7 +1,5 @@
 package nacelle
 
-import "os"
-
 type (
 	// Bootstrapper wraps the entrypoint to the program.
 	Bootstrapper struct {
@@ -51,13 +49,9 @@ func NewBootstrapper(
 	}
 }
 
-// Boot will initialize services and exit the process with a zero
-// on graceful shutdown and one on error.
-func (bs *Bootstrapper) Boot() {
-	os.Exit(bs.boot())
-}
-
-func (bs *Bootstrapper) boot() int {
+// Boot will initialize services and return a status code (zero
+// on nominal exit and one if an error was encountered).
+func (bs *Bootstrapper) Boot() int {
 	var (
 		container = NewServiceContainer()
 		runner    = NewProcessRunner(container)
