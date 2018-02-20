@@ -70,7 +70,7 @@ func (pr *ProcessRunner) RegisterProcess(process Process, processConfigs ...Proc
 }
 
 func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
-	errChan := make(chan error, pr.numProcesses+1)
+	errChan := make(chan error, pr.numProcesses*2+1)
 
 	if err := pr.runInitializers(config, logger); err != nil {
 		defer close(errChan)
@@ -183,11 +183,9 @@ func (pr *ProcessRunner) runProcesses(
 				defer close(errChan)
 
 				for err := range startErrors {
-					if err.err == nil {
-						continue
+					if err.err != nil {
+						errChan <- err.err
 					}
-
-					errChan <- err.err
 				}
 			}()
 
@@ -204,7 +202,7 @@ func (pr *ProcessRunner) initAndStartProcesses(
 	config Config,
 	logger Logger,
 	wg *sync.WaitGroup,
-	errChan chan<- errMeta,
+	startErrors chan<- errMeta,
 ) error {
 	logger.Debug("Initializing processes at priority %d", priority)
 
@@ -233,7 +231,7 @@ func (pr *ProcessRunner) initAndStartProcesses(
 				err = fmt.Errorf("%s returned a fatal error (%s)", process.Name(), err.Error())
 			}
 
-			errChan <- errMeta{err, process}
+			startErrors <- errMeta{err, process}
 		}(process)
 	}
 
@@ -328,21 +326,18 @@ func (pr *ProcessRunner) stopProcesses(processes []*processMeta, priority int, l
 	for _, process := range processes {
 		logger.Debug("Stopping %s", process.Name())
 
-		err := process.Stop()
-		if err != nil {
-			err = fmt.Errorf("%s returned error from stop (%s)", process.Name(), err.Error())
+		if err := process.Stop(); err != nil {
+			errChan <- fmt.Errorf("%s returned error from stop (%s)", process.Name(), err.Error())
 		}
-
-		errChan <- err
 	}
 }
 
 //
 // Helpers
 
-func closeAfterWait(wg *sync.WaitGroup, ch chan errMeta) {
+func closeAfterWait(wg *sync.WaitGroup, startErrors chan errMeta) {
 	wg.Wait()
-	close(ch)
+	close(startErrors)
 }
 
 func chainUntilHalt(src <-chan error, halt <-chan struct{}) <-chan error {
