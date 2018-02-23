@@ -1,7 +1,6 @@
 package nacelle
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -20,12 +19,6 @@ const (
 	optionalTag = "optional"
 )
 
-var (
-	ErrDuplicateServiceKey    = errors.New("duplicate service key")
-	ErrUnregisteredServiceKey = errors.New("no service registered to key")
-	ErrIllegalLogger          = errors.New("logger instance is not a nacelle.Logger")
-)
-
 func WrapServiceInitializerFunc(container *ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
 	return InitializerFunc(func(config Config) error {
 		return f(config, container)
@@ -41,13 +34,13 @@ func NewServiceContainer() *ServiceContainer {
 	return container
 }
 
-func (c *ServiceContainer) Get(service interface{}) (interface{}, error) {
-	value, ok := c.services[service]
+func (c *ServiceContainer) Get(key interface{}) (interface{}, error) {
+	service, ok := c.services[key]
 	if !ok {
-		return nil, ErrUnregisteredServiceKey
+		return nil, fmt.Errorf("no service registered to key `%s`", serializeKey(key))
 	}
 
-	return value, nil
+	return service, nil
 }
 
 func (c *ServiceContainer) GetLogger() Logger {
@@ -68,18 +61,18 @@ func (c *ServiceContainer) MustGet(service interface{}) interface{} {
 	return value
 }
 
-func (c *ServiceContainer) Set(service, value interface{}) error {
-	if service == "logger" {
-		if _, ok := value.(Logger); !ok {
-			return ErrIllegalLogger
+func (c *ServiceContainer) Set(key, service interface{}) error {
+	if key == "logger" {
+		if _, ok := service.(Logger); !ok {
+			return fmt.Errorf("logger instance is not a nacelle.Logger")
 		}
 	}
 
-	if _, ok := c.services[service]; ok {
-		return ErrDuplicateServiceKey
+	if _, ok := c.services[key]; ok {
+		return fmt.Errorf("duplicate service key `%s`", serializeKey(key))
 	}
 
-	c.services[service] = value
+	c.services[key] = service
 	return nil
 }
 

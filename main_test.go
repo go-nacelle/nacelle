@@ -15,7 +15,8 @@ func TestMain(m *testing.M) {
 		s.RegisterPlugin(junit.NewPlugin())
 
 		s.AddSuite(&ConfigSuite{})
-		s.AddSuite(&RunnerSuite{})
 		s.AddSuite(&ServiceSuite{})
+		s.AddSuite(&RunnerSuite{})
+		s.AddSuite(&UtilSuite{})
 	})
 }

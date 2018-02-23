@@ -295,12 +295,6 @@ func (s *ConfigSuite) TestMustGetPanics(t sweet.T) {
 	}).To(Panic())
 }
 
-func (s *ConfigSuite) TestSerializeConfigKey(t sweet.T) {
-	Expect(serializeConfigKey("foo")).To(Equal("foo"))
-	Expect(serializeConfigKey(TestConfigKey{})).To(Equal("TestConfigKey"))
-	Expect(serializeConfigKey(&TestConfigKey{})).To(Equal("TestConfigKey"))
-}
-
 //
 // Chunks
 

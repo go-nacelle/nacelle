@@ -40,7 +40,7 @@ func (s *ServiceSuite) TestGetUnregisteredLogger(t sweet.T) {
 }
 
 func (s *ServiceSuite) TestSetBadLogger(t sweet.T) {
-	Expect(NewServiceContainer().Set("logger", struct{}{})).To(Equal(ErrIllegalLogger))
+	Expect(NewServiceContainer().Set("logger", struct{}{})).To(MatchError("logger instance is not a nacelle.Logger"))
 }
 
 func (s *ServiceSuite) TestInject(t sweet.T) {
@@ -63,7 +63,7 @@ func (s *ServiceSuite) TestInjectMissingService(t sweet.T) {
 	container := NewServiceContainer()
 	obj := &TestSimpleProcess{}
 	err := container.Inject(obj)
-	Expect(err).To(MatchError("no service registered to key"))
+	Expect(err).To(MatchError("no service registered to key `value`"))
 }
 
 func (s *ServiceSuite) TestInjectBadType(t sweet.T) {
@@ -106,13 +106,13 @@ func (s *ServiceSuite) TestDuplicateRegistration(t sweet.T) {
 	err1 := container.Set("dup", struct{}{})
 	err2 := container.Set("dup", struct{}{})
 	Expect(err1).To(BeNil())
-	Expect(err2).To(Equal(ErrDuplicateServiceKey))
+	Expect(err2).To(MatchError("duplicate service key `dup`"))
 }
 
 func (s *ServiceSuite) TestGetUnregisteredKey(t sweet.T) {
 	container := NewServiceContainer()
 	_, err := container.Get("unregistered")
-	Expect(err).To(Equal(ErrUnregisteredServiceKey))
+	Expect(err).To(MatchError("no service registered to key `unregistered`"))
 }
 
 func (s *ServiceSuite) TestMustSetPanics(t sweet.T) {

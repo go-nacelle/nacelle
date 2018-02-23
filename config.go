@@ -63,7 +63,7 @@ func (c *EnvConfig) Register(key interface{}, config interface{}) error {
 	}
 
 	if _, ok := c.chunks[key]; ok {
-		return fmt.Errorf("duplicate config key `%s`", serializeConfigKey(key))
+		return fmt.Errorf("duplicate config key `%s`", serializeKey(key))
 	}
 
 	c.chunks[key] = config
@@ -85,7 +85,7 @@ func (c *EnvConfig) Get(key interface{}) (interface{}, error) {
 		return config, nil
 	}
 
-	return nil, fmt.Errorf("unregistered config key `%s`", serializeConfigKey(key))
+	return nil, fmt.Errorf("unregistered config key `%s`", serializeKey(key))
 }
 
 func (c *EnvConfig) MustGet(key interface{}) interface{} {
@@ -288,18 +288,4 @@ func dumpChunk(obj interface{}, m map[string]interface{}) error {
 	}
 
 	return nil
-}
-
-func serializeConfigKey(v interface{}) string {
-	if str, ok := v.(string); ok {
-		return str
-	}
-
-	t := reflect.TypeOf(v)
-
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-
-	return t.Name()
 }
