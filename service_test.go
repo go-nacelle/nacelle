@@ -71,7 +71,15 @@ func (s *ServiceSuite) TestInjectBadType(t sweet.T) {
 	container.Set("value", &FloatWrapper{3.14})
 	obj := &TestSimpleProcess{}
 	err := container.Inject(obj)
-	Expect(err).To(MatchError("field 'Value' cannot be assigned a value of type *nacelle.IntWrapper"))
+	Expect(err).To(MatchError("field 'Value' cannot be assigned a value of type *nacelle.FloatWrapper"))
+}
+
+func (s *ServiceSuite) TestInjectNil(t sweet.T) {
+	container := NewServiceContainer()
+	container.Set("value", nil)
+	obj := &TestNonPointerField{}
+	err := container.Inject(obj)
+	Expect(err).To(MatchError("field 'Value' cannot be assigned a value of type nil"))
 }
 
 func (s *ServiceSuite) TestInjectOptional(t sweet.T) {
@@ -147,6 +155,10 @@ type (
 
 	TestUnsettableService struct {
 		value *IntWrapper `service:"value"`
+	}
+
+	TestNonPointerField struct {
+		Value IntWrapper `service:"value"`
 	}
 
 	TestOptionalServiceProcess struct {

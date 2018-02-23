@@ -143,10 +143,22 @@ func loadServiceField(container *ServiceContainer, fieldType reflect.StructField
 		targetValue = reflect.ValueOf(value)
 	)
 
-	if !targetValue.Type().ConvertibleTo(targetType) {
-		return fmt.Errorf("field '%s' cannot be assigned a value of type %s", fieldType.Name, targetType)
+	if !targetValue.IsValid() || !targetValue.Type().ConvertibleTo(targetType) {
+		return fmt.Errorf(
+			"field '%s' cannot be assigned a value of type %s",
+			fieldType.Name,
+			getTypeName(value),
+		)
 	}
 
 	fieldValue.Set(targetValue.Convert(targetType))
 	return nil
+}
+
+func getTypeName(v interface{}) string {
+	if v == nil {
+		return "nil"
+	}
+
+	return reflect.TypeOf(v).String()
 }
