@@ -26,14 +26,15 @@ func makeClient(config nacelle.Config, container *nacelle.ServiceContainer) (rec
 		return nil, err
 	}
 
-	logger := container.GetLogger()
-
 	discoveryConfig, ok := rawConfig.(*Config)
 	if !ok {
 		return nil, ErrBadConfig
 	}
 
-	return initializers[discoveryConfig.DiscoveryBackend](discoveryConfig, logger)
+	return initializers[discoveryConfig.DiscoveryBackend](
+		discoveryConfig,
+		container.GetLogger(),
+	)
 }
 
 func initConsul(config *Config, logger nacelle.Logger) (reception.Client, error) {
