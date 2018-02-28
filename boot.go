@@ -86,7 +86,12 @@ func (bs *Bootstrapper) Boot() int {
 		return 1
 	}
 
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			emergencyLogger().Error("failed to sync logs on shutdown (%s)", err.Error())
+		}
+	}()
+
 	logger.Info("Logging initialized")
 
 	if err := container.Set("logger", logger); err != nil {
