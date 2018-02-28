@@ -13,6 +13,65 @@ type GomolShim struct {
 	disableCaller bool
 }
 
+var gomolLevels = map[LogLevel]gomol.LogLevel{
+	LevelDebug:   gomol.LevelDebug,
+	LevelInfo:    gomol.LevelInfo,
+	LevelWarning: gomol.LevelWarning,
+	LevelError:   gomol.LevelError,
+	LevelFatal:   gomol.LevelFatal,
+}
+
+//
+// Shim
+
+func NewGomolLogger(logger *gomol.LogAdapter, disableCaller bool, initialFields Fields) Logger {
+	shim := &GomolShim{
+		logger:        logger,
+		disableCaller: disableCaller,
+	}
+
+	return adaptShim(shim.WithFields(initialFields))
+}
+
+func (g *GomolShim) WithFields(fields Fields) logShim {
+	if len(fields) == 0 {
+		return g
+	}
+
+	return &GomolShim{
+		logger:        gomol.NewLogAdapterFor(g.logger, gomol.NewAttrsFromMap(fields)),
+		disableCaller: g.disableCaller,
+	}
+}
+
+func (g *GomolShim) Log(level LogLevel, format string, args ...interface{}) {
+	g.LogWithFields(level, nil, format, args...)
+}
+
+func (g *GomolShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
+	if fields == nil {
+		fields = map[string]interface{}{}
+	}
+
+	if !g.disableCaller {
+		fields["caller"] = getCaller()
+	}
+
+	g.logger.Log(gomolLevels[level], gomol.NewAttrsFromMap(fields.normalizeTimeValues()), format, args...)
+
+	if level == LevelFatal {
+		g.logger.ShutdownLoggers()
+		os.Exit(1)
+	}
+}
+
+func (g *GomolShim) Sync() error {
+	return gomol.ShutdownLoggers()
+}
+
+//
+// Init
+
 func InitGomolShim(c *Config) (Logger, error) {
 	level, _ := gomol.ToLogLevel(c.LogLevel)
 	gomol.SetLogLevel(level)
@@ -42,91 +101,11 @@ func InitGomolShim(c *Config) (Logger, error) {
 		return nil, err
 	}
 
-	return NewGomolShim(
+	return NewGomolLogger(
 		gomol.NewLogAdapter(nil),
 		c.LogDisableCaller,
 		c.LogInitialFields,
 	), nil
-}
-
-func NewGomolShim(logger *gomol.LogAdapter, disableCaller bool, initialFields Fields) Logger {
-	shim := &GomolShim{
-		logger:        logger,
-		disableCaller: disableCaller,
-	}
-
-	return shim.WithFields(initialFields)
-}
-
-func (g *GomolShim) WithFields(fields Fields) Logger {
-	if len(fields) == 0 {
-		return g
-	}
-
-	return &GomolShim{
-		logger:        gomol.NewLogAdapterFor(g.logger, gomol.NewAttrsFromMap(fields)),
-		disableCaller: g.disableCaller,
-	}
-}
-
-func (g *GomolShim) Debug(format string, args ...interface{}) {
-	g.log(gomol.LevelDebug, nil, format, args...)
-}
-
-func (g *GomolShim) Info(format string, args ...interface{}) {
-	g.log(gomol.LevelInfo, nil, format, args...)
-}
-
-func (g *GomolShim) Warning(format string, args ...interface{}) {
-	g.log(gomol.LevelWarning, nil, format, args...)
-}
-
-func (g *GomolShim) Error(format string, args ...interface{}) {
-	g.log(gomol.LevelError, nil, format, args...)
-}
-
-func (g *GomolShim) Fatal(format string, args ...interface{}) {
-	g.log(gomol.LevelFatal, nil, format, args...)
-	g.logger.ShutdownLoggers()
-	os.Exit(1)
-}
-
-func (g *GomolShim) DebugWithFields(fields Fields, format string, args ...interface{}) {
-	g.log(gomol.LevelDebug, fields, format, args...)
-}
-
-func (g *GomolShim) InfoWithFields(fields Fields, format string, args ...interface{}) {
-	g.log(gomol.LevelInfo, fields, format, args...)
-}
-
-func (g *GomolShim) WarningWithFields(fields Fields, format string, args ...interface{}) {
-	g.log(gomol.LevelWarning, fields, format, args...)
-}
-
-func (g *GomolShim) ErrorWithFields(fields Fields, format string, args ...interface{}) {
-	g.log(gomol.LevelError, fields, format, args...)
-}
-
-func (g *GomolShim) FatalWithFields(fields Fields, format string, args ...interface{}) {
-	g.log(gomol.LevelFatal, fields, format, args...)
-	g.logger.ShutdownLoggers()
-	os.Exit(1)
-}
-
-func (g *GomolShim) Sync() error {
-	return gomol.ShutdownLoggers()
-}
-
-func (g *GomolShim) log(level gomol.LogLevel, fields Fields, format string, args ...interface{}) {
-	if fields == nil {
-		fields = map[string]interface{}{}
-	}
-
-	if !g.disableCaller {
-		fields["caller"] = getCaller()
-	}
-
-	g.logger.Log(level, gomol.NewAttrsFromMap(fields.normalizeTimeValues()), format, args...)
 }
 
 func newGomolConsoleTemplate(color bool) (*gomol.Template, error) {

@@ -4,17 +4,17 @@ import "time"
 
 type (
 	Logger interface {
-		WithFields(fields Fields) Logger
-		Debug(format string, args ...interface{})
-		Info(format string, args ...interface{})
-		Warning(format string, args ...interface{})
-		Error(format string, args ...interface{})
-		Fatal(format string, args ...interface{})
-		DebugWithFields(fields Fields, format string, args ...interface{})
-		InfoWithFields(fields Fields, format string, args ...interface{})
-		WarningWithFields(fields Fields, format string, args ...interface{})
-		ErrorWithFields(fields Fields, format string, args ...interface{})
-		FatalWithFields(fields Fields, format string, args ...interface{})
+		WithFields(Fields) Logger
+		Debug(string, ...interface{})
+		Info(string, ...interface{})
+		Warning(string, ...interface{})
+		Error(string, ...interface{})
+		Fatal(string, ...interface{})
+		DebugWithFields(Fields, string, ...interface{})
+		InfoWithFields(Fields, string, ...interface{})
+		WarningWithFields(Fields, string, ...interface{})
+		ErrorWithFields(Fields, string, ...interface{})
+		FatalWithFields(Fields, string, ...interface{})
 		Sync() error
 	}
 

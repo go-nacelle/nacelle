@@ -11,6 +11,80 @@ type ZapShim struct {
 	logger *zap.SugaredLogger
 }
 
+//
+// Shim
+
+func NewZapLogger(logger *zap.SugaredLogger, initialFields Fields) Logger {
+	shim := &ZapShim{
+		logger: logger,
+	}
+
+	return adaptShim(shim.WithFields(initialFields))
+}
+
+func (z *ZapShim) WithFields(fields Fields) logShim {
+	if len(fields) == 0 {
+		return z
+	}
+
+	return &ZapShim{logger: z.getLogger(fields)}
+}
+
+func (z *ZapShim) Log(level LogLevel, format string, args ...interface{}) {
+	switch level {
+	case LevelDebug:
+		z.logger.Debugf(format, args...)
+	case LevelInfo:
+		z.logger.Infof(format, args...)
+	case LevelWarning:
+		z.logger.Warnf(format, args...)
+	case LevelError:
+		z.logger.Errorf(format, args...)
+	case LevelFatal:
+		z.logger.Fatalf(format, args...)
+	}
+}
+
+func (z *ZapShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
+	switch level {
+	case LevelDebug:
+		z.getLogger(fields).Debugf(format, args...)
+	case LevelInfo:
+		z.getLogger(fields).Infof(format, args...)
+	case LevelWarning:
+		z.getLogger(fields).Warnf(format, args...)
+	case LevelError:
+		z.getLogger(fields).Errorf(format, args...)
+	case LevelFatal:
+		z.getLogger(fields).Fatalf(format, args...)
+	}
+}
+
+func (z *ZapShim) Sync() error {
+	return z.logger.Sync()
+}
+
+func (z *ZapShim) getLogger(fields Fields) *zap.SugaredLogger {
+	if len(fields) == 0 {
+		return z.logger
+	}
+
+	return z.logger.With(flatten(fields)...)
+}
+
+func flatten(fields Fields) []interface{} {
+	flattened := []interface{}{}
+	for key, value := range fields {
+		flattened = append(flattened, key)
+		flattened = append(flattened, value)
+	}
+
+	return flattened
+}
+
+//
+// Init
+
 func InitZapShim(c *Config) (Logger, error) {
 	var (
 		level        zap.AtomicLevel
@@ -61,90 +135,10 @@ func InitZapShim(c *Config) (Logger, error) {
 		return nil, err
 	}
 
-	return NewZapShim(
+	return NewZapLogger(
 		logger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
 		c.LogInitialFields,
 	), nil
-}
-
-func NewZapShim(logger *zap.SugaredLogger, initialFields Fields) Logger {
-	shim := &ZapShim{
-		logger: logger,
-	}
-
-	return shim.WithFields(initialFields)
-}
-
-func (z *ZapShim) WithFields(fields Fields) Logger {
-	if len(fields) == 0 {
-		return z
-	}
-
-	return &ZapShim{
-		logger: z.getLogger(fields),
-	}
-}
-
-func (z *ZapShim) Debug(format string, args ...interface{}) {
-	z.logger.Debugf(format, args...)
-}
-
-func (z *ZapShim) Info(format string, args ...interface{}) {
-	z.logger.Infof(format, args...)
-}
-
-func (z *ZapShim) Warning(format string, args ...interface{}) {
-	z.logger.Warnf(format, args...)
-}
-
-func (z *ZapShim) Error(format string, args ...interface{}) {
-	z.logger.Errorf(format, args...)
-}
-
-func (z *ZapShim) Fatal(format string, args ...interface{}) {
-	z.logger.Fatalf(format, args...)
-}
-
-func (z *ZapShim) DebugWithFields(fields Fields, format string, args ...interface{}) {
-	z.getLogger(fields).Debugf(format, args...)
-}
-
-func (z *ZapShim) InfoWithFields(fields Fields, format string, args ...interface{}) {
-	z.getLogger(fields).Infof(format, args...)
-}
-
-func (z *ZapShim) WarningWithFields(fields Fields, format string, args ...interface{}) {
-	z.getLogger(fields).Warnf(format, args...)
-}
-
-func (z *ZapShim) ErrorWithFields(fields Fields, format string, args ...interface{}) {
-	z.getLogger(fields).Errorf(format, args...)
-}
-
-func (z *ZapShim) FatalWithFields(fields Fields, format string, args ...interface{}) {
-	z.getLogger(fields).Fatalf(format, args...)
-}
-
-func (z *ZapShim) Sync() error {
-	return z.logger.Sync()
-}
-
-func (z *ZapShim) getLogger(fields Fields) *zap.SugaredLogger {
-	if len(fields) == 0 {
-		return z.logger
-	}
-
-	return z.logger.With(flatten(fields)...)
-}
-
-func flatten(fields Fields) []interface{} {
-	flattened := []interface{}{}
-	for key, value := range fields {
-		flattened = append(flattened, key)
-		flattened = append(flattened, value)
-	}
-
-	return flattened
 }
 
 func zapConsoleTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {

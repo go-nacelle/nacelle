@@ -10,6 +10,71 @@ type LogrusShim struct {
 	disableCaller bool
 }
 
+//
+// Shim
+
+func NewLogrusLogger(logger *logrus.Entry, disableCaller bool, initialFields Fields) Logger {
+	shim := &LogrusShim{
+		entry:         logger,
+		disableCaller: disableCaller,
+	}
+
+	return adaptShim(shim.WithFields(initialFields))
+}
+
+func (l *LogrusShim) WithFields(fields Fields) logShim {
+	if len(fields) == 0 {
+		return l
+	}
+
+	return &LogrusShim{
+		entry:         l.getEntry(fields),
+		disableCaller: l.disableCaller,
+	}
+}
+
+func (l *LogrusShim) Log(level LogLevel, format string, args ...interface{}) {
+	l.LogWithFields(level, nil, format, args...)
+}
+
+func (l *LogrusShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
+	entry := l.getEntry(fields)
+
+	if !l.disableCaller {
+		entry = entry.WithFields(logrus.Fields(map[string]interface{}{
+			"caller": getCaller(),
+		}))
+	}
+
+	switch level {
+	case LevelDebug:
+		entry.Debugf(format, args...)
+	case LevelInfo:
+		entry.Infof(format, args...)
+	case LevelWarning:
+		entry.Warningf(format, args...)
+	case LevelError:
+		entry.Errorf(format, args...)
+	case LevelFatal:
+		entry.Fatalf(format, args...)
+	}
+}
+
+func (l *LogrusShim) Sync() error {
+	return nil
+}
+
+func (l *LogrusShim) getEntry(fields Fields) *logrus.Entry {
+	if len(fields) == 0 {
+		return l.entry
+	}
+
+	return l.entry.WithFields(logrus.Fields(fields.normalizeTimeValues()))
+}
+
+//
+// Init
+
 func InitLogrusShim(c *Config) (Logger, error) {
 	level, err := logrus.ParseLevel(c.LogLevel)
 	if err != nil {
@@ -39,93 +104,9 @@ func InitLogrusShim(c *Config) (Logger, error) {
 		}
 	}
 
-	return NewLogrusShim(
+	return NewLogrusLogger(
 		logger.WithFields(nil),
 		c.LogDisableCaller,
 		c.LogInitialFields,
 	), nil
-}
-
-func NewLogrusShim(logger *logrus.Entry, disableCaller bool, initialFields Fields) Logger {
-	shim := &LogrusShim{
-		entry:         logger,
-		disableCaller: disableCaller,
-	}
-
-	return shim.WithFields(initialFields)
-}
-
-func (l *LogrusShim) WithFields(fields Fields) Logger {
-	if len(fields) == 0 {
-		return l
-	}
-
-	return &LogrusShim{
-		entry:         l.getEntry(fields),
-		disableCaller: l.disableCaller,
-	}
-}
-
-func (l *LogrusShim) Debug(format string, args ...interface{}) {
-	l.decorateEntry(nil).Debugf(format, args...)
-}
-
-func (l *LogrusShim) Info(format string, args ...interface{}) {
-	l.decorateEntry(nil).Infof(format, args...)
-}
-
-func (l *LogrusShim) Warning(format string, args ...interface{}) {
-	l.decorateEntry(nil).Warningf(format, args...)
-}
-
-func (l *LogrusShim) Error(format string, args ...interface{}) {
-	l.decorateEntry(nil).Errorf(format, args...)
-}
-
-func (l *LogrusShim) Fatal(format string, args ...interface{}) {
-	l.decorateEntry(nil).Fatalf(format, args...)
-}
-
-func (l *LogrusShim) DebugWithFields(fields Fields, format string, args ...interface{}) {
-	l.decorateEntry(fields).Debugf(format, args...)
-}
-
-func (l *LogrusShim) InfoWithFields(fields Fields, format string, args ...interface{}) {
-	l.decorateEntry(fields).Infof(format, args...)
-}
-
-func (l *LogrusShim) WarningWithFields(fields Fields, format string, args ...interface{}) {
-	l.decorateEntry(fields).Warningf(format, args...)
-}
-
-func (l *LogrusShim) ErrorWithFields(fields Fields, format string, args ...interface{}) {
-	l.decorateEntry(fields).Errorf(format, args...)
-}
-
-func (l *LogrusShim) FatalWithFields(fields Fields, format string, args ...interface{}) {
-	l.decorateEntry(fields).Fatalf(format, args...)
-}
-
-func (l *LogrusShim) Sync() error {
-	return nil
-}
-
-func (l *LogrusShim) getEntry(fields Fields) *logrus.Entry {
-	if len(fields) == 0 {
-		return l.entry
-	}
-
-	return l.entry.WithFields(logrus.Fields(fields.normalizeTimeValues()))
-}
-
-func (l *LogrusShim) decorateEntry(fields Fields) *logrus.Entry {
-	entry := l.getEntry(fields)
-
-	if l.disableCaller {
-		return entry
-	}
-
-	return entry.WithFields(logrus.Fields(map[string]interface{}{
-		"caller": getCaller(),
-	}))
 }
