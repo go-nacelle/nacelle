@@ -33,43 +33,43 @@ func (sa *shimAdapter) WithFields(fields Fields) Logger {
 }
 
 func (sa *shimAdapter) Debug(format string, args ...interface{}) {
-	sa.shim.Log(LevelDebug, format, args)
+	sa.shim.Log(LevelDebug, format, args...)
 }
 
 func (sa *shimAdapter) Info(format string, args ...interface{}) {
-	sa.shim.Log(LevelInfo, format, args)
+	sa.shim.Log(LevelInfo, format, args...)
 }
 
 func (sa *shimAdapter) Warning(format string, args ...interface{}) {
-	sa.shim.Log(LevelWarning, format, args)
+	sa.shim.Log(LevelWarning, format, args...)
 }
 
 func (sa *shimAdapter) Error(format string, args ...interface{}) {
-	sa.shim.Log(LevelError, format, args)
+	sa.shim.Log(LevelError, format, args...)
 }
 
 func (sa *shimAdapter) Fatal(format string, args ...interface{}) {
-	sa.shim.Log(LevelFatal, format, args)
+	sa.shim.Log(LevelFatal, format, args...)
 }
 
 func (sa *shimAdapter) DebugWithFields(fields Fields, format string, args ...interface{}) {
-	sa.shim.LogWithFields(LevelDebug, fields, format, args)
+	sa.shim.LogWithFields(LevelDebug, fields, format, args...)
 }
 
 func (sa *shimAdapter) InfoWithFields(fields Fields, format string, args ...interface{}) {
-	sa.shim.LogWithFields(LevelInfo, fields, format, args)
+	sa.shim.LogWithFields(LevelInfo, fields, format, args...)
 }
 
 func (sa *shimAdapter) WarningWithFields(fields Fields, format string, args ...interface{}) {
-	sa.shim.LogWithFields(LevelWarning, fields, format, args)
+	sa.shim.LogWithFields(LevelWarning, fields, format, args...)
 }
 
 func (sa *shimAdapter) ErrorWithFields(fields Fields, format string, args ...interface{}) {
-	sa.shim.LogWithFields(LevelError, fields, format, args)
+	sa.shim.LogWithFields(LevelError, fields, format, args...)
 }
 
 func (sa *shimAdapter) FatalWithFields(fields Fields, format string, args ...interface{}) {
-	sa.shim.LogWithFields(LevelFatal, fields, format, args)
+	sa.shim.LogWithFields(LevelFatal, fields, format, args...)
 }
 
 func (sa *shimAdapter) Sync() error {
