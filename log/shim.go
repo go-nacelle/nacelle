@@ -8,19 +8,16 @@ type (
 		Sync() error
 	}
 
-	LogLevel int
-
 	shimAdapter struct {
 		shim logShim
 	}
-)
 
-const (
-	LevelDebug LogLevel = iota
-	LevelInfo
-	LevelWarning
-	LevelError
-	LevelFatal
+	logMessage struct {
+		level  LogLevel
+		fields Fields
+		format string
+		args   []interface{}
+	}
 )
 
 func adaptShim(shim logShim) Logger {

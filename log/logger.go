@@ -1,7 +1,5 @@
 package log
 
-import "time"
-
 type (
 	Logger interface {
 		WithFields(Fields) Logger
@@ -17,8 +15,6 @@ type (
 		FatalWithFields(Fields, string, ...interface{})
 		Sync() error
 	}
-
-	Fields map[string]interface{}
 )
 
 const (
