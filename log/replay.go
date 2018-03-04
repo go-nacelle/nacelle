@@ -12,9 +12,18 @@ import (
 const FieldReplay = "replayed-from-level"
 
 type (
-	// ReplayAdapter provides a way to replay a sequence of message, in
-	// the order they were logged, at a higher log level.
-	ReplayAdapter struct {
+	// ReplayLogger is a Logger that provides a way to replay a sequence of
+	// message in the order they were logged, at a higher log level.
+	ReplayLogger interface {
+		Logger
+
+		// Replay will cause all of the messages previously logged at one of the
+		// journaled levels to be re-set at the given level. All future messages
+		// logged at one of the journaled levels will be replayed immediately.
+		Replay(LogLevel)
+	}
+
+	replayShim struct {
 		logger        Logger
 		sharedJournal *sharedJournal
 	}
@@ -36,60 +45,55 @@ type (
 //
 // Shim
 
-var _ logShim = &ReplayAdapter{}
+var _ logShim = &replayShim{}
 
-// NewReplayAdapter creates a ReplayAdapter which wraps the given logger.
-func NewReplayAdapter(logger Logger, levels ...LogLevel) *ReplayAdapter {
-	return newReplayAdapter(logger, glock.NewRealClock(), levels...)
+// NewReplayAdapter creates a ReplayLogger wrapping the given logger.
+func NewReplayAdapter(logger Logger, levels ...LogLevel) ReplayLogger {
+	return adaptReplayShim(newReplayShim(logger, glock.NewRealClock(), levels...))
 }
 
-func newReplayAdapter(logger Logger, clock glock.Clock, levels ...LogLevel) *ReplayAdapter {
+func newReplayShim(logger Logger, clock glock.Clock, levels ...LogLevel) *replayShim {
 	sharedJournal := &sharedJournal{
 		clock:    clock,
 		messages: []*journaledMessage{},
 		levels:   levels,
 	}
 
-	return &ReplayAdapter{
+	return &replayShim{
 		logger:        logger,
 		sharedJournal: sharedJournal,
 	}
 }
 
-func (a *ReplayAdapter) WithFields(fields Fields) logShim {
+func (s *replayShim) WithFields(fields Fields) logShim {
 	if len(fields) == 0 {
-		return a
+		return s
 	}
 
-	return &ReplayAdapter{
-		logger:        a.logger.WithFields(fields),
-		sharedJournal: a.sharedJournal,
+	return &replayShim{
+		logger:        s.logger.WithFields(fields),
+		sharedJournal: s.sharedJournal,
 	}
 }
 
-func (a *ReplayAdapter) Log(level LogLevel, format string, args ...interface{}) {
-	a.LogWithFields(level, nil, format, args)
+func (s *replayShim) Log(level LogLevel, format string, args ...interface{}) {
+	s.LogWithFields(level, nil, format, args)
 }
 
-func (a *ReplayAdapter) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
+func (s *replayShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
 	// Log immediately
-	logWithFields(a.logger, level, fields, format, args...)
+	logWithFields(s.logger, level, fields, format, args...)
 
 	// Add to journal
-	a.sharedJournal.record(a.logger, level, fields, format, args)
+	s.sharedJournal.record(s.logger, level, fields, format, args)
 }
 
-func (a *ReplayAdapter) Sync() error {
-	return a.logger.Sync()
+func (s *replayShim) Sync() error {
+	return s.logger.Sync()
 }
 
-// TODO - how to export properly? This is a shim.
-
-// Replay will cause all of the messages previously logged at one of the
-// journaled levels to be re-set at the given level. All future messages
-// logged at one of the journaled levels will be replayed immediately.
-func (a *ReplayAdapter) Replay(level LogLevel) {
-	a.sharedJournal.replay(level)
+func (s *replayShim) Replay(level LogLevel) {
+	s.sharedJournal.replay(level)
 }
 
 //

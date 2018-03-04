@@ -12,6 +12,11 @@ type (
 		shim logShim
 	}
 
+	replayShimAdapter struct {
+		Logger
+		shim *replayShim
+	}
+
 	logMessage struct {
 		level  LogLevel
 		fields Fields
@@ -22,6 +27,10 @@ type (
 
 func adaptShim(shim logShim) Logger {
 	return &shimAdapter{shim: shim}
+}
+
+func adaptReplayShim(shim *replayShim) ReplayLogger {
+	return &replayShimAdapter{adaptShim(shim), shim}
 }
 
 func (sa *shimAdapter) WithFields(fields Fields) Logger {
@@ -74,4 +83,8 @@ func (sa *shimAdapter) FatalWithFields(fields Fields, format string, args ...int
 
 func (sa *shimAdapter) Sync() error {
 	return sa.shim.Sync()
+}
+
+func (a *replayShimAdapter) Replay(level LogLevel) {
+	a.shim.Replay(level)
 }

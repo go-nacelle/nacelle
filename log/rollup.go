@@ -13,12 +13,7 @@ import (
 const FieldRollup = "rollup-multiplicity"
 
 type (
-	// RollupAdapter provides a way to throttle equivalent messages. Messages begin
-	// a roll-up when a second messages with an identical format string is seen in
-	// the same window period. All remaining messages logged within that period are
-	// captured and emitted as a single message at the end of the window period. The
-	// fields and args are equal to the first rolled-up message.
-	RollupAdapter struct {
+	rollupShim struct {
 		logger         Logger
 		clock          glock.Clock
 		windowDuration time.Duration
@@ -37,15 +32,19 @@ type (
 //
 // Shim
 
-var _ logShim = &RollupAdapter{}
+var _ logShim = &rollupShim{}
 
-// NewRollupAdapter creates a RollupAdapter which wraps the given logger.
-func NewRollupAdapter(logger Logger, windowDuration time.Duration) *RollupAdapter {
-	return newRollupAdapter(logger, glock.NewRealClock(), windowDuration)
+// NewRollupAdapter returns a logger with functionality to throttle similar messages. Messages begin
+// a roll-up when a second messages with an identical format string is seen in
+// the same window period. All remaining messages logged within that period are
+// captured and emitted as a single message at the end of the window period. The
+// fields and args are equal to the first rolled-up message.
+func NewRollupAdapter(logger Logger, windowDuration time.Duration) Logger {
+	return adaptShim(newRollupShim(logger, glock.NewRealClock(), windowDuration))
 }
 
-func newRollupAdapter(logger Logger, clock glock.Clock, windowDuration time.Duration) *RollupAdapter {
-	return &RollupAdapter{
+func newRollupShim(logger Logger, clock glock.Clock, windowDuration time.Duration) *rollupShim {
+	return &rollupShim{
 		logger:         logger,
 		clock:          clock,
 		windowDuration: windowDuration,
@@ -53,51 +52,51 @@ func newRollupAdapter(logger Logger, clock glock.Clock, windowDuration time.Dura
 	}
 }
 
-func (a *RollupAdapter) WithFields(fields Fields) logShim {
+func (s *rollupShim) WithFields(fields Fields) logShim {
 	if len(fields) == 0 {
-		return a
+		return s
 	}
 
-	return newRollupAdapter(
-		a.logger.WithFields(fields),
-		a.clock,
-		a.windowDuration,
+	return newRollupShim(
+		s.logger.WithFields(fields),
+		s.clock,
+		s.windowDuration,
 	)
 }
 
-func (a *RollupAdapter) Log(level LogLevel, format string, args ...interface{}) {
-	a.LogWithFields(level, nil, format, args)
+func (s *rollupShim) Log(level LogLevel, format string, args ...interface{}) {
+	s.LogWithFields(level, nil, format, args)
 }
 
-func (a *RollupAdapter) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
-	if a.getWindow(format).record(a.logger, a.clock, a.windowDuration, level, fields, format, args...) {
+func (s *rollupShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
+	if s.getWindow(format).record(s.logger, s.clock, s.windowDuration, level, fields, format, args...) {
 		// Not rolling up, log immediately
-		logWithFields(a.logger, level, fields, format, args...)
+		logWithFields(s.logger, level, fields, format, args...)
 	}
 }
 
-func (a *RollupAdapter) getWindow(format string) *logWindow {
-	a.mutex.RLock()
-	if window, ok := a.windows[format]; ok {
-		a.mutex.RUnlock()
+func (s *rollupShim) getWindow(format string) *logWindow {
+	s.mutex.RLock()
+	if window, ok := s.windows[format]; ok {
+		s.mutex.RUnlock()
 		return window
 	}
 
-	a.mutex.RUnlock()
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
+	s.mutex.RUnlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
-	if window, ok := a.windows[format]; ok {
+	if window, ok := s.windows[format]; ok {
 		return window
 	}
 
 	window := &logWindow{}
-	a.windows[format] = window
+	s.windows[format] = window
 	return window
 }
 
-func (a *RollupAdapter) Sync() error {
-	return a.logger.Sync()
+func (s *rollupShim) Sync() error {
+	return s.logger.Sync()
 }
 
 //

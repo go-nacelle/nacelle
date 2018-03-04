@@ -12,7 +12,7 @@ func (s *ReplaySuite) TestReplay(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newReplayAdapter(adaptShim(shim), clock, LevelDebug)
+		adapter = newReplayShim(adaptShim(shim), clock, LevelDebug)
 	)
 
 	adapter.LogWithFields(LevelDebug, map[string]interface{}{"x": "x"}, "foo", 12)
@@ -47,7 +47,7 @@ func (s *ReplaySuite) TestReplayTwice(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newReplayAdapter(adaptShim(shim), clock, LevelDebug)
+		adapter = newReplayShim(adaptShim(shim), clock, LevelDebug)
 	)
 
 	adapter.Log(LevelDebug, "foo")
@@ -76,7 +76,7 @@ func (s *ReplaySuite) TestReplayAtHigherlevelNoops(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newReplayAdapter(adaptShim(shim), clock, LevelDebug)
+		adapter = newReplayShim(adaptShim(shim), clock, LevelDebug)
 	)
 
 	adapter.Log(LevelDebug, "foo")
@@ -102,7 +102,7 @@ func (s *ReplaySuite) TestLogAfterReplaySendsImmediately(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newReplayAdapter(adaptShim(shim), clock, LevelDebug)
+		adapter = newReplayShim(adaptShim(shim), clock, LevelDebug)
 	)
 
 	adapter.Log(LevelDebug, "foo")
@@ -133,7 +133,7 @@ func (s *ReplaySuite) TestLogAfterSecondReplaySendsAtNewLevel(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newReplayAdapter(adaptShim(shim), clock, LevelDebug)
+		adapter = newReplayShim(adaptShim(shim), clock, LevelDebug)
 	)
 
 	adapter.Log(LevelDebug, "foo")
@@ -164,7 +164,7 @@ func (s *ReplaySuite) TestCheckReplayAddsAttribute(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newReplayAdapter(adaptShim(shim), clock, LevelDebug, LevelInfo)
+		adapter = newReplayShim(adaptShim(shim), clock, LevelDebug, LevelInfo)
 	)
 
 	adapter.Log(LevelDebug, "foo")
@@ -188,7 +188,7 @@ func (s *ReplaySuite) TestCheckSecondReplayAddsAttribute(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newReplayAdapter(adaptShim(shim), clock, LevelDebug, LevelInfo)
+		adapter = newReplayShim(adaptShim(shim), clock, LevelDebug, LevelInfo)
 	)
 
 	adapter.Log(LevelDebug, "foo")

@@ -14,7 +14,7 @@ func (s *RollupSuite) TestRollupSimilarMessages(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newRollupAdapter(adaptShim(shim), clock, time.Second)
+		adapter = newRollupShim(adaptShim(shim), clock, time.Second)
 	)
 
 	for i := 1; i <= 20; i++ {
@@ -38,7 +38,7 @@ func (s *RollupSuite) TestRollupInactivity(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newRollupAdapter(adaptShim(shim), clock, time.Second)
+		adapter = newRollupShim(adaptShim(shim), clock, time.Second)
 	)
 
 	for i := 0; i < 20; i++ {
@@ -54,7 +54,7 @@ func (s *RollupSuite) TestRollupFlushesRelativeToFirstMessage(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newRollupAdapter(adaptShim(shim), clock, time.Second)
+		adapter = newRollupShim(adaptShim(shim), clock, time.Second)
 	)
 
 	adapter.Log(LevelDebug, "a")
@@ -73,7 +73,7 @@ func (s *RollupSuite) TestAllDistinctMessages(t sweet.T) {
 	var (
 		shim    = &testShim{}
 		clock   = glock.NewMockClock()
-		adapter = newRollupAdapter(adaptShim(shim), clock, time.Second)
+		adapter = newRollupShim(adaptShim(shim), clock, time.Second)
 	)
 
 	for i := 0; i < 10; i++ {
