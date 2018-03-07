@@ -48,9 +48,9 @@ func InitLogging(config Config) (logger Logger, err error) {
 	case "gomol":
 		logger, err = log.InitGomolShim(c)
 	case "logrus":
-		logger, err = log.InitZapShim(c)
-	case "zap":
 		logger, err = log.InitLogrusShim(c)
+	case "zap":
+		logger, err = log.InitZapShim(c)
 	}
 
 	return

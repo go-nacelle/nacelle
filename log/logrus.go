@@ -70,7 +70,7 @@ func InitLogrusShim(c *Config) (Logger, error) {
 			FullTimestamp:    true,
 			TimestampFormat:  ConsoleTimeFormat,
 			QuoteEmptyFields: true,
-			DisableColors:    !c.LogColorize,
+			ForceColors:      c.LogColorize,
 		}
 
 		logger.Formatter = formatter
