@@ -64,14 +64,13 @@ func (s *rollupShim) WithFields(fields Fields) logShim {
 	)
 }
 
-func (s *rollupShim) Log(level LogLevel, format string, args ...interface{}) {
-	s.LogWithFields(level, nil, format, args)
-}
-
 func (s *rollupShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
+	fields = addCaller(fields)
+
 	if s.getWindow(format).record(s.logger, s.clock, s.windowDuration, level, fields, format, args...) {
 		// Not rolling up, log immediately
-		logWithFields(s.logger, level, fields, format, args...)
+		// TOOD - explain why layer+2
+		s.logger.LogWithFields(level, fields, format, args...)
 	}
 }
 
@@ -96,12 +95,17 @@ func (s *rollupShim) getWindow(format string) *logWindow {
 }
 
 func (s *rollupShim) Sync() error {
+	for _, window := range s.windows {
+		window.flush(s.logger)
+	}
+
 	return s.logger.Sync()
 }
 
 //
 // Log Window
 
+// TODO - wrap
 func (w *logWindow) record(logger Logger, clock glock.Clock, windowDuration time.Duration, level LogLevel, fields Fields, format string, args ...interface{}) bool {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
@@ -116,17 +120,14 @@ func (w *logWindow) record(logger Logger, clock glock.Clock, windowDuration time
 
 			go func() {
 				<-ch
-
-				w.mutex.Lock()
 				w.flush(logger)
-				w.mutex.Unlock()
 			}()
 		}
 
 		return false
 	}
 
-	w.flush(logger)
+	w.flushLocked(logger)
 
 	w.count = 0
 	w.start = now
@@ -141,22 +142,22 @@ func (w *logWindow) record(logger Logger, clock glock.Clock, windowDuration time
 }
 
 func (w *logWindow) flush(logger Logger) {
+	w.mutex.Lock()
+	w.flushLocked(logger)
+	w.mutex.Unlock()
+}
+
+func (w *logWindow) flushLocked(logger Logger) {
 	if w.stashed == nil || w.count <= 1 {
 		return
 	}
 
-	fields := w.stashed.fields
-	if fields == nil {
-		fields = Fields{}
-	}
-
 	// Set replay field on message
-	fields[FieldRollup] = w.count
+	w.stashed.fields[FieldRollup] = w.count
 
-	logWithFields(
-		logger,
+	logger.LogWithFields(
 		w.stashed.level,
-		fields,
+		w.stashed.fields,
 		w.stashed.format,
 		w.stashed.args...,
 	)

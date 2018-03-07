@@ -6,20 +6,14 @@ import (
 )
 
 type LogrusShim struct {
-	entry         *logrus.Entry
-	disableCaller bool
+	entry *logrus.Entry
 }
 
 //
 // Shim
 
-func NewLogrusLogger(logger *logrus.Entry, disableCaller bool, initialFields Fields) Logger {
-	shim := &LogrusShim{
-		entry:         logger,
-		disableCaller: disableCaller,
-	}
-
-	return adaptShim(shim.WithFields(initialFields))
+func NewLogrusLogger(logger *logrus.Entry, initialFields Fields) Logger {
+	return adaptShim((&LogrusShim{logger}).WithFields(initialFields))
 }
 
 func (l *LogrusShim) WithFields(fields Fields) logShim {
@@ -27,24 +21,11 @@ func (l *LogrusShim) WithFields(fields Fields) logShim {
 		return l
 	}
 
-	return &LogrusShim{
-		entry:         l.getEntry(fields),
-		disableCaller: l.disableCaller,
-	}
-}
-
-func (l *LogrusShim) Log(level LogLevel, format string, args ...interface{}) {
-	l.LogWithFields(level, nil, format, args...)
+	return &LogrusShim{l.getEntry(fields)}
 }
 
 func (l *LogrusShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
-	entry := l.getEntry(fields)
-
-	if !l.disableCaller {
-		entry = entry.WithFields(logrus.Fields(map[string]interface{}{
-			"caller": getCaller(),
-		}))
-	}
+	entry := l.getEntry(addCaller(fields))
 
 	switch level {
 	case LevelDebug:
@@ -104,9 +85,5 @@ func InitLogrusShim(c *Config) (Logger, error) {
 		}
 	}
 
-	return NewLogrusLogger(
-		logger.WithFields(nil),
-		c.LogDisableCaller,
-		c.LogInitialFields,
-	), nil
+	return NewLogrusLogger(logger.WithFields(nil), c.LogInitialFields), nil
 }

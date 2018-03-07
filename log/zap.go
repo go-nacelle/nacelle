@@ -15,11 +15,7 @@ type ZapShim struct {
 // Shim
 
 func NewZapLogger(logger *zap.SugaredLogger, initialFields Fields) Logger {
-	shim := &ZapShim{
-		logger: logger,
-	}
-
-	return adaptShim(shim.WithFields(initialFields))
+	return adaptShim((&ZapShim{logger}).WithFields(initialFields))
 }
 
 func (z *ZapShim) WithFields(fields Fields) logShim {
@@ -27,36 +23,23 @@ func (z *ZapShim) WithFields(fields Fields) logShim {
 		return z
 	}
 
-	return &ZapShim{logger: z.getLogger(fields)}
-}
-
-func (z *ZapShim) Log(level LogLevel, format string, args ...interface{}) {
-	switch level {
-	case LevelDebug:
-		z.logger.Debugf(format, args...)
-	case LevelInfo:
-		z.logger.Infof(format, args...)
-	case LevelWarning:
-		z.logger.Warnf(format, args...)
-	case LevelError:
-		z.logger.Errorf(format, args...)
-	case LevelFatal:
-		z.logger.Fatalf(format, args...)
-	}
+	return &ZapShim{z.getLogger(fields)}
 }
 
 func (z *ZapShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
+	logger := z.getLogger(addCaller(fields))
+
 	switch level {
 	case LevelDebug:
-		z.getLogger(fields).Debugf(format, args...)
+		logger.Debugf(format, args...)
 	case LevelInfo:
-		z.getLogger(fields).Infof(format, args...)
+		logger.Infof(format, args...)
 	case LevelWarning:
-		z.getLogger(fields).Warnf(format, args...)
+		logger.Warnf(format, args...)
 	case LevelError:
-		z.getLogger(fields).Errorf(format, args...)
+		logger.Errorf(format, args...)
 	case LevelFatal:
-		z.getLogger(fields).Fatalf(format, args...)
+		logger.Fatalf(format, args...)
 	}
 }
 
@@ -69,17 +52,13 @@ func (z *ZapShim) getLogger(fields Fields) *zap.SugaredLogger {
 		return z.logger
 	}
 
-	return z.logger.With(flatten(fields)...)
-}
-
-func flatten(fields Fields) []interface{} {
 	flattened := []interface{}{}
 	for key, value := range fields {
 		flattened = append(flattened, key)
 		flattened = append(flattened, value)
 	}
 
-	return flattened
+	return z.logger.With(flattened...)
 }
 
 //
@@ -111,7 +90,7 @@ func InitZapShim(c *Config) (Logger, error) {
 
 	config := zap.Config{
 		Level:             level,
-		DisableCaller:     c.LogDisableCaller,
+		DisableCaller:     true,
 		Encoding:          c.LogEncoding,
 		Development:       false,
 		DisableStacktrace: true,
@@ -135,10 +114,7 @@ func InitZapShim(c *Config) (Logger, error) {
 		return nil, err
 	}
 
-	return NewZapLogger(
-		logger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
-		c.LogInitialFields,
-	), nil
+	return NewZapLogger(logger.Sugar(), c.LogInitialFields), nil
 }
 
 func zapConsoleTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {

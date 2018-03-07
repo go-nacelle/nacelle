@@ -76,15 +76,15 @@ func (s *replayShim) WithFields(fields Fields) logShim {
 	}
 }
 
-func (s *replayShim) Log(level LogLevel, format string, args ...interface{}) {
-	s.LogWithFields(level, nil, format, args)
-}
-
 func (s *replayShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
+	fields = addCaller(fields)
+
 	// Log immediately
-	logWithFields(s.logger, level, fields, format, args...)
+	// TODO - explain why layer+3
+	s.logger.LogWithFields(level, fields, format, args...)
 
 	// Add to journal
+	// TODO - get rid of all these things
 	s.sharedJournal.record(s.logger, level, fields, format, args)
 }
 
@@ -164,8 +164,7 @@ func (m *journaledMessage) replay(level *LogLevel) {
 	// Set replay field on message
 	m.message.fields[FieldReplay] = m.message.level
 
-	logWithFields(
-		m.logger,
+	m.logger.LogWithFields(
 		*level,
 		m.message.fields,
 		m.message.format,

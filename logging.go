@@ -10,6 +10,7 @@ type (
 	Logger        = log.Logger
 	Fields        = log.Fields
 	LoggingConfig = log.Config
+	// TODO - other things from that package
 
 	loggingConfigToken struct{}
 	logFunc            func(log.Fields, string, ...interface{})
@@ -45,9 +46,8 @@ func InitLogging(config Config) (logger Logger, err error) {
 
 func emergencyLogger() Logger {
 	logger, _ := log.InitLogrusShim(&LoggingConfig{
-		LogLevel:         "DEBUG",
-		LogEncoding:      "json",
-		LogDisableCaller: true,
+		LogLevel:    "DEBUG",
+		LogEncoding: "json",
 	})
 
 	return logger

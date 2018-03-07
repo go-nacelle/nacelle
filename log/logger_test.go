@@ -10,12 +10,12 @@ import (
 type LoggerSuite struct{}
 
 func (s *LoggerSuite) TestNormalizeTimeValues(t sweet.T) {
-	fields := Fields(map[string]interface{}{
+	fields := Fields{
 		"foo":  "bar",
 		"bar":  time.Unix(1503939881, 0),
 		"baz":  time.Unix(1503939891, 0),
 		"bonk": []bool{true, false, true},
-	})
+	}
 
 	// Modifies object in-place
 	Expect(fields.normalizeTimeValues()).To(Equal(fields))

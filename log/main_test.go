@@ -1,6 +1,10 @@
 package log
 
 import (
+	"bufio"
+	"bytes"
+	"io"
+	"os"
 	"testing"
 
 	"github.com/aphistic/sweet"
@@ -34,14 +38,10 @@ func (ts *testShim) WithFields(fields Fields) logShim {
 	return ts
 }
 
-func (ts *testShim) Log(level LogLevel, format string, args ...interface{}) {
-	ts.LogWithFields(level, nil, format, args...)
-}
-
 func (ts *testShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
 	ts.messages = append(ts.messages, &logMessage{
 		level:  level,
-		fields: fields,
+		fields: addCaller(fields),
 		format: format,
 		args:   args,
 	})
@@ -49,4 +49,46 @@ func (ts *testShim) LogWithFields(level LogLevel, fields Fields, format string, 
 
 func (ts *testShim) Sync() error {
 	return nil
+}
+
+//
+// Log Capture
+
+func captureStderr(f func()) string {
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	ch := make(chan string)
+	go read(reader, ch)
+	replaceStderr(writer, f)
+	return <-ch
+}
+
+func read(reader io.Reader, ch chan<- string) {
+	defer close(ch)
+
+	var (
+		buffer  = bytes.Buffer{}
+		scanner = bufio.NewScanner(reader)
+	)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if _, err := buffer.Write([]byte(line + "\n")); err != nil {
+			panic(err.Error())
+		}
+	}
+
+	ch <- buffer.String()
+}
+
+func replaceStderr(writer *os.File, f func()) {
+	defer writer.Close()
+
+	temp := os.Stderr
+	os.Stderr = writer
+	f()
+	os.Stderr = temp
 }

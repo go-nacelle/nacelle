@@ -7,6 +7,5 @@ func NewNilLogger() Logger {
 }
 
 func (n *NilShim) WithFields(Fields) logShim                              { return n }
-func (n *NilShim) Log(LogLevel, string, ...interface{})                   {}
 func (n *NilShim) LogWithFields(LogLevel, Fields, string, ...interface{}) {}
 func (n *NilShim) Sync() error                                            { return nil }

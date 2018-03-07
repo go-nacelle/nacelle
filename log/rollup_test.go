@@ -19,12 +19,12 @@ func (s *RollupSuite) TestRollupSimilarMessages(t sweet.T) {
 
 	for i := 1; i <= 20; i++ {
 		// Logged, starting window
-		adapter.Log(LevelDebug, "a")
+		adapter.LogWithFields(LevelDebug, nil, "a")
 		Expect(shim.messages).To(HaveLen(2*i - 1))
 
 		// Stashed
-		adapter.Log(LevelDebug, "a")
-		adapter.Log(LevelDebug, "a")
+		adapter.LogWithFields(LevelDebug, nil, "a")
+		adapter.LogWithFields(LevelDebug, nil, "a")
 		Expect(shim.messages).To(HaveLen(2*i - 1))
 
 		// Flushed
@@ -42,7 +42,7 @@ func (s *RollupSuite) TestRollupInactivity(t sweet.T) {
 	)
 
 	for i := 0; i < 20; i++ {
-		adapter.Log(LevelDebug, "a")
+		adapter.LogWithFields(LevelDebug, nil, "a")
 		clock.Advance(time.Second * 2)
 	}
 
@@ -57,11 +57,11 @@ func (s *RollupSuite) TestRollupFlushesRelativeToFirstMessage(t sweet.T) {
 		adapter = newRollupShim(adaptShim(shim), clock, time.Second)
 	)
 
-	adapter.Log(LevelDebug, "a")
+	adapter.LogWithFields(LevelDebug, nil, "a")
 	clock.Advance(time.Millisecond * 500)
 
 	for i := 0; i < 90; i++ {
-		adapter.Log(LevelDebug, "a")
+		adapter.LogWithFields(LevelDebug, nil, "a")
 		clock.Advance(time.Millisecond * 5)
 	}
 
@@ -77,9 +77,9 @@ func (s *RollupSuite) TestAllDistinctMessages(t sweet.T) {
 	)
 
 	for i := 0; i < 10; i++ {
-		adapter.Log(LevelDebug, "a")
-		adapter.Log(LevelDebug, "b")
-		adapter.Log(LevelDebug, "c")
+		adapter.LogWithFields(LevelDebug, nil, "a")
+		adapter.LogWithFields(LevelDebug, nil, "b")
+		adapter.LogWithFields(LevelDebug, nil, "c")
 	}
 
 	Expect(shim.messages).To(HaveLen(3))

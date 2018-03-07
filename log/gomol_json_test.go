@@ -37,7 +37,7 @@ func (s *GomolJSONSuite) TestLogm(t sweet.T) {
 	logger.Logm(
 		time.Unix(1503939881, 0),
 		gomol.LevelFatal,
-		map[string]interface{}{"attr1": 4321},
+		Fields{"attr1": 4321},
 		"test 1234",
 	)
 
@@ -65,7 +65,7 @@ func (s *GomolJSONSuite) TestBaseAttrs(t sweet.T) {
 	logger.Logm(
 		time.Unix(1503939881, 0),
 		gomol.LevelDebug,
-		map[string]interface{}{
+		Fields{
 			"attr1": 4321,
 			"attr3": "val3",
 		},

@@ -9,8 +9,7 @@ import (
 )
 
 type GomolShim struct {
-	logger        gomol.WrappableLogger
-	disableCaller bool
+	logger gomol.WrappableLogger
 }
 
 var gomolLevels = map[LogLevel]gomol.LogLevel{
@@ -24,13 +23,8 @@ var gomolLevels = map[LogLevel]gomol.LogLevel{
 //
 // Shim
 
-func NewGomolLogger(logger *gomol.LogAdapter, disableCaller bool, initialFields Fields) Logger {
-	shim := &GomolShim{
-		logger:        logger,
-		disableCaller: disableCaller,
-	}
-
-	return adaptShim(shim.WithFields(initialFields))
+func NewGomolLogger(logger *gomol.LogAdapter, initialFields Fields) Logger {
+	return adaptShim((&GomolShim{logger}).WithFields(initialFields))
 }
 
 func (g *GomolShim) WithFields(fields Fields) logShim {
@@ -38,26 +32,11 @@ func (g *GomolShim) WithFields(fields Fields) logShim {
 		return g
 	}
 
-	return &GomolShim{
-		logger:        gomol.NewLogAdapterFor(g.logger, gomol.NewAttrsFromMap(fields)),
-		disableCaller: g.disableCaller,
-	}
-}
-
-func (g *GomolShim) Log(level LogLevel, format string, args ...interface{}) {
-	g.LogWithFields(level, nil, format, args...)
+	return &GomolShim{gomol.NewLogAdapterFor(g.logger, gomol.NewAttrsFromMap(fields))}
 }
 
 func (g *GomolShim) LogWithFields(level LogLevel, fields Fields, format string, args ...interface{}) {
-	if fields == nil {
-		fields = map[string]interface{}{}
-	}
-
-	if !g.disableCaller {
-		fields["caller"] = getCaller()
-	}
-
-	g.logger.Log(gomolLevels[level], gomol.NewAttrsFromMap(fields.normalizeTimeValues()), format, args...)
+	g.logger.Log(gomolLevels[level], gomol.NewAttrsFromMap(addCaller(fields).normalizeTimeValues()), format, args...)
 
 	if level == LevelFatal {
 		g.logger.ShutdownLoggers()
@@ -101,11 +80,7 @@ func InitGomolShim(c *Config) (Logger, error) {
 		return nil, err
 	}
 
-	return NewGomolLogger(
-		gomol.NewLogAdapter(nil),
-		c.LogDisableCaller,
-		c.LogInitialFields,
-	), nil
+	return NewGomolLogger(gomol.NewLogAdapter(nil), c.LogInitialFields), nil
 }
 
 func newGomolConsoleTemplate(color bool) (*gomol.Template, error) {
