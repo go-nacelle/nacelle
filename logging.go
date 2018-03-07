@@ -8,15 +8,27 @@ import (
 
 type (
 	Logger        = log.Logger
+	ReplayLogger  = log.ReplayLogger
 	Fields        = log.Fields
 	LoggingConfig = log.Config
-	// TODO - other things from that package
+	LogLevel      = log.LogLevel
 
 	loggingConfigToken struct{}
 	logFunc            func(log.Fields, string, ...interface{})
 )
 
+const (
+	LevelFatal   = log.LevelFatal
+	LevelError   = log.LevelError
+	LevelWarning = log.LevelWarning
+	LevelInfo    = log.LevelInfo
+	LevelDebug   = log.LevelDebug
+)
+
 var (
+	NewReplayAdapter = log.NewReplayAdapter
+	NewRollupAdapter = log.NewRollupAdapter
+
 	LoggingConfigToken = loggingConfigToken{}
 	ErrBadConfig       = errors.New("logging config not registered properly")
 )

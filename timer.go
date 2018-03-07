@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/efritz/glock"
+	"github.com/efritz/nacelle/log"
 )
 
 type (
@@ -67,12 +68,12 @@ func startTimer(logger Logger, clock glock.Clock, name string, configs ...TimerC
 		config(timer)
 	}
 
-	attrs := map[string]interface{}{
+	fields := log.Fields{
 		"timer_id":   timer.id,
 		"timer_name": timer.name,
 	}
 
-	logger.InfoWithFields(attrs, "Starting timer: %s", name)
+	logger.InfoWithFields(fields, "Starting timer: %s", name)
 	return timer
 }
 
@@ -94,14 +95,14 @@ func (t *Timer) Mark(message string) {
 		t.warningThreshold,
 	)
 
-	attrs := map[string]interface{}{
+	fields := log.Fields{
 		"timer_id":           t.id,
 		"timer_name":         t.name,
 		"elapsed_time":       elapsed,
 		"total_elapsed_time": totalElapsed,
 	}
 
-	logFunc(attrs, "Marking timer: %s", message)
+	logFunc(fields, "Marking timer: %s", message)
 }
 
 func getLogFunction(logger Logger, elapsed, dropThreshold, debugThreshold, infoThreshold, warningThreshold time.Duration) logFunc {
