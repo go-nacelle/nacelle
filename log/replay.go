@@ -80,11 +80,9 @@ func (s *replayShim) LogWithFields(level LogLevel, fields Fields, format string,
 	fields = addCaller(fields)
 
 	// Log immediately
-	// TODO - explain why layer+3
 	s.logger.LogWithFields(level, fields, format, args...)
 
 	// Add to journal
-	// TODO - get rid of all these things
 	s.sharedJournal.record(s.logger, level, fields, format, args)
 }
 

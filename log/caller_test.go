@@ -155,7 +155,6 @@ func (s *CallerSuite) testRollupAdapter(init func(*Config) (Logger, error)) {
 			return nil, err
 		}
 
-		// TODO - test synthesized messages
 		return NewRollupAdapter(NewRollupAdapter(NewRollupAdapter(logger, time.Second), time.Second), time.Second), nil
 	})
 }

@@ -105,8 +105,15 @@ func (s *rollupShim) Sync() error {
 //
 // Log Window
 
-// TODO - wrap
-func (w *logWindow) record(logger Logger, clock glock.Clock, windowDuration time.Duration, level LogLevel, fields Fields, format string, args ...interface{}) bool {
+func (w *logWindow) record(
+	logger Logger,
+	clock glock.Clock,
+	windowDuration time.Duration,
+	level LogLevel,
+	fields Fields,
+	format string,
+	args ...interface{},
+) bool {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
