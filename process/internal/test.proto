@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package internal;
+
+service TestService {
+    rpc ToUpper(UpperRequest) returns (UpperResponse) {}
+}
+
+message UpperRequest {
+    string text = 1;
+}
+
+message UpperResponse {
+    string text = 1;
+}

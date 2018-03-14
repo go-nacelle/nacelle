@@ -1,0 +1,102 @@
+package process
+
+import (
+	"context"
+	"errors"
+	"net"
+	"net/http"
+	"sync"
+	"time"
+
+	"github.com/efritz/nacelle"
+)
+
+type (
+	HTTPServer struct {
+		Container       *nacelle.ServiceContainer `service:"container"`
+		initializer     HTTPServerInitializer
+		listener        *net.TCPListener
+		server          *http.Server
+		once            *sync.Once
+		certFile        string
+		keyFile         string
+		shutdownTimeout time.Duration
+	}
+
+	HTTPServerInitializer interface {
+		Init(nacelle.Config, *http.Server) error
+	}
+
+	HTTPServerInitializerFunc func(nacelle.Config, *http.Server) error
+)
+
+var ErrBadHTTPConfig = errors.New("HTTP config not registered properly")
+
+func (f HTTPServerInitializerFunc) Init(config nacelle.Config, server *http.Server) error {
+	return f(config, server)
+}
+
+func NewHTTPServer(initializer HTTPServerInitializer) *HTTPServer {
+	return &HTTPServer{
+		initializer: initializer,
+		once:        &sync.Once{},
+	}
+}
+
+func (s *HTTPServer) Init(config nacelle.Config) error {
+	rawConfig, err := config.Get(HTTPConfigToken)
+	if err != nil {
+		return err
+	}
+
+	httpConfig, ok := rawConfig.(*HTTPConfig)
+	if !ok {
+		return ErrBadHTTPConfig
+	}
+
+	s.listener, err = makeListener(httpConfig.HTTPPort)
+	if err != nil {
+		return err
+	}
+
+	s.server = &http.Server{}
+	s.certFile = httpConfig.HTTPCertFile
+	s.keyFile = httpConfig.HTTPKeyFile
+	s.shutdownTimeout = httpConfig.ShutdownTimeout
+
+	if err := s.Container.Inject(s.initializer); err != nil {
+		return err
+	}
+
+	return s.initializer.Init(config, s.server)
+}
+
+func (s *HTTPServer) Start() error {
+	defer s.listener.Close()
+	defer s.server.Close()
+
+	if s.certFile == "" {
+		if err := s.server.Serve(s.listener); err != http.ErrServerClosed {
+			return err
+		}
+
+		return nil
+	}
+
+	if err := s.server.ServeTLS(s.listener, s.certFile, s.keyFile); err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
+}
+
+func (s *HTTPServer) Stop() (err error) {
+	s.once.Do(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
+		defer cancel()
+
+		err = s.server.Shutdown(ctx)
+	})
+
+	return
+}
