@@ -11,12 +11,9 @@ import (
 	"time"
 )
 
-var (
-	ErrCleanShutdown  = errors.New("process stopped cleanly")
-	ErrUrgentShutdown = errors.New("urgent shutdown requested")
-)
-
 type (
+	// ProcessRunner maintains a set of registered initializers and processes,
+	// starts them in order, and then monitors their results.
 	ProcessRunner struct {
 		container    *ServiceContainer
 		initializers []*initializerMeta
@@ -33,6 +30,7 @@ type (
 	}
 )
 
+// NewProcessRunner creates a new process runner with the given service container.
 func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
 	return &ProcessRunner{
 		container:    container,
@@ -44,6 +42,8 @@ func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
 	}
 }
 
+// RegisterInitializer registers an initializer with the given configuration. The
+// order the initializers are run mirrors the order of registration.
 func (pr *ProcessRunner) RegisterInitializer(initializer Initializer, initializerConfigs ...InitializerConfigFunc) {
 	meta := &initializerMeta{Initializer: initializer}
 
@@ -54,6 +54,8 @@ func (pr *ProcessRunner) RegisterInitializer(initializer Initializer, initialize
 	pr.initializers = append(pr.initializers, meta)
 }
 
+// RegisterProcess registers a process with the given configuration. The order
+// of process registration is arbitrary.
 func (pr *ProcessRunner) RegisterProcess(process Process, processConfigs ...ProcessConfigFunc) {
 	meta := &processMeta{Process: process}
 
@@ -69,6 +71,30 @@ func (pr *ProcessRunner) RegisterProcess(process Process, processConfigs ...Proc
 	pr.processes[meta.priority] = append(pr.processes[meta.priority], meta)
 }
 
+// Run will run the registered initializers and processes with the given loaded
+// configuration object. It will return a read-only channel of erorr values on
+// which non-nil error results from initializers and proceses are written.
+//
+// For each initializer, in order of registration: services are injected into the
+// initializer and then its Init method is called. Initializers are run one at a
+// time and an error from an initializer will cause an immediate return from Run.
+//
+// For each processes set with the same priority (lowest to highest): services are
+// injected into each process and each Init method is called. Init methods are called
+// one at a time and in the order of process registration. If an Init method returns
+// an error, all lower-priority processes are stopped. Then, the Start method for each
+// process is called concurrently in its own goroutine.
+//
+// If any process returns a non-nil error from Start, all running processes will be
+// stopped. If a process return a nil error and has not been configured for silent exit,
+// the same behavior will occur.
+//
+// Receiving an external signal (SIGINT or SIGTERM) will also start a graceful shutdown.
+// A second signal will cause the Run method to stop blocking (although a process may
+// still be running in a goroutine).
+//
+// If any process has started, the error channel returned from Run will remain open
+// until all running processes have exited.
 func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 	errChan := make(chan error, pr.numProcesses*2+1)
 

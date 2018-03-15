@@ -13,9 +13,18 @@ type (
 		loggingInitFunc LoggingInitFunc
 	}
 
-	AppInitFunc          func(*ProcessRunner, *ServiceContainer) error
+	// AppInitFunc is an program entrypoint called after performing initial
+	// configuration loading, sanity checks, and setting up loggers. This
+	// function should register initializers and processes and inject values
+	// into the service container where necessary.
+	AppInitFunc func(*ProcessRunner, *ServiceContainer) error
+
+	// LoggingInitFunc creates a factory from a config object.
+	LoggingInitFunc func(Config) (Logger, error)
+
+	// BoostraperConfigFunc is a function used to configure an instance of
+	// a Bootstrapper.
 	BoostraperConfigFunc func(*bootstrapperConfig)
-	LoggingInitFunc      func(Config) (Logger, error)
 )
 
 // WithLoggingInitFunc sets the function that initializes logging.
@@ -23,6 +32,7 @@ func WithLoggingInitFunc(loggingInitFunc LoggingInitFunc) BoostraperConfigFunc {
 	return func(c *bootstrapperConfig) { c.loggingInitFunc = loggingInitFunc }
 }
 
+// NewBootstrapper creates an entrypoint to the program with the given configs.
 func NewBootstrapper(
 	name string,
 	configs map[interface{}]interface{},
@@ -49,8 +59,8 @@ func NewBootstrapper(
 	}
 }
 
-// Boot will initialize services and return a status code (zero
-// on nominal exit and one if an error was encountered).
+// Boot will initialize services and return a status code - zero
+// for a successful exit and one if an error was encountered.
 func (bs *Bootstrapper) Boot() int {
 	var (
 		container = NewServiceContainer()

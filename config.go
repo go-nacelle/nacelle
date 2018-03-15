@@ -11,19 +11,45 @@ import (
 )
 
 type (
+	// Config is a structure that maintains chunks of an application's
+	// configuration values accessible via artibtary key. This design is
+	// meant for a library-driven architecture so that multiple pieces
+	// of an application can register their own configuration requirements
+	// independently from the core.
 	Config interface {
+		// Load attempts to read an external environment for values
+		// and modifies the config's internal state on succses.
 		Load() []error
+
+		// Register associates an empty configuration object. This key should
+		// be unique to the application as it is generally error to register
+		// the same key twice.
 		Register(key interface{}, config interface{}) error
+
+		// MustRegister calls Register and panics on error.
 		MustRegister(key interface{}, config interface{})
+
+		// Get retrieves a configuration object by its key. It is an error
+		// to request a non-registered key or to Get before a call to Load.
 		Get(key interface{}) (interface{}, error)
+
+		// MustGet calls Get and panics on error.
 		MustGet(key interface{}) interface{}
+
+		// ToMap will convert the configuration values into a printable
+		// or loggable map.
 		ToMap() (map[string]interface{}, error)
 	}
 
+	// PostLoadConfig is a marker interface for configuration objects
+	// which should do some post-processing after being loaded. This
+	// can perform additional casting (e.g. ints to time.Duration) and
+	// more sophisticated validation (e.g. enum or exclusive values).
 	PostLoadConfig interface {
 		PostLoad() error
 	}
 
+	// EnvConfig is a Config object that reads from the OS environment.
 	EnvConfig struct {
 		prefix string
 		chunks map[interface{}]interface{}
@@ -40,8 +66,11 @@ const (
 )
 
 var (
+	// ErrAlreadyLoaded is returned on a second call to Config#Load.
 	ErrAlreadyLoaded = errors.New("config already loaded")
-	ErrNotLoaded     = errors.New("config not loaded")
+
+	// ErrNotLoaded is returned on a call to Get without first calling Load.
+	ErrNotLoaded = errors.New("config not loaded")
 
 	replacer = strings.NewReplacer(
 		"\n", `\n`,
@@ -50,6 +79,8 @@ var (
 	)
 )
 
+// NewEnvConfig creates a EnvConfig object with the given prefix. If supplied,
+// the {PREFIX}{NAME} envvar is read before falling back to the {NAME} envvar.
 func NewEnvConfig(prefix string) Config {
 	return &EnvConfig{
 		prefix: prefix,
@@ -57,6 +88,8 @@ func NewEnvConfig(prefix string) Config {
 	}
 }
 
+// Register associates a zero-valued struct whose exported fields should be tagged
+// as `env:"name"` with a key. It is an error to register the same key twice.
 func (c *EnvConfig) Register(key interface{}, config interface{}) error {
 	if c.loaded {
 		return ErrAlreadyLoaded
@@ -70,12 +103,14 @@ func (c *EnvConfig) Register(key interface{}, config interface{}) error {
 	return nil
 }
 
+// MustRegister calls Register and panics on error.
 func (c *EnvConfig) MustRegister(key interface{}, config interface{}) {
 	if err := c.Register(key, config); err != nil {
 		panic(err.Error())
 	}
 }
 
+// Get retrieves the populated struct by its key.
 func (c *EnvConfig) Get(key interface{}) (interface{}, error) {
 	if !c.loaded {
 		return nil, ErrNotLoaded
@@ -88,6 +123,7 @@ func (c *EnvConfig) Get(key interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("unregistered config key `%s`", serializeKey(key))
 }
 
+// MustGet calls Get and panics on error.
 func (c *EnvConfig) MustGet(key interface{}) interface{} {
 	config, err := c.Get(key)
 	if err != nil {
@@ -97,10 +133,17 @@ func (c *EnvConfig) MustGet(key interface{}) interface{} {
 	return config
 }
 
+// Load each registered struct with values from the environment. If a struct field
+// is tagged as `required:"true"` and no value (nor default value) is supplied, an
+// error is generated. If a struct field is tagged with a `default:"value"` value and
+// no value is supplied from the environment, that value is used as if it came from
+// the environment. The values that are pulled from the environment are attempted to
+// be treated as JSON and, on failure, are treated as a string before assigning them
+// to registered struct fields. This allows lists and map types to be expressed easily.
 func (c *EnvConfig) Load() []error {
 	c.loaded = true
-	errors := []error{}
 
+	errors := []error{}
 	for _, chunk := range c.chunks {
 		errors = loadChunk(chunk, errors, c.prefix)
 	}
@@ -108,6 +151,9 @@ func (c *EnvConfig) Load() []error {
 	return errors
 }
 
+// ToMap will serialize the loaded config structs into a map. If a struct field has a
+// `mask:"true"` tag it will be omitted form the result. If a struct field has the tag
+// `display:"name"`, then the tag's value will be used in place of the field name.
 func (c *EnvConfig) ToMap() (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 
