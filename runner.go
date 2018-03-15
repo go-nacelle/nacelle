@@ -72,7 +72,7 @@ func (pr *ProcessRunner) RegisterProcess(process Process, processConfigs ...Proc
 }
 
 // Run will run the registered initializers and processes with the given loaded
-// configuration object. It will return a read-only channel of erorr values on
+// configuration object. It will return a read-only channel of error values on
 // which non-nil error results from initializers and proceses are written.
 //
 // For each initializer, in order of registration: services are injected into the
