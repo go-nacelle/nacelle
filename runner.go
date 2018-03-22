@@ -30,6 +30,8 @@ type (
 	}
 )
 
+var ErrInitTimeout = fmt.Errorf("init method did not finish within timeout")
+
 // NewProcessRunner creates a new process runner with the given service container.
 func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
 	return &ProcessRunner{
@@ -148,7 +150,7 @@ func (pr *ProcessRunner) runInitializers(config Config, logger Logger) error {
 
 		logger.Debug("Initializing %s", initializer.Name())
 
-		if err := initializer.Init(config); err != nil {
+		if err := initWithTimeout(initializer, config, initializer.timeout); err != nil {
 			return fmt.Errorf(
 				"failed to initialize %s (%s)",
 				initializer.Name(),
@@ -235,7 +237,7 @@ func (pr *ProcessRunner) initAndStartProcesses(
 	for _, process := range processes {
 		logger.Debug("Initializing %s", process.Name())
 
-		if err := process.Init(config); err != nil {
+		if err := initWithTimeout(process, config, process.initTimeout); err != nil {
 			return fmt.Errorf("failed to initialize %s (%s)", process.Name(), err.Error())
 		}
 
@@ -360,6 +362,32 @@ func (pr *ProcessRunner) stopProcesses(processes []*processMeta, priority int, l
 
 //
 // Helpers
+
+func initWithTimeout(initializer Initializer, config Config, timeout time.Duration) error {
+	ch := make(chan error)
+
+	go func() {
+		defer close(ch)
+		ch <- initializer.Init(config)
+	}()
+
+	select {
+	case err := <-ch:
+		return err
+	case <-makeTimeoutChan(timeout):
+		return ErrInitTimeout
+	}
+}
+
+var blockingChan = make(chan time.Time)
+
+func makeTimeoutChan(timeout time.Duration) <-chan time.Time {
+	if timeout == 0 {
+		return blockingChan
+	}
+
+	return time.After(timeout)
+}
 
 func closeAfterWait(wg *sync.WaitGroup, startErrors chan errMeta) {
 	wg.Wait()

@@ -1,18 +1,23 @@
 package nacelle
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type (
 	initializerMeta struct {
 		Initializer
-		name string
+		name    string
+		timeout time.Duration
 	}
 
 	processMeta struct {
 		Process
-		name       string
-		priority   int
-		silentExit bool
+		name        string
+		priority    int
+		silentExit  bool
+		initTimeout time.Duration
 	}
 
 	// InitializerConfigFunc is a function used to append additional
@@ -65,4 +70,14 @@ func WithPriority(priority int) ProcessConfigFunc {
 // (even successful) causes a graceful shutdown of the other processes.
 func WithSilentExit() ProcessConfigFunc {
 	return func(meta *processMeta) { meta.silentExit = true }
+}
+
+// WithInitializerTimeout sets the time limit for the initializer.
+func WithInitializerTimeout(timeout time.Duration) InitializerConfigFunc {
+	return func(meta *initializerMeta) { meta.timeout = timeout }
+}
+
+// WithProcessInitTimeout sets the time limit for the process's Init method.
+func WithProcessInitTimeout(timeout time.Duration) ProcessConfigFunc {
+	return func(meta *processMeta) { meta.initTimeout = timeout }
 }
