@@ -12,11 +12,13 @@ import (
 
 type (
 	GRPCServer struct {
+		Logger        nacelle.Logger            `service:"logger"`
 		Container     *nacelle.ServiceContainer `service:"container"`
 		initializer   GRPCServerInitializer
 		listener      *net.TCPListener
 		server        *grpc.Server
 		once          *sync.Once
+		port          int
 		serverOptions []grpc.ServerOption
 	}
 
@@ -61,6 +63,7 @@ func (s *GRPCServer) Init(config nacelle.Config) (err error) {
 		return err
 	}
 
+	s.port = grpcConfig.GRPCPort
 	s.server = grpc.NewServer(s.serverOptions...)
 	err = s.initializer.Init(config, s.server)
 	return
@@ -69,10 +72,21 @@ func (s *GRPCServer) Init(config nacelle.Config) (err error) {
 func (s *GRPCServer) Start() error {
 	defer s.listener.Close()
 
-	return s.server.Serve(s.listener)
+	s.Logger.Info("Serving gRPC on port %d", s.port)
+
+	if err := s.server.Serve(s.listener); err != nil {
+		return err
+	}
+
+	s.Logger.Info("No longer serving gRPC on port %d", s.port)
+	return nil
 }
 
 func (s *GRPCServer) Stop() error {
-	s.once.Do(func() { s.server.GracefulStop() })
+	s.once.Do(func() {
+		s.Logger.Info("Shutting down gRPC server")
+		s.server.GracefulStop()
+	})
+
 	return nil
 }

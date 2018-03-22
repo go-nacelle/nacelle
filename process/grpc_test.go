@@ -11,17 +11,18 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/efritz/nacelle"
+	"github.com/efritz/nacelle/log"
 	"github.com/efritz/nacelle/process/internal"
 )
 
 type GRPCSuite struct{}
 
 func (s *GRPCSuite) TestServeAndStop(t sweet.T) {
-	server := NewGRPCServer(GRPCServerInitializerFunc(func(config nacelle.Config, server *grpc.Server) error {
+	server := makeGRPCServer(func(config nacelle.Config, server *grpc.Server) error {
 		internal.RegisterTestServiceServer(server, &upperService{})
 
 		return nil
-	}))
+	})
 
 	os.Setenv("GRPC_PORT", "0")
 	defer os.Clearenv()
@@ -45,9 +46,9 @@ func (s *GRPCSuite) TestServeAndStop(t sweet.T) {
 }
 
 func (s *GRPCSuite) TestBadConfig(t sweet.T) {
-	server := NewGRPCServer(GRPCServerInitializerFunc(func(config nacelle.Config, server *grpc.Server) error {
+	server := makeGRPCServer(func(config nacelle.Config, server *grpc.Server) error {
 		return nil
-	}))
+	})
 
 	err := server.Init(makeConfig(GRPCConfigToken, &emptyConfig{}))
 	Expect(err).To(Equal(ErrBadGRPCConfig))
@@ -65,15 +66,24 @@ func (s *GRPCSuite) TestBadInjection(t sweet.T) {
 }
 
 func (s *GRPCSuite) TestInitError(t sweet.T) {
-	server := NewGRPCServer(GRPCServerInitializerFunc(func(config nacelle.Config, server *grpc.Server) error {
+	server := makeGRPCServer(func(config nacelle.Config, server *grpc.Server) error {
 		return fmt.Errorf("utoh")
-	}))
+	})
 
 	os.Setenv("GRPC_PORT", "0")
 	defer os.Clearenv()
 
 	err := server.Init(makeConfig(GRPCConfigToken, &GRPCConfig{}))
 	Expect(err).To(MatchError("utoh"))
+}
+
+//
+// Helpers
+
+func makeGRPCServer(initializer func(nacelle.Config, *grpc.Server) error) *GRPCServer {
+	server := NewGRPCServer(GRPCServerInitializerFunc(initializer))
+	server.Logger = log.NewNilLogger()
+	return server
 }
 
 //

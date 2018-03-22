@@ -13,11 +13,13 @@ import (
 
 type (
 	HTTPServer struct {
+		Logger          nacelle.Logger            `service:"logger"`
 		Container       *nacelle.ServiceContainer `service:"container"`
 		initializer     HTTPServerInitializer
 		listener        *net.TCPListener
 		server          *http.Server
 		once            *sync.Once
+		port            int
 		certFile        string
 		keyFile         string
 		shutdownTimeout time.Duration
@@ -60,6 +62,7 @@ func (s *HTTPServer) Init(config nacelle.Config) error {
 	}
 
 	s.server = &http.Server{}
+	s.port = httpConfig.HTTPPort
 	s.certFile = httpConfig.HTTPCertFile
 	s.keyFile = httpConfig.HTTPKeyFile
 	s.shutdownTimeout = httpConfig.ShutdownTimeout
@@ -76,17 +79,21 @@ func (s *HTTPServer) Start() error {
 	defer s.server.Close()
 
 	if s.certFile == "" {
+		s.Logger.Info("Serving HTTP on port %d", s.port)
 		if err := s.server.Serve(s.listener); err != http.ErrServerClosed {
 			return err
 		}
 
+		s.Logger.Info("No longer serving HTTP on port %d", s.port)
 		return nil
 	}
 
+	s.Logger.Info("Serving HTTP/TLS on port %d", s.port)
 	if err := s.server.ServeTLS(s.listener, s.certFile, s.keyFile); err != http.ErrServerClosed {
 		return err
 	}
 
+	s.Logger.Info("No longer serving HTTP/TLS on port %d", s.port)
 	return nil
 }
 
@@ -95,6 +102,7 @@ func (s *HTTPServer) Stop() (err error) {
 		ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 		defer cancel()
 
+		s.Logger.Info("Shutting down HTTP server")
 		err = s.server.Shutdown(ctx)
 	})
 
