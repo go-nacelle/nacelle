@@ -1,7 +1,6 @@
 package nacelle
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -31,18 +30,18 @@ type (
 
 func (m *initializerMeta) Name() string {
 	if m.name == "" {
-		return "unnamed initializer"
+		return "<unnamed>"
 	}
 
-	return fmt.Sprintf("initializer %s", m.name)
+	return m.name
 }
 
 func (m *processMeta) Name() string {
 	if m.name == "" {
-		return "unnamed process"
+		return "<unnamed>"
 	}
 
-	return fmt.Sprintf("process %s", m.name)
+	return m.name
 }
 
 //
