@@ -267,7 +267,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	}()
 
 	// Whoops
-	Eventually(errChan).Should(Receive(MatchError("process bar returned a fatal error (error in start)")))
+	Eventually(errChan).Should(Receive(MatchError("bar returned a fatal error (error in start)")))
 
 	// Processes stopped with reversed priority
 	Eventually(stopChan).Should(Receive(Equal("proc4")))
@@ -276,7 +276,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	Eventually(stopChan).Should(Receive(Equal("proc1")))
 
 	// Check additional errors on top
-	Eventually(errChan).Should(Receive(MatchError("process foo returned error from stop (error in stop)")))
+	Eventually(errChan).Should(Receive(MatchError("foo returned error from stop (error in stop)")))
 
 	// Unblocked
 	Eventually(errChan).Should(BeClosed())
@@ -364,7 +364,7 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	Consistently(stopChan).ShouldNot(Receive())
 
 	// Check errors
-	Eventually(errChan).Should(Receive(MatchError("failed to initialize process foo (error in init)")))
+	Eventually(errChan).Should(Receive(MatchError("failed to initialize foo (error in init)")))
 	Eventually(errChan).Should(BeClosed())
 }
 
