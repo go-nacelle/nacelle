@@ -12,13 +12,13 @@ import (
 
 type (
 	// Config is a structure that maintains chunks of an application's
-	// configuration values accessible via artibtary key. This design is
+	// configuration values accessible via arbitrary key. This design is
 	// meant for a library-driven architecture so that multiple pieces
 	// of an application can register their own configuration requirements
 	// independently from the core.
 	Config interface {
 		// Load attempts to read an external environment for values
-		// and modifies the config's internal state on succses.
+		// and modifies the config's internal state on success.
 		Load() []error
 
 		// Register associates an empty configuration object. This key should
