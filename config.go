@@ -36,6 +36,17 @@ type (
 		// MustGet calls Get and panics on error.
 		MustGet(key interface{}) interface{}
 
+		// Fetch retrieve a configuration object by its key and copies the
+		// values of fields into the target value. The same error conditions
+		// of Get apply here. An error is also returned if the type of the
+		// target value and the type of the registered config do not match.
+		// If the target value conforms to the PostLoadConfig interface, the
+		// PostLoad function may be called multiple times.
+		Fetch(key interface{}, target interface{}) error
+
+		// MustFetch calls Fetch and panics on error.
+		MustFetch(key interface{}, target interface{})
+
 		// ToMap will convert the configuration values into a printable
 		// or loggable map.
 		ToMap() (map[string]interface{}, error)
@@ -131,6 +142,56 @@ func (c *EnvConfig) MustGet(key interface{}) interface{} {
 	}
 
 	return config
+}
+
+// Fetch populates the target struct with the field values in the config struct
+// registered to the given key.
+func (c *EnvConfig) Fetch(key interface{}, target interface{}) error {
+	config, err := c.Get(key)
+	if err != nil {
+		return err
+	}
+
+	var (
+		sourceIndirect     = reflect.Indirect(reflect.ValueOf(config))
+		targetIndirect     = reflect.Indirect(reflect.ValueOf(target))
+		sourceIndirectType = sourceIndirect.Type()
+		targetIndirectType = targetIndirect.Type()
+	)
+
+	if sourceIndirectType.NumField() != targetIndirectType.NumField() {
+		return fmt.Errorf("target does not have the same number of fields as the registered config")
+	}
+
+	for i := 0; i < sourceIndirectType.NumField(); i++ {
+		var (
+			sourceFieldType  = sourceIndirectType.Field(i)
+			targetFieldType  = targetIndirectType.Field(i)
+			sourceFieldValue = sourceIndirect.Field(i)
+			targetFieldValue = targetIndirect.Field(i)
+		)
+
+		if sourceFieldType.Name != targetFieldType.Name || sourceFieldType.Type != targetFieldType.Type {
+			return fmt.Errorf("target field mismatch at index %d (%s in registered config)", i, sourceFieldType.Name)
+		}
+
+		if targetFieldValue.IsValid() && targetFieldValue.CanSet() {
+			targetFieldValue.Set(sourceFieldValue)
+		}
+	}
+
+	if plc, ok := target.(PostLoadConfig); ok {
+		return plc.PostLoad()
+	}
+
+	return nil
+}
+
+// MustFetch calls Fetch and panics on error.
+func (c *EnvConfig) MustFetch(key interface{}, target interface{}) {
+	if err := c.Fetch(key, target); err != nil {
+		panic(err.Error())
+	}
 }
 
 // Load each registered struct with values from the environment. If a struct field

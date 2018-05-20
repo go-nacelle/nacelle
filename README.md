@@ -73,20 +73,16 @@ method.
 
 ```go
 func (p *Process) Init(config nacelle.Config) error {
+    c := &Config{}
+    if err := config.Fetch(ConfigToken, c); err != nil {
+        // ...
+    }
+
+    c.A // use
+    c.B // these
+    c.C // values
+
     // ...
-    raw, err := config.Get(ConfigToken)
-    if err != nil {
-        // ...
-    }
-
-    c, ok := raw.(*Config)
-    if !ok {
-        // ...
-    }
-
-    c.A
-    c.B
-    c.C
 }
 ```
 

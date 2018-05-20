@@ -55,13 +55,8 @@ func (w *Worker) HaltChan() <-chan struct{} {
 }
 
 func (w *Worker) Init(config nacelle.Config) error {
-	rawConfig, err := config.Get(WorkerConfigToken)
-	if err != nil {
-		return err
-	}
-
-	workerConfig, ok := rawConfig.(*WorkerConfig)
-	if !ok {
+	workerConfig := &WorkerConfig{}
+	if err := config.Fetch(WorkerConfigToken, workerConfig); err != nil {
 		return ErrBadWorkerConfig
 	}
 

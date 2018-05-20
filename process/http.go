@@ -45,14 +45,9 @@ func NewHTTPServer(initializer HTTPServerInitializer) *HTTPServer {
 	}
 }
 
-func (s *HTTPServer) Init(config nacelle.Config) error {
-	rawConfig, err := config.Get(HTTPConfigToken)
-	if err != nil {
-		return err
-	}
-
-	httpConfig, ok := rawConfig.(*HTTPConfig)
-	if !ok {
+func (s *HTTPServer) Init(config nacelle.Config) (err error) {
+	httpConfig := &HTTPConfig{}
+	if err = config.Fetch(HTTPConfigToken, httpConfig); err != nil {
 		return ErrBadHTTPConfig
 	}
 

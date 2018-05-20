@@ -34,13 +34,8 @@ var (
 )
 
 func InitLogging(config Config) (logger Logger, err error) {
-	cx, err := config.Get(LoggingConfigToken)
-	if err != nil {
-		return nil, err
-	}
-
-	c, ok := cx.(*LoggingConfig)
-	if !ok {
+	c := &LoggingConfig{}
+	if err := config.Fetch(LoggingConfigToken, c); err != nil {
 		return nil, ErrBadConfig
 	}
 

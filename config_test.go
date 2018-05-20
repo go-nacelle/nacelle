@@ -3,6 +3,7 @@ package nacelle
 import (
 	"errors"
 	"os"
+	"time"
 
 	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
@@ -295,6 +296,60 @@ func (s *ConfigSuite) TestMustGetPanics(t sweet.T) {
 	}).To(Panic())
 }
 
+func (s *ConfigSuite) TestFetch(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestSimpleConfig{}
+	)
+
+	os.Setenv("APP_X", "foo")
+	os.Setenv("APP_Y", "123")
+	os.Setenv("APP_W", `["bar", "baz", "bonk"]`)
+
+	Expect(config.Register("simple", chunk)).To(BeNil())
+	Expect(config.Load()).To(BeEmpty())
+
+	target := &TestSimpleConfig{}
+	Expect(config.Fetch("simple", target)).To(BeNil())
+	Expect(target.X).To(Equal("foo"))
+	Expect(target.Y).To(Equal(123))
+	Expect(target.Z).To(Equal([]string{"bar", "baz", "bonk"}))
+}
+
+func (s *ConfigSuite) TestFetchBadType(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestSimpleConfig{}
+	)
+
+	os.Setenv("APP_X", "foo")
+	os.Setenv("APP_Y", "123")
+	os.Setenv("APP_W", `["bar", "baz", "bonk"]`)
+
+	Expect(config.Register("simple", chunk)).To(BeNil())
+	Expect(config.Load()).To(BeEmpty())
+
+	target := &TestDefaultConfig{}
+	Expect(config.Fetch("simple", target)).NotTo(BeNil())
+}
+
+func (s *ConfigSuite) TestFetchPostLoadWithConversion(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestPostLoadConversion{}
+	)
+
+	Expect(config.Register("post-load", chunk)).To(BeNil())
+
+	os.Setenv("APP_DURATION", "3")
+	Expect(config.Load()).To(BeEmpty())
+	Expect(chunk.duration).To(Equal(time.Second * 3))
+
+	target := &TestPostLoadConversion{}
+	Expect(config.Fetch("post-load", target)).To(BeNil())
+	Expect(target.duration).To(Equal(time.Second * 3))
+}
+
 //
 // Chunks
 
@@ -341,6 +396,11 @@ type (
 		X int `env:"X"`
 	}
 
+	TestPostLoadConversion struct {
+		RawDuration int `env:"duration"`
+		duration    time.Duration
+	}
+
 	TestMaskConfig struct {
 		X string   `env:"x"`
 		Y int      `env:"y" mask:"true"`
@@ -357,5 +417,10 @@ func (c *TestPostLoadConfig) PostLoad() error {
 		return errors.New("X must be positive")
 	}
 
+	return nil
+}
+
+func (c *TestPostLoadConversion) PostLoad() error {
+	c.duration = time.Duration(c.RawDuration) * time.Second
 	return nil
 }

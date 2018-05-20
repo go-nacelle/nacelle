@@ -44,13 +44,8 @@ func NewGRPCServer(initializer GRPCServerInitializer, serverOptions ...grpc.Serv
 }
 
 func (s *GRPCServer) Init(config nacelle.Config) (err error) {
-	rawConfig, err := config.Get(GRPCConfigToken)
-	if err != nil {
-		return err
-	}
-
-	grpcConfig, ok := rawConfig.(*GRPCConfig)
-	if !ok {
+	grpcConfig := &GRPCConfig{}
+	if err = config.Fetch(GRPCConfigToken, grpcConfig); err != nil {
 		return ErrBadGRPCConfig
 	}
 

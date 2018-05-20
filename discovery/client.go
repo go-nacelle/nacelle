@@ -21,13 +21,8 @@ var (
 )
 
 func makeClient(config nacelle.Config, container *nacelle.ServiceContainer) (reception.Client, error) {
-	rawConfig, err := config.Get(ConfigToken)
-	if err != nil {
-		return nil, err
-	}
-
-	discoveryConfig, ok := rawConfig.(*Config)
-	if !ok {
+	discoveryConfig := &Config{}
+	if err := config.Fetch(ConfigToken, discoveryConfig); err != nil {
 		return nil, ErrBadConfig
 	}
 
