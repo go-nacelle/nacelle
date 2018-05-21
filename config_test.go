@@ -370,6 +370,22 @@ func (s *ConfigSuite) TestFetchPostLoadWithConversion(t sweet.T) {
 	Expect(target.duration).To(Equal(time.Second * 3))
 }
 
+func (s *ConfigSuite) TestFetchWithConfigTagRoundtrip(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = MustApplyTagModifiers(&TestPostLoadConversion{}, NewEnvTagPrefixer("foo"))
+	)
+
+	Expect(config.Register("post-load", chunk)).To(BeNil())
+
+	os.Setenv("APP_FOO_DURATION", "3")
+	Expect(config.Load()).To(BeEmpty())
+
+	target := &TestPostLoadConversion{}
+	Expect(config.Fetch("post-load", target)).To(BeNil())
+	Expect(target.duration).To(Equal(time.Second * 3))
+}
+
 //
 // Chunks
 
