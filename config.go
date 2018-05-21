@@ -66,6 +66,11 @@ type (
 		chunks map[interface{}]interface{}
 		loaded bool
 	}
+
+	reflectField struct {
+		field     reflect.Value
+		fieldType reflect.StructField
+	}
 )
 
 const (
@@ -153,30 +158,30 @@ func (c *EnvConfig) Fetch(key interface{}, target interface{}) error {
 	}
 
 	var (
-		sourceIndirect     = reflect.Indirect(reflect.ValueOf(config))
-		targetIndirect     = reflect.Indirect(reflect.ValueOf(target))
-		sourceIndirectType = sourceIndirect.Type()
-		targetIndirectType = targetIndirect.Type()
+		sourceFields = getExportedFields(config)
+		targetFields = getExportedFields(target)
 	)
 
-	if sourceIndirectType.NumField() != targetIndirectType.NumField() {
+	if len(sourceFields) != len(targetFields) {
 		return fmt.Errorf("target does not have the same number of fields as the registered config")
 	}
 
-	for i := 0; i < sourceIndirectType.NumField(); i++ {
+	for i := 0; i < len(sourceFields); i++ {
 		var (
-			sourceFieldType  = sourceIndirectType.Field(i)
-			targetFieldType  = targetIndirectType.Field(i)
-			sourceFieldValue = sourceIndirect.Field(i)
-			targetFieldValue = targetIndirect.Field(i)
+			sourceField, sourceFieldType = sourceFields[i].field, sourceFields[i].fieldType
+			targetField, targetFieldType = targetFields[i].field, targetFields[i].fieldType
 		)
 
 		if sourceFieldType.Name != targetFieldType.Name || sourceFieldType.Type != targetFieldType.Type {
-			return fmt.Errorf("target field mismatch at index %d (%s in registered config)", i, sourceFieldType.Name)
+			return fmt.Errorf(
+				"target field mismatch at index %d (%s in registered config)",
+				i,
+				sourceFieldType.Name,
+			)
 		}
 
-		if targetFieldValue.IsValid() && targetFieldValue.CanSet() {
-			targetFieldValue.Set(sourceFieldValue)
+		if targetField.IsValid() && targetField.CanSet() {
+			targetField.Set(sourceField)
 		}
 	}
 
@@ -185,6 +190,31 @@ func (c *EnvConfig) Fetch(key interface{}, target interface{}) error {
 	}
 
 	return nil
+}
+
+func getExportedFields(obj interface{}) []*reflectField {
+	var (
+		fields            = []*reflectField{}
+		objValue, objType = getIndirect(obj)
+	)
+
+	for i := 0; i < objType.NumField(); i++ {
+		field, fieldType := objValue.Field(i), objType.Field(i)
+		if !isExported(fieldType.Name) {
+			continue
+		}
+
+		fields = append(fields, &reflectField{
+			field:     field,
+			fieldType: fieldType,
+		})
+	}
+
+	return fields
+}
+
+func isExported(name string) bool {
+	return 'A' <= name[0] && name[0] <= 'Z'
 }
 
 // MustFetch calls Fetch and panics on error.
@@ -228,19 +258,14 @@ func (c *EnvConfig) ToMap() (map[string]interface{}, error) {
 }
 
 func loadChunk(obj interface{}, errors []error, prefix string) []error {
-	var (
-		ov = reflect.ValueOf(obj)
-		oi = reflect.Indirect(ov)
-		ot = oi.Type()
-	)
+	objValue, objType := getIndirect(obj)
 
-	for i := 0; i < ot.NumField(); i++ {
+	for i := 0; i < objType.NumField(); i++ {
 		var (
-			fieldType        = ot.Field(i)
-			fieldValue       = oi.Field(i)
-			envTagValue      = fieldType.Tag.Get(envTag)
-			defaultTagValue  = fieldType.Tag.Get(defaultTag)
-			requiredTagValue = fieldType.Tag.Get(requiredTag)
+			fieldValue, fieldType = objValue.Field(i), objType.Field(i)
+			envTagValue           = fieldType.Tag.Get(envTag)
+			defaultTagValue       = fieldType.Tag.Get(defaultTag)
+			requiredTagValue      = fieldType.Tag.Get(requiredTag)
 		)
 
 		if envTagValue == "" {
@@ -272,6 +297,11 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 	}
 
 	return errors
+}
+
+func getIndirect(obj interface{}) (reflect.Value, reflect.Type) {
+	indirect := reflect.Indirect(reflect.ValueOf(obj))
+	return indirect, indirect.Type()
 }
 
 func loadEnvField(fieldType reflect.StructField, fieldValue reflect.Value, envTags []string, defaultTag, requiredTag string) error {
