@@ -316,6 +316,26 @@ func (s *ConfigSuite) TestFetch(t sweet.T) {
 	Expect(target.Z).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
+func (s *ConfigSuite) TestFetchIsomorphicType(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestSimpleConfig{}
+	)
+
+	os.Setenv("APP_X", "foo")
+	os.Setenv("APP_Y", "123")
+	os.Setenv("APP_W", `["bar", "baz", "bonk"]`)
+
+	Expect(config.Register("simple", chunk)).To(BeNil())
+	Expect(config.Load()).To(BeEmpty())
+
+	target := &TestSimpleConfigClone{}
+	Expect(config.Fetch("simple", target)).To(BeNil())
+	Expect(target.X).To(Equal("foo"))
+	Expect(target.Y).To(Equal(123))
+	Expect(target.Z).To(Equal([]string{"bar", "baz", "bonk"}))
+}
+
 func (s *ConfigSuite) TestFetchBadType(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
@@ -358,6 +378,12 @@ type (
 		X string   `env:"x"`
 		Y int      `env:"y"`
 		Z []string `env:"w" display:"q"`
+	}
+
+	TestSimpleConfigClone struct {
+		X string
+		Y int
+		Z []string
 	}
 
 	TestEmbeddedJSONConfig struct {
