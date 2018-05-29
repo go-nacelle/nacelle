@@ -25,15 +25,15 @@ type (
 		WorkerTickInterval time.Duration
 	}
 
-	httpConfigToken   struct{}
-	grpcConfigToken   struct{}
-	workerConfigToken struct{}
+	httpConfigToken   string
+	grpcConfigToken   string
+	workerConfigToken string
 )
 
 var (
-	HTTPConfigToken   = httpConfigToken{}
-	GRPCConfigToken   = grpcConfigToken{}
-	WorkerConfigToken = workerConfigToken{}
+	HTTPConfigToken   = httpConfigToken("nacelle-process-http")
+	GRPCConfigToken   = grpcConfigToken("nacelle-process-grpc")
+	WorkerConfigToken = workerConfigToken("nacelle-process-worker")
 	ErrBadCertConfig  = errors.New("cert file and key file must both be supplied or both be omitted")
 )
 
