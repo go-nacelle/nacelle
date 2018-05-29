@@ -13,7 +13,7 @@ type (
 	LoggingConfig = log.Config
 	LogLevel      = log.LogLevel
 
-	loggingConfigToken struct{}
+	loggingConfigToken string
 	logFunc            func(log.Fields, string, ...interface{})
 )
 
@@ -29,7 +29,7 @@ var (
 	NewReplayAdapter = log.NewReplayAdapter
 	NewRollupAdapter = log.NewRollupAdapter
 
-	LoggingConfigToken = loggingConfigToken{}
+	LoggingConfigToken = loggingConfigToken("nacelle-logging")
 	ErrBadConfig       = errors.New("logging config not registered properly")
 )
 

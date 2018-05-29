@@ -20,11 +20,11 @@ type (
 		DiscoveryInterval time.Duration
 	}
 
-	configToken struct{}
+	configToken string
 )
 
 var (
-	ConfigToken       = configToken{}
+	ConfigToken       = configToken("nacelle-discovery")
 	ErrIllegalBackend = errors.New("illegal discovery backend")
 	ErrIllegalTTL     = errors.New("TTL must be greater than the refresh interval")
 	ErrIllegalHost    = errors.New("hostname cannot be determined")

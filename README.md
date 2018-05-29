@@ -52,10 +52,10 @@ type (
         C bool   `env:"C"`
     }
 
-    configToken struct{}
+    configToken string
 )
 
-var ConfigToken = &configToken{}
+var ConfigToken = configToken("my-config-name")
 ```
 
 An zero-value instance of this config can be registered with the singleton token on
