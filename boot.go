@@ -5,6 +5,7 @@ type (
 	Bootstrapper struct {
 		name            string
 		configs         map[interface{}]interface{}
+		configSetupFunc ConfigSetupFunc
 		initFunc        AppInitFunc
 		loggingInitFunc LoggingInitFunc
 	}
@@ -12,6 +13,10 @@ type (
 	bootstrapperConfig struct {
 		loggingInitFunc LoggingInitFunc
 	}
+
+	// ConfigSetupFunc is called by the bootstrap procedure to populate
+	// the config object with unpopulated config objects.
+	ConfigSetupFunc func(Config) error
 
 	// AppInitFunc is an program entrypoint called after performing initial
 	// configuration loading, sanity checks, and setting up loggers. This
@@ -35,14 +40,10 @@ func WithLoggingInitFunc(loggingInitFunc LoggingInitFunc) BoostraperConfigFunc {
 // NewBootstrapper creates an entrypoint to the program with the given configs.
 func NewBootstrapper(
 	name string,
-	configs map[interface{}]interface{},
+	configSetupFunc ConfigSetupFunc,
 	initFunc AppInitFunc,
 	bootstrapperConfigs ...BoostraperConfigFunc,
 ) *Bootstrapper {
-	if configs == nil {
-		configs = map[interface{}]interface{}{}
-	}
-
 	config := &bootstrapperConfig{
 		loggingInitFunc: InitLogging,
 	}
@@ -53,7 +54,7 @@ func NewBootstrapper(
 
 	return &Bootstrapper{
 		name:            name,
-		configs:         configs,
+		configSetupFunc: configSetupFunc,
 		initFunc:        initFunc,
 		loggingInitFunc: config.loggingInitFunc,
 	}
@@ -68,15 +69,13 @@ func (bs *Bootstrapper) Boot() int {
 		config    = NewEnvConfig(bs.name)
 	)
 
-	for key, obj := range bs.configs {
-		if err := config.Register(key, obj); err != nil {
-			emergencyLogger().Error("failed to register configs (%s)", err.Error())
-			return 1
-		}
-	}
-
 	if err := config.Register(LoggingConfigToken, &LoggingConfig{}); err != nil {
 		emergencyLogger().Error("failed to register logging config (%s)", err.Error())
+		return 1
+	}
+
+	if err := bs.configSetupFunc(config); err != nil {
+		emergencyLogger().Error("failed to register configs (%s)", err.Error())
 		return 1
 	}
 
