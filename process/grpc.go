@@ -14,6 +14,7 @@ type (
 	GRPCServer struct {
 		Logger        nacelle.Logger            `service:"logger"`
 		Container     *nacelle.ServiceContainer `service:"container"`
+		configToken   interface{}
 		initializer   GRPCServerInitializer
 		listener      *net.TCPListener
 		server        *grpc.Server
@@ -35,17 +36,20 @@ func (f GRPCServerInitializerFunc) Init(config nacelle.Config, server *grpc.Serv
 	return f(config, server)
 }
 
-func NewGRPCServer(initializer GRPCServerInitializer, serverOptions ...grpc.ServerOption) *GRPCServer {
+func NewGRPCServer(initializer GRPCServerInitializer, configs ...GRPCServerConfigFunc) *GRPCServer {
+	options := getGRPCOptions(configs)
+
 	return &GRPCServer{
+		configToken:   options.configToken,
 		initializer:   initializer,
 		once:          &sync.Once{},
-		serverOptions: serverOptions,
+		serverOptions: options.serverOptions,
 	}
 }
 
 func (s *GRPCServer) Init(config nacelle.Config) (err error) {
 	grpcConfig := &GRPCConfig{}
-	if err = config.Fetch(GRPCConfigToken, grpcConfig); err != nil {
+	if err = config.Fetch(s.configToken, grpcConfig); err != nil {
 		return ErrBadGRPCConfig
 	}
 

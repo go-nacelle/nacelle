@@ -15,6 +15,7 @@ type (
 	HTTPServer struct {
 		Logger          nacelle.Logger            `service:"logger"`
 		Container       *nacelle.ServiceContainer `service:"container"`
+		configToken     interface{}
 		initializer     HTTPServerInitializer
 		listener        *net.TCPListener
 		server          *http.Server
@@ -38,8 +39,11 @@ func (f HTTPServerInitializerFunc) Init(config nacelle.Config, server *http.Serv
 	return f(config, server)
 }
 
-func NewHTTPServer(initializer HTTPServerInitializer) *HTTPServer {
+func NewHTTPServer(initializer HTTPServerInitializer, configs ...HTTPServerConfigFunc) *HTTPServer {
+	options := getHTTPOptions(configs)
+
 	return &HTTPServer{
+		configToken: options.configToken,
 		initializer: initializer,
 		once:        &sync.Once{},
 	}
@@ -47,7 +51,7 @@ func NewHTTPServer(initializer HTTPServerInitializer) *HTTPServer {
 
 func (s *HTTPServer) Init(config nacelle.Config) (err error) {
 	httpConfig := &HTTPConfig{}
-	if err = config.Fetch(HTTPConfigToken, httpConfig); err != nil {
+	if err = config.Fetch(s.configToken, httpConfig); err != nil {
 		return ErrBadHTTPConfig
 	}
 

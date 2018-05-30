@@ -13,6 +13,7 @@ import (
 type (
 	Worker struct {
 		Container    *nacelle.ServiceContainer `service:"container"`
+		configToken  interface{}
 		spec         WorkerSpec
 		clock        glock.Clock
 		halt         chan struct{}
@@ -28,16 +29,19 @@ type (
 
 var ErrBadWorkerConfig = errors.New("worker config not registered properly")
 
-func NewWorker(spec WorkerSpec) *Worker {
+func NewWorker(spec WorkerSpec, configs ...WorkerConfigFunc) *Worker {
 	return newWorker(spec, glock.NewRealClock())
 }
 
-func newWorker(spec WorkerSpec, clock glock.Clock) *Worker {
+func newWorker(spec WorkerSpec, clock glock.Clock, configs ...WorkerConfigFunc) *Worker {
+	options := getWorkerOptions(configs)
+
 	return &Worker{
-		spec:  spec,
-		clock: clock,
-		halt:  make(chan struct{}),
-		once:  &sync.Once{},
+		configToken: options.configToken,
+		spec:        spec,
+		clock:       clock,
+		halt:        make(chan struct{}),
+		once:        &sync.Once{},
 	}
 }
 
@@ -56,7 +60,7 @@ func (w *Worker) HaltChan() <-chan struct{} {
 
 func (w *Worker) Init(config nacelle.Config) error {
 	workerConfig := &WorkerConfig{}
-	if err := config.Fetch(WorkerConfigToken, workerConfig); err != nil {
+	if err := config.Fetch(w.configToken, workerConfig); err != nil {
 		return ErrBadWorkerConfig
 	}
 

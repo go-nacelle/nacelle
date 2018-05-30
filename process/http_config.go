@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
-	"github.com/efritz/nacelle"
 )
 
 type (
@@ -36,18 +34,5 @@ func (c *HTTPConfig) PostLoad() error {
 	}
 
 	c.ShutdownTimeout = time.Duration(c.RawShutdownTimeout) * time.Second
-	return nil
-}
-
-// RegisterHTTPConfigs adds the required configs for an HTTP server to the given map. If any tag
-// modifiers are supplied, they are run over each of the required configs (this may require
-// some knowledge about package internals).
-func RegisterHTTPConfigs(m map[interface{}]interface{}, modifiers ...nacelle.TagModifier) error {
-	c, err := nacelle.ApplyTagModifiers(&HTTPConfig{}, modifiers...)
-	if err != nil {
-		return err
-	}
-
-	m[HTTPConfigToken] = c
 	return nil
 }
