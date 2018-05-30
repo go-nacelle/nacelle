@@ -1,6 +1,8 @@
 package process
 
 import (
+	"fmt"
+
 	"github.com/efritz/nacelle"
 )
 
@@ -12,7 +14,11 @@ type (
 	grpcConfigToken string
 )
 
-var GRPCConfigToken = grpcConfigToken("nacelle-process-grpc")
+var GRPCConfigToken = MakeGRPCConfigToken("default")
+
+func MakeGRPCConfigToken(name string) interface{} {
+	return grpcConfigToken(fmt.Sprintf("nacelle-process-grpc-%s", name))
+}
 
 // RegisterGRPCConfigs adds the required configs for a GRPC server to the given map. If any tag
 // modifiers are supplied, they are run over each of the required configs (this may require

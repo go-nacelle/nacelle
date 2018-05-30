@@ -2,6 +2,7 @@ package process
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/efritz/nacelle"
@@ -21,9 +22,13 @@ type (
 )
 
 var (
-	HTTPConfigToken  = httpConfigToken("nacelle-process-http")
+	HTTPConfigToken  = MakeHTTPConfigToken("default")
 	ErrBadCertConfig = errors.New("cert file and key file must both be supplied or both be omitted")
 )
+
+func MakeHTTPConfigToken(name string) interface{} {
+	return httpConfigToken(fmt.Sprintf("nacelle-process-http-%s", name))
+}
 
 func (c *HTTPConfig) PostLoad() error {
 	if (c.HTTPCertFile == "") != (c.HTTPKeyFile == "") {

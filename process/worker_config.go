@@ -1,6 +1,7 @@
 package process
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/efritz/nacelle"
@@ -16,7 +17,11 @@ type (
 	workerConfigToken string
 )
 
-var WorkerConfigToken = workerConfigToken("nacelle-process-worker")
+var WorkerConfigToken = MakeWorkerConfigToken("default")
+
+func MakeWorkerConfigToken(name string) interface{} {
+	return workerConfigToken(fmt.Sprintf("nacelle-process-worker-%s", name))
+}
 
 func (c *WorkerConfig) PostLoad() error {
 	c.WorkerTickInterval = time.Duration(c.RawWorkerTickInterval) * time.Second
