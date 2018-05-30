@@ -21,7 +21,7 @@ func WithGRPCConfigToken(token interface{}) GRPCServerConfigFunc {
 
 // WithGRPCServerOptions sets grpc options on the underlying server.
 func WithGRPCServerOptions(options ...grpc.ServerOption) GRPCServerConfigFunc {
-	return func(o *grpcOptions) { o.serverOptions = options }
+	return func(o *grpcOptions) { o.serverOptions = append(o.serverOptions, options...) }
 }
 
 func getGRPCOptions(configs []GRPCServerConfigFunc) *grpcOptions {
