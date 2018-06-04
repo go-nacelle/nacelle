@@ -2,7 +2,8 @@
 
 [![GoDoc](https://godoc.org/github.com/efritz/nacelle?status.svg)](https://godoc.org/github.com/efritz/nacelle)
 [![Build Status](https://secure.travis-ci.org/efritz/nacelle.png)](http://travis-ci.org/efritz/nacelle)
-[![codecov.io](http://codecov.io/github/efritz/nacelle/coverage.svg?branch=master)](http://codecov.io/github/efritz/nacelle?branch=master)
+[![Maintainability](https://api.codeclimate.com/v1/badges/8118b324f3b7ac9b442a/maintainability)](https://codeclimate.com/github/efritz/nacelle/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/8118b324f3b7ac9b442a/test_coverage)](https://codeclimate.com/github/efritz/nacelle/test_coverage)
 
 Nacelle is a configuration and dependency injection framework for services written
 in Go. For example usage, see [this](https://github.com/efritz/nacelle-example) repo.
