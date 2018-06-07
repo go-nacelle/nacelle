@@ -64,10 +64,15 @@ func NewBootstrapper(
 // for a successful exit and one if an error was encountered.
 func (bs *Bootstrapper) Boot() int {
 	var (
-		container = NewServiceContainer()
-		runner    = NewProcessRunner(container)
-		config    = NewEnvConfig(bs.name)
+		container, err = MakeServiceContainer()
+		runner         = NewProcessRunner(container)
+		config         = NewEnvConfig(bs.name)
 	)
+
+	if err != nil {
+		emergencyLogger().Error("failed to create service container (%s)", err.Error())
+		return 1
+	}
 
 	if err := config.Register(LoggingConfigToken, &LoggingConfig{}); err != nil {
 		emergencyLogger().Error("failed to register logging config (%s)", err.Error())

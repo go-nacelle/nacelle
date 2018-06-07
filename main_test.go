@@ -18,6 +18,5 @@ func TestMain(m *testing.M) {
 		s.AddSuite(&ConfigTagsSuite{})
 		s.AddSuite(&ServiceSuite{})
 		s.AddSuite(&RunnerSuite{})
-		s.AddSuite(&UtilSuite{})
 	})
 }

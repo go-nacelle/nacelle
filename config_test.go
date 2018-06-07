@@ -386,6 +386,13 @@ func (s *ConfigSuite) TestFetchWithConfigTagRoundtrip(t sweet.T) {
 	Expect(target.duration).To(Equal(time.Second * 3))
 }
 
+func (s *ConfigSuite) TestSerializeKey(t sweet.T) {
+	Expect(serializeKey("foo")).To(Equal("foo"))
+	Expect(serializeKey(TestStringer{})).To(Equal("bar"))
+	Expect(serializeKey(TestConfigKey{})).To(Equal("TestConfigKey"))
+	Expect(serializeKey(&TestConfigKey{})).To(Equal("TestConfigKey"))
+}
+
 //
 // Chunks
 
@@ -465,4 +472,13 @@ func (c *TestPostLoadConfig) PostLoad() error {
 func (c *TestPostLoadConversion) PostLoad() error {
 	c.duration = time.Duration(c.RawDuration) * time.Second
 	return nil
+}
+
+//
+// Helpers
+
+type TestStringer struct{}
+
+func (TestStringer) String() string {
+	return "bar"
 }
