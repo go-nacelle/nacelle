@@ -14,11 +14,12 @@ type RunnerSuite struct{}
 
 func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	var (
-		runner     = NewProcessRunner(NewServiceContainer())
-		initChan   = make(chan string)
-		startChan  = make(chan string)
-		errChan    = make(chan error)
-		numStopped = 0
+		container, _ = MakeServiceContainer()
+		runner       = NewProcessRunner(container)
+		initChan     = make(chan string)
+		startChan    = make(chan string)
+		errChan      = make(chan error)
+		numStopped   = 0
 	)
 
 	makeProcess := func(name string) Process {
@@ -129,10 +130,11 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 
 func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 	var (
-		runner     = NewProcessRunner(NewServiceContainer())
-		startChan  = make(chan string)
-		errChan    = make(chan error)
-		numStopped = 0
+		container, _ = MakeServiceContainer()
+		runner       = NewProcessRunner(container)
+		startChan    = make(chan string)
+		errChan      = make(chan error)
+		numStopped   = 0
 	)
 
 	makeProcess := func(name string) Process {
@@ -212,9 +214,10 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 
 func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	var (
-		runner   = NewProcessRunner(NewServiceContainer())
-		stopChan = make(chan string)
-		errChan  = make(chan error)
+		container, _ = MakeServiceContainer()
+		runner       = NewProcessRunner(container)
+		stopChan     = make(chan string)
+		errChan      = make(chan error)
 	)
 
 	makeProcess := func(name string, startError, stopError error) Process {
@@ -284,10 +287,11 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 
 func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	var (
-		runner   = NewProcessRunner(NewServiceContainer())
-		initChan = make(chan string)
-		stopChan = make(chan string)
-		errChan  = make(chan error)
+		container, _ = MakeServiceContainer()
+		runner       = NewProcessRunner(container)
+		initChan     = make(chan string)
+		stopChan     = make(chan string)
+		errChan      = make(chan error)
 	)
 
 	makeProcess := func(name string, initError error) Process {

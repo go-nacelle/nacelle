@@ -9,17 +9,22 @@ import (
 type ServiceSuite struct{}
 
 func (s *ServiceSuite) TestGetLogger(t sweet.T) {
-	container := NewServiceContainer()
-	logger, _ := log.InitGomolShim(&LoggingConfig{})
-	err := container.Set("logger", logger)
+	container, err := MakeServiceContainer()
 	Expect(err).To(BeNil())
+
+	logger, _ := log.InitGomolShim(&LoggingConfig{})
+	Expect(container.Set("logger", logger)).To(BeNil())
 	Expect(container.GetLogger()).To(Equal(logger))
 }
 
 func (s *ServiceSuite) TestGetUnregisteredLogger(t sweet.T) {
-	Expect(NewServiceContainer().GetLogger()).NotTo(BeNil())
+	container, err := MakeServiceContainer()
+	Expect(err).To(BeNil())
+	Expect(container.GetLogger()).NotTo(BeNil())
 }
 
 func (s *ServiceSuite) TestSetBadLogger(t sweet.T) {
-	Expect(NewServiceContainer().Set("logger", struct{}{})).To(MatchError("logger instance is not a nacelle.Logger"))
+	container, err := MakeServiceContainer()
+	Expect(err).To(BeNil())
+	Expect(container.Set("logger", struct{}{})).To(MatchError("logger instance is not a nacelle.Logger"))
 }
