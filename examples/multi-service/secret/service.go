@@ -31,10 +31,10 @@ func (s *secretService) Post(secret string) (string, error) {
 		key = s.key(id)
 	)
 
-	_, err := s.client.Transaction(
-		deepjoy.NewCommand("set", key, secret),
-		deepjoy.NewCommand("expire", key, s.ttl),
-	)
+	pipeline := s.client.Pipeline()
+	pipeline.Add("set", key, secret)
+	pipeline.Add("expire", key, s.ttl)
+	_, err := pipeline.Run()
 
 	return id, err
 }
@@ -46,11 +46,11 @@ func (s *secretService) Read(id string) (string, error) {
 		err    error
 	)
 
-	result, err = s.client.Transaction(
-		deepjoy.NewCommand("get", key),
-		deepjoy.NewCommand("del", key),
-	)
+	pipeline := s.client.Pipeline()
+	pipeline.Add("get", key)
+	pipeline.Add("del", key)
 
+	result, err = pipeline.Run()
 	if err != nil {
 		return "", err
 	}
