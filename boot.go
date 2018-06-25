@@ -32,7 +32,7 @@ func NewBootstrapper(
 	name string,
 	configSetupFunc ConfigSetupFunc,
 	initFunc AppInitFunc,
-	bootstrapperConfigs ...BoostraperConfigFunc,
+	bootstrapperConfigs ...BootstrapperConfigFunc,
 ) *Bootstrapper {
 	config := &bootstrapperConfig{
 		loggingInitFunc: InitLogging,
