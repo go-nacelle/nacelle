@@ -342,11 +342,9 @@ func initWithTimeout(initializer Initializer, config Config, timeout time.Durati
 	}
 }
 
-var blockingChan = make(chan time.Time)
-
 func makeTimeoutChan(timeout time.Duration) <-chan time.Time {
 	if timeout == 0 {
-		return blockingChan
+		return nil
 	}
 
 	return time.After(timeout)
