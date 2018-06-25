@@ -336,7 +336,7 @@ func (pr *ProcessRunner) Shutdown(timeout time.Duration) error {
 
 	select {
 	case <-time.After(timeout):
-		return errors.New("process failed to stop in timeout")
+		return errors.New("process runner did not complete within timeout")
 	case <-pr.done:
 		return nil
 	}
