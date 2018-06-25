@@ -60,6 +60,22 @@ func emergencyLogger() Logger {
 	return logger
 }
 
+func logEmergencyError(message string, err error) {
+	l := emergencyLogger()
+	l.Error(message, err.Error())
+	l.Sync()
+}
+
+func logEmergencyErrors(message string, errs []error) {
+	l := emergencyLogger()
+
+	for _, err := range errs {
+		l.Error(message, err.Error())
+	}
+
+	l.Sync()
+}
+
 func noopLogger(fields log.Fields, message string, args ...interface{}) {
 	// Silence is golden
 }

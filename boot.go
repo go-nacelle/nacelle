@@ -70,46 +70,41 @@ func (bs *Bootstrapper) Boot() int {
 	)
 
 	if err != nil {
-		emergencyLogger().Error("failed to create service container (%s)", err.Error())
+		logEmergencyError("failed to create service container (%s)", err)
 		return 1
 	}
 
 	if err := config.Register(LoggingConfigToken, &LoggingConfig{}); err != nil {
-		emergencyLogger().Error("failed to register logging config (%s)", err.Error())
+		logEmergencyError("failed to register logging config (%s)", err)
 		return 1
 	}
 
 	if err := bs.configSetupFunc(config); err != nil {
-		emergencyLogger().Error("failed to register configs (%s)", err.Error())
+		logEmergencyError("failed to register configs (%s)", err)
 		return 1
 	}
 
 	if errs := config.Load(); len(errs) > 0 {
-		logger := emergencyLogger()
-
-		for _, err := range errs {
-			logger.Error("Failed to load configuration (%s)", err.Error())
-		}
-
+		logEmergencyErrors("Failed to load configuration (%s)", errs)
 		return 1
 	}
 
 	logger, err := bs.loggingInitFunc(config)
 	if err != nil {
-		emergencyLogger().Error("failed to initialize logging (%s)", err.Error())
+		logEmergencyError("failed to initialize logging (%s)", err)
 		return 1
 	}
 
 	defer func() {
 		if err := logger.Sync(); err != nil {
-			emergencyLogger().Error("failed to sync logs on shutdown (%s)", err.Error())
+			logEmergencyError("failed to sync logs on shutdown (%s)", err)
 		}
 	}()
 
 	logger.Info("Logging initialized")
 
 	if err := container.Set("logger", logger); err != nil {
-		logger.Error("Failed to register logger to service container (%s)", err.Error())
+		logger.Error("Failed to register logger to service container (%s)", err)
 		return 1
 	}
 
