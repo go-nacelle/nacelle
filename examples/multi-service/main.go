@@ -24,5 +24,14 @@ func setupProcesses(runner *nacelle.ProcessRunner, container *nacelle.ServiceCon
 }
 
 func main() {
-	nacelle.NewBootstrapper("app", setupConfigs, setupProcesses).Boot()
+	boostrapper := nacelle.NewBootstrapper(
+		"app",
+		setupConfigs,
+		setupProcesses,
+		nacelle.WithLoggingFields(nacelle.Fields{
+			"app_name": "app",
+		}),
+	)
+
+	boostrapper.BootAndExit()
 }

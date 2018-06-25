@@ -10,10 +10,12 @@ type (
 		configSetupFunc ConfigSetupFunc
 		initFunc        AppInitFunc
 		loggingInitFunc LoggingInitFunc
+		loggingFields   Fields
 	}
 
 	bootstrapperConfig struct {
 		loggingInitFunc LoggingInitFunc
+		loggingFields   Fields
 	}
 
 	// ConfigSetupFunc is called by the bootstrap procedure to populate
@@ -47,6 +49,7 @@ func NewBootstrapper(
 		configSetupFunc: configSetupFunc,
 		initFunc:        initFunc,
 		loggingInitFunc: config.loggingInitFunc,
+		loggingFields:   config.loggingFields,
 	}
 }
 
@@ -85,6 +88,8 @@ func (bs *Bootstrapper) Boot() int {
 		logEmergencyError("failed to initialize logging (%s)", err)
 		return 1
 	}
+
+	logger = logger.WithFields(bs.loggingFields)
 
 	defer func() {
 		if err := logger.Sync(); err != nil {
