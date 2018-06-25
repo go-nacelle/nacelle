@@ -6,25 +6,23 @@ import (
 )
 
 type Config struct {
-	LogBackend       string `env:"LOG_BACKEND" default:"gomol"`
-	LogLevel         string `env:"LOG_LEVEL" default:"info"`
-	LogEncoding      string `env:"LOG_ENCODING" default:"console"`
-	LogColorize      bool   `env:"LOG_COLORIZE" default:"true"`
-	LogInitialFields Fields `env:"LOG_FIELDS"`
+	LogLevel            string `env:"LOG_LEVEL" default:"info"`
+	LogEncoding         string `env:"LOG_ENCODING" default:"console"`
+	LogColorize         bool   `env:"LOG_COLORIZE" default:"true"`
+	LogInitialFields    Fields `env:"LOG_FIELDS"`
+	LogShortTime        bool   `env:"LOG_SHORT_TIME" default:"false"`
+	LogMultilineFields  bool   `env:"LOG_MULTILINE_FIELDS" default:"true"`
+	RawLogAttrBlacklist string `env:"LOG_ATTR_BLACKLIST" default:""`
+	LogAttrBlacklist    []string
 }
 
 var (
-	ErrIllegalBackend  = errors.New("illegal log backend")
 	ErrIllegalLevel    = errors.New("illegal log level")
 	ErrIllegalEncoding = errors.New("illegal log encoding")
 )
 
 func (c *Config) PostLoad() error {
 	c.LogLevel = strings.ToLower(c.LogLevel)
-
-	if !isLegalBackend(c.LogBackend) {
-		return ErrIllegalBackend
-	}
 
 	if !isLegalLevel(c.LogLevel) {
 		return ErrIllegalLevel
@@ -34,17 +32,14 @@ func (c *Config) PostLoad() error {
 		return ErrIllegalEncoding
 	}
 
-	return nil
-}
-
-func isLegalBackend(backend string) bool {
-	for _, whitelisted := range []string{"gomol", "logrus", "zap"} {
-		if backend == whitelisted {
-			return true
-		}
+	for _, s := range strings.Split(c.RawLogAttrBlacklist, ",") {
+		c.LogAttrBlacklist = append(
+			c.LogAttrBlacklist,
+			strings.ToLower(strings.TrimSpace(s)),
+		)
 	}
 
-	return false
+	return nil
 }
 
 func isLegalLevel(level string) bool {

@@ -33,26 +33,17 @@ var (
 	ErrBadConfig       = errors.New("logging config not registered properly")
 )
 
-func InitLogging(config Config) (logger Logger, err error) {
+func InitLogging(config Config) (Logger, error) {
 	c := &LoggingConfig{}
 	if err := config.Fetch(LoggingConfigToken, c); err != nil {
 		return nil, ErrBadConfig
 	}
 
-	switch c.LogBackend {
-	case "gomol":
-		logger, err = log.InitGomolShim(c)
-	case "logrus":
-		logger, err = log.InitLogrusShim(c)
-	case "zap":
-		logger, err = log.InitZapShim(c)
-	}
-
-	return
+	return log.InitGomolShim(c)
 }
 
 func emergencyLogger() Logger {
-	logger, _ := log.InitLogrusShim(&LoggingConfig{
+	logger, _ := log.InitGomolShim(&LoggingConfig{
 		LogLevel:    "DEBUG",
 		LogEncoding: "json",
 	})

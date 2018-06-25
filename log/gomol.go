@@ -1,8 +1,10 @@
 package log
 
 import (
+	"fmt"
 	"os"
 	"strings"
+	"text/template"
 
 	"github.com/aphistic/gomol"
 	console "github.com/aphistic/gomol-console"
@@ -52,28 +54,26 @@ func (g *GomolShim) Sync() error {
 // Init
 
 func InitGomolShim(c *Config) (Logger, error) {
-	level, _ := gomol.ToLogLevel(c.LogLevel)
+	level, err := gomol.ToLogLevel(c.LogLevel)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := gomol.ClearLoggers(); err != nil {
+		return nil, err
+	}
+
 	gomol.SetLogLevel(level)
+	gomol.SetConfig(&gomol.Config{SequenceAttr: "sequence_number"})
 
-	if c.LogEncoding == "console" {
-		consoleLogger, err := console.NewConsoleLogger(&console.ConsoleLoggerConfig{
-			Colorize: true,
-			Writer:   os.Stderr,
-		})
-
-		if err != nil {
+	switch c.LogEncoding {
+	case "console":
+		if err := setupConsoleLogger(c); err != nil {
 			return nil, err
 		}
 
-		tpl, err := newGomolConsoleTemplate(c.LogColorize)
-		if err != nil {
-			return nil, err
-		}
-
-		consoleLogger.SetTemplate(tpl)
-		gomol.AddLogger(consoleLogger)
-	} else {
-		gomol.AddLogger(newJSONLogger())
+	case "json":
+		setupJSONLogger()
 	}
 
 	if err := gomol.InitLoggers(); err != nil {
@@ -83,20 +83,99 @@ func InitGomolShim(c *Config) (Logger, error) {
 	return NewGomolLogger(gomol.NewLogAdapter(nil), c.LogInitialFields), nil
 }
 
-func newGomolConsoleTemplate(color bool) (*gomol.Template, error) {
-	text := "" +
-		`[{{.Timestamp.Format "2006-01-02 15:04:05.000"}}] ` +
-		`{{color}}{{printf "%5s" (ucase .LevelName)}}{{reset}} ` +
-		"{{.Message}}" +
-		"{{if .Attrs}}{{range $key, $val := .Attrs}} {{color}}{{$key}}{{reset}}={{$val}}{{end}}{{end}}"
+func setupConsoleLogger(c *Config) error {
+	consoleLogger, err := console.NewConsoleLogger(&console.ConsoleLoggerConfig{
+		Colorize: true,
+		Writer:   os.Stderr,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	tpl, err := newGomolConsoleTemplate(
+		c.LogColorize,
+		c.LogShortTime,
+		c.LogMultilineFields,
+		c.LogAttrBlacklist,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	consoleLogger.SetTemplate(tpl)
+	gomol.AddLogger(consoleLogger)
+	return nil
+}
+
+func setupJSONLogger() {
+	gomol.AddLogger(newJSONLogger())
+}
+
+func newGomolConsoleTemplate(color, shortTime, multilineFields bool, blacklist []string) (*gomol.Template, error) {
+	var (
+		attrPrefix  = " "
+		attrPadding = ""
+		attrSuffix  = ""
+	)
+
+	if multilineFields {
+		attrPrefix = "\n    "
+		attrPadding = " "
+		attrSuffix = "\n"
+	}
+
+	fieldsTemplate := fmt.Sprintf(
+		""+
+			`{{if .Attrs}}`+
+			`{{range $key, $val := .Attrs}}`+
+			`{{if shouldDisplayAttr $key}}`+
+			`%s{{$key}}%s=%s{{$val}}`+
+			`{{end}}`+
+			`{{end}}`+
+			`%s`+
+			`{{end}}`,
+		attrPrefix,
+		attrPadding,
+		attrPadding,
+		attrSuffix,
+	)
+
+	timeFormat := "2006/01/02 15:04:05.000"
+	if shortTime {
+		timeFormat = "15:04:05"
+	}
+
+	text :=
+		"" +
+			`{{color}}` +
+			`[{{ucase .LevelName | printf "%1.1s"}}] ` +
+			fmt.Sprintf(`[{{.Timestamp.Format "%s"}}] {{.Message}}`, timeFormat) +
+			`{{reset}}` +
+			fieldsTemplate
 
 	if !color {
 		text = removeColor(text)
 	}
 
-	return gomol.NewTemplate(text)
+	return gomol.NewTemplateWithFuncMap(text, template.FuncMap{
+		"shouldDisplayAttr": shouldDisplayAttr(blacklist),
+	})
 }
 
 func removeColor(text string) string {
 	return strings.NewReplacer("{{color}}", "", "{{reset}}", "").Replace(text)
+}
+
+func shouldDisplayAttr(blacklist []string) func(string) bool {
+	return func(attr string) bool {
+		for _, cmp := range blacklist {
+			if cmp == attr {
+				return false
+			}
+		}
+
+		return true
+	}
 }

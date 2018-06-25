@@ -7,14 +7,6 @@ import (
 
 type ConfigSuite struct{}
 
-func (s *ConfigSuite) TestIsLegalBackend(t sweet.T) {
-	Expect(isLegalBackend("gomol")).To(BeTrue())
-	Expect(isLegalBackend("logrus")).To(BeTrue())
-	Expect(isLegalBackend("zap")).To(BeTrue())
-	Expect(isLegalBackend("gomolx")).To(BeFalse())
-	Expect(isLegalBackend("paz")).To(BeFalse())
-}
-
 func (s *ConfigSuite) TestIsLegalLevel(t sweet.T) {
 	Expect(isLegalLevel("debug")).To(BeTrue())
 	Expect(isLegalLevel("info")).To(BeTrue())

@@ -171,21 +171,9 @@ func (s *CallerSuite) TestTrimPath(t sweet.T) {
 	Expect(trimPath("/foo/bar/baz/bonk")).To(Equal("baz/bonk"))
 }
 
-func (s *CallerSuite) TestGomol(t sweet.T)                   { s.testBasic(InitGomolShim) }
-func (s *CallerSuite) TestLogrus(t sweet.T)                  { s.testBasic(InitLogrusShim) }
-func (s *CallerSuite) TestZap(t sweet.T)                     { s.testBasic(InitZapShim) }
-func (s *CallerSuite) TestGomolWithFields(t sweet.T)         { s.testFields(InitGomolShim) }
-func (s *CallerSuite) TestLogrusWithFields(t sweet.T)        { s.testFields(InitLogrusShim) }
-func (s *CallerSuite) TestZapWithFields(t sweet.T)           { s.testFields(InitZapShim) }
-func (s *CallerSuite) TestGomolWithReplayAdapter(t sweet.T)  { s.testReplayAdapter(InitGomolShim) }
-func (s *CallerSuite) TestLogrusWithReplayAdapter(t sweet.T) { s.testReplayAdapter(InitLogrusShim) }
-func (s *CallerSuite) TestZapWithReplayAdapter(t sweet.T)    { s.testReplayAdapter(InitZapShim) }
-func (s *CallerSuite) TestGomolWithRollupAdapter(t sweet.T)  { s.testRollupAdapter(InitGomolShim) }
-func (s *CallerSuite) TestLogrusWithRollupAdapter(t sweet.T) { s.testRollupAdapter(InitLogrusShim) }
-func (s *CallerSuite) TestZapWithRollupAdapter(t sweet.T)    { s.testRollupAdapter(InitZapShim) }
-func (s *CallerSuite) TestGomolReplay(t sweet.T)             { s.testReplay(InitGomolShim) }
-func (s *CallerSuite) TestLogrusReplay(t sweet.T)            { s.testReplay(InitLogrusShim) }
-func (s *CallerSuite) TestZapReplay(t sweet.T)               { s.testReplay(InitZapShim) }
-func (s *CallerSuite) TestGomolRollup(t sweet.T)             { s.testRollup(InitGomolShim) }
-func (s *CallerSuite) TestLogrusRollup(t sweet.T)            { s.testRollup(InitLogrusShim) }
-func (s *CallerSuite) TestZapRollup(t sweet.T)               { s.testRollup(InitZapShim) }
+func (s *CallerSuite) TestGomol(t sweet.T)                  { s.testBasic(InitGomolShim) }
+func (s *CallerSuite) TestGomolWithFields(t sweet.T)        { s.testFields(InitGomolShim) }
+func (s *CallerSuite) TestGomolWithReplayAdapter(t sweet.T) { s.testReplayAdapter(InitGomolShim) }
+func (s *CallerSuite) TestGomolWithRollupAdapter(t sweet.T) { s.testRollupAdapter(InitGomolShim) }
+func (s *CallerSuite) TestGomolReplay(t sweet.T)            { s.testReplay(InitGomolShim) }
+func (s *CallerSuite) TestGomolRollup(t sweet.T)            { s.testRollup(InitGomolShim) }
