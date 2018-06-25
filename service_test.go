@@ -12,7 +12,11 @@ func (s *ServiceSuite) TestGetLogger(t sweet.T) {
 	container, err := MakeServiceContainer()
 	Expect(err).To(BeNil())
 
-	logger, _ := log.InitGomolShim(&LoggingConfig{})
+	logger, err := log.InitGomolShim(&LoggingConfig{
+		LogLevel: "warning",
+	})
+
+	Expect(err).To(BeNil())
 	Expect(container.Set("logger", logger)).To(BeNil())
 	Expect(container.GetLogger()).To(Equal(logger))
 }
