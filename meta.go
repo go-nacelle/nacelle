@@ -1,6 +1,7 @@
 package nacelle
 
 import (
+	"sync"
 	"time"
 )
 
@@ -17,7 +18,7 @@ type (
 		priority    int
 		silentExit  bool
 		initTimeout time.Duration
-		// TODO - throw a once here you bozo!
+		once        *sync.Once
 	}
 )
 

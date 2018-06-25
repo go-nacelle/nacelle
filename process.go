@@ -20,10 +20,7 @@ type (
 
 		// Stop should interrupt the routine running the Start method.
 		// Generally this is done by closing a listener or a channel which
-		// the frequently read by the Start method. This method must be
-		// well-behaved if called twice or called if Start is not currently
-		// running (either because it was never called or has finished).
-		// This method should not attempt to block until Start completes.
+		// the frequently read by the Start method.
 		Stop() error
 	}
 

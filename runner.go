@@ -56,7 +56,7 @@ func (pr *ProcessRunner) RegisterInitializer(initializer Initializer, initialize
 // RegisterProcess registers a process with the given configuration. The order
 // of process registration is arbitrary.
 func (pr *ProcessRunner) RegisterProcess(process Process, processConfigs ...ProcessConfigFunc) {
-	meta := &processMeta{Process: process}
+	meta := &processMeta{Process: process, once: &sync.Once{}}
 
 	for _, f := range processConfigs {
 		f(meta)
@@ -315,9 +315,11 @@ func (pr *ProcessRunner) stopProcesses(processes []*processMeta, priority int, l
 	for _, process := range processes {
 		logger.Debug("Stopping %s", process.Name())
 
-		if err := process.Stop(); err != nil {
-			errChan <- fmt.Errorf("%s returned error from stop (%s)", process.Name(), err.Error())
-		}
+		process.once.Do(func() {
+			if err := process.Stop(); err != nil {
+				errChan <- fmt.Errorf("%s returned error from stop (%s)", process.Name(), err.Error())
+			}
+		})
 	}
 }
 
