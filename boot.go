@@ -1,5 +1,7 @@
 package nacelle
 
+import "os"
+
 type (
 	// Bootstrapper wraps the entrypoint to the program.
 	Bootstrapper struct {
@@ -48,8 +50,9 @@ func NewBootstrapper(
 	}
 }
 
-// Boot will initialize services and return a status code - zero
-// for a successful exit and one if an error was encountered.
+// Boot will initialize services and return a status code. This
+// method does not return in any meaningful way (it blocks until
+// the associated process runner has completed).
 func (bs *Bootstrapper) Boot() int {
 	var (
 		container, err = MakeServiceContainer()
@@ -117,4 +120,10 @@ func (bs *Bootstrapper) Boot() int {
 
 	logger.Info("All processes have stopped")
 	return statusCode
+}
+
+// BootAndExit calls Boot and sets the program return code on halt. This
+// method does not return.
+func (bs *Bootstrapper) BootAndExit() {
+	os.Exit(bs.Boot())
 }
