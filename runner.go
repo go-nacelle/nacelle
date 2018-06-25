@@ -43,7 +43,10 @@ func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
 
 // RegisterInitializer registers an initializer with the given configuration. The
 // order the initializers are run mirrors the order of registration.
-func (pr *ProcessRunner) RegisterInitializer(initializer Initializer, initializerConfigs ...InitializerConfigFunc) {
+func (pr *ProcessRunner) RegisterInitializer(
+	initializer Initializer,
+	initializerConfigs ...InitializerConfigFunc,
+) {
 	meta := &initializerMeta{Initializer: initializer}
 
 	for _, f := range initializerConfigs {
@@ -55,7 +58,10 @@ func (pr *ProcessRunner) RegisterInitializer(initializer Initializer, initialize
 
 // RegisterProcess registers a process with the given configuration. The order
 // of process registration is arbitrary.
-func (pr *ProcessRunner) RegisterProcess(process Process, processConfigs ...ProcessConfigFunc) {
+func (pr *ProcessRunner) RegisterProcess(
+	process Process,
+	processConfigs ...ProcessConfigFunc,
+) {
 	meta := &processMeta{Process: process, once: &sync.Once{}}
 
 	for _, f := range processConfigs {
