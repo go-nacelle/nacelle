@@ -3,11 +3,8 @@ package nacelle
 import (
 	"errors"
 	"fmt"
-	"os"
-	"os/signal"
 	"sort"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -123,6 +120,26 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 
 	return chainUntilHalt(errChan, pr.done)
 }
+
+// Shutdown initiates a graceful shutdown of processes (if it is not already
+// within a graceful shutdown period). This method will block until the runner
+// has exited or the timeout period has elapsed. In the later case, an error
+// is returned.
+func (pr *ProcessRunner) Shutdown(timeout time.Duration) error {
+	pr.once.Do(func() {
+		close(pr.halt)
+	})
+
+	select {
+	case <-time.After(timeout):
+		return errors.New("process runner did not complete within timeout")
+	case <-pr.done:
+		return nil
+	}
+}
+
+//
+// Internals
 
 func (pr *ProcessRunner) getPriorities() []int {
 	priorities := []int{}
@@ -272,74 +289,18 @@ func (pr *ProcessRunner) watch(
 	startErrors <-chan errMeta,
 	errChan chan<- error,
 ) {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
-	signal.Notify(sigChan, syscall.SIGTERM)
+	callback := func() {
+		pr.stopProcesessBelowPriority(
+			priorities,
+			len(priorities),
+			logger,
+			errChan,
+		)
+	}
 
-	defer close(errChan)
 	defer close(pr.done)
-
-	var (
-		urgent  = false
-		stopped = false
-	)
-
-	for {
-		select {
-		case <-sigChan:
-			if urgent {
-				logger.Info("Received second signal, no longer waiting for graceful exit")
-				return
-			}
-
-			logger.Info("Received signal, starting graceful shutdown")
-			urgent = true
-
-		case err, ok := <-startErrors:
-			if !ok {
-				return
-			}
-
-			if err.err == nil {
-				if err.process.silentExit {
-					continue
-				}
-
-				logger.Info(
-					"%s has stopped cleanly, starting graceful shutdown",
-					err.process.Name(),
-				)
-			} else {
-				logger.Error(
-					"%s returned a fatal error, starting graceful shutdown",
-					err.process.Name(),
-				)
-
-				errChan <- err.err
-			}
-
-		case <-pr.halt:
-			logger.Info("Received external shutdown request")
-		}
-
-		if !stopped {
-			stopped = true
-			pr.stopProcesessBelowPriority(priorities, len(priorities), logger, errChan)
-		}
-	}
-}
-
-func (pr *ProcessRunner) Shutdown(timeout time.Duration) error {
-	pr.once.Do(func() {
-		close(pr.halt)
-	})
-
-	select {
-	case <-time.After(timeout):
-		return errors.New("process runner did not complete within timeout")
-	case <-pr.done:
-		return nil
-	}
+	watcher := newWatcher(callback, logger, startErrors, errChan, pr.halt)
+	watcher.watch()
 }
 
 func (pr *ProcessRunner) stopProcesessBelowPriority(priorities []int, p int, logger Logger, errChan chan<- error) {
