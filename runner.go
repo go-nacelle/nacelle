@@ -56,7 +56,7 @@ func (pr *ProcessRunner) RegisterInitializer(
 	initializer Initializer,
 	initializerConfigs ...InitializerConfigFunc,
 ) {
-	meta := &initializerMeta{Initializer: initializer}
+	meta := newInitializerMeta(initializer)
 
 	for _, f := range initializerConfigs {
 		f(meta)
@@ -71,7 +71,7 @@ func (pr *ProcessRunner) RegisterProcess(
 	process Process,
 	processConfigs ...ProcessConfigFunc,
 ) {
-	meta := &processMeta{Process: process, once: &sync.Once{}}
+	meta := newProcessMeta(process)
 
 	for _, f := range processConfigs {
 		f(meta)

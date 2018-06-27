@@ -37,3 +37,16 @@ func (m *processMeta) Name() string {
 
 	return m.name
 }
+
+func newInitializerMeta(initializer Initializer) *initializerMeta {
+	return &initializerMeta{
+		Initializer: initializer,
+	}
+}
+
+func newProcessMeta(process Process) *processMeta {
+	return &processMeta{
+		Process: process,
+		once:    &sync.Once{},
+	}
+}
