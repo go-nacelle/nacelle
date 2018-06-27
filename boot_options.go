@@ -18,3 +18,8 @@ func WithLoggingInitFunc(loggingInitFunc LoggingInitFunc) BootstrapperConfigFunc
 func WithLoggingFields(loggingFields Fields) BootstrapperConfigFunc {
 	return func(c *bootstrapperConfig) { c.loggingFields = loggingFields }
 }
+
+// WithRunnerOption passes RunnerConfigFuncs to the runner created by Boot.
+func WithRunnerOptions(configs ...ProcessRunnerConfigFunc) BootstrapperConfigFunc {
+	return func(c *bootstrapperConfig) { c.runnerConfigFuncs = configs }
+}

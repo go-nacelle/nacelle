@@ -30,8 +30,11 @@ type (
 var ErrInitTimeout = fmt.Errorf("init method did not finish within timeout")
 
 // NewProcessRunner creates a new process runner with the given service container.
-func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
-	return &ProcessRunner{
+func NewProcessRunner(
+	container *ServiceContainer,
+	runnerConfigs ...ProcessRunnerConfigFunc,
+) *ProcessRunner {
+	runner := &ProcessRunner{
 		container:    container,
 		initializers: []*initializerMeta{},
 		processes:    map[int][]*processMeta{},
@@ -39,6 +42,12 @@ func NewProcessRunner(container *ServiceContainer) *ProcessRunner {
 		halt:         make(chan struct{}),
 		once:         &sync.Once{},
 	}
+
+	for _, f := range runnerConfigs {
+		f(runner)
+	}
+
+	return runner
 }
 
 // RegisterInitializer registers an initializer with the given configuration. The

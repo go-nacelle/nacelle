@@ -5,17 +5,19 @@ import "os"
 type (
 	// Bootstrapper wraps the entrypoint to the program.
 	Bootstrapper struct {
-		name            string
-		configs         map[interface{}]interface{}
-		configSetupFunc ConfigSetupFunc
-		initFunc        AppInitFunc
-		loggingInitFunc LoggingInitFunc
-		loggingFields   Fields
+		name              string
+		configs           map[interface{}]interface{}
+		configSetupFunc   ConfigSetupFunc
+		initFunc          AppInitFunc
+		loggingInitFunc   LoggingInitFunc
+		loggingFields     Fields
+		runnerConfigFuncs []ProcessRunnerConfigFunc
 	}
 
 	bootstrapperConfig struct {
-		loggingInitFunc LoggingInitFunc
-		loggingFields   Fields
+		loggingInitFunc   LoggingInitFunc
+		loggingFields     Fields
+		runnerConfigFuncs []ProcessRunnerConfigFunc
 	}
 
 	// ConfigSetupFunc is called by the bootstrap procedure to populate
@@ -45,11 +47,12 @@ func NewBootstrapper(
 	}
 
 	return &Bootstrapper{
-		name:            name,
-		configSetupFunc: configSetupFunc,
-		initFunc:        initFunc,
-		loggingInitFunc: config.loggingInitFunc,
-		loggingFields:   config.loggingFields,
+		name:              name,
+		configSetupFunc:   configSetupFunc,
+		initFunc:          initFunc,
+		loggingInitFunc:   config.loggingInitFunc,
+		loggingFields:     config.loggingFields,
+		runnerConfigFuncs: config.runnerConfigFuncs,
 	}
 }
 
@@ -57,17 +60,13 @@ func NewBootstrapper(
 // method does not return in any meaningful way (it blocks until
 // the associated process runner has completed).
 func (bs *Bootstrapper) Boot() int {
-	var (
-		container, err = MakeServiceContainer()
-		runner         = NewProcessRunner(container)
-		config         = NewEnvConfig(bs.name)
-	)
-
+	container, err := MakeServiceContainer()
 	if err != nil {
 		logEmergencyError("failed to create service container (%s)", err)
 		return 1
 	}
 
+	config := NewEnvConfig(bs.name)
 	if err := config.Register(LoggingConfigToken, &LoggingConfig{}); err != nil {
 		logEmergencyError("failed to register logging config (%s)", err)
 		return 1
@@ -111,6 +110,11 @@ func (bs *Bootstrapper) Boot() int {
 	}
 
 	logger.InfoWithFields(m, "Process starting")
+
+	runner := NewProcessRunner(
+		container,
+		bs.runnerConfigFuncs...,
+	)
 
 	if err := bs.initFunc(runner, container); err != nil {
 		logger.Error("Failed to run initialization function (%s)", err.Error())
