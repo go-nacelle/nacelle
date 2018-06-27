@@ -15,7 +15,6 @@ type (
 		container    *ServiceContainer
 		initializers []*initializerMeta
 		processes    map[int][]*processMeta
-		numProcesses int
 		done         chan struct{}
 		halt         chan struct{}
 		once         *sync.Once
@@ -81,7 +80,6 @@ func (pr *ProcessRunner) RegisterProcess(
 		pr.processes[meta.priority] = []*processMeta{}
 	}
 
-	pr.numProcesses++
 	pr.processes[meta.priority] = append(pr.processes[meta.priority], meta)
 }
 
@@ -110,7 +108,12 @@ func (pr *ProcessRunner) RegisterProcess(
 // If any process has started, the error channel returned from Run will remain open
 // until all running processes have exited.
 func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
-	errChan := make(chan error, pr.numProcesses*2+1)
+	n := 0
+	for _, ps := range pr.processes {
+		n += len(ps)
+	}
+
+	errChan := make(chan error, n*2+1)
 
 	if err := pr.runInitializers(config, logger); err != nil {
 		defer close(errChan)
