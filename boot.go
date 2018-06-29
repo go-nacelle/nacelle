@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/efritz/nacelle/logging"
+	"github.com/efritz/nacelle/process"
 	"github.com/efritz/nacelle/service"
 )
 
@@ -16,13 +17,13 @@ type (
 		initFunc          AppInitFunc
 		loggingInitFunc   LoggingInitFunc
 		loggingFields     Fields
-		runnerConfigFuncs []ProcessRunnerConfigFunc
+		runnerConfigFuncs []RunnerConfigFunc
 	}
 
 	bootstrapperConfig struct {
 		loggingInitFunc   LoggingInitFunc
 		loggingFields     Fields
-		runnerConfigFuncs []ProcessRunnerConfigFunc
+		runnerConfigFuncs []RunnerConfigFunc
 	}
 
 	// ConfigSetupFunc is called by the bootstrap procedure to populate
@@ -33,7 +34,7 @@ type (
 	// configuration loading, sanity checks, and setting up loggers. This
 	// function should register initializers and processes and inject values
 	// into the service container where necessary.
-	AppInitFunc func(*ProcessRunner, ServiceContainer) error
+	AppInitFunc func(ProcessContainer, ServiceContainer) error
 )
 
 // NewBootstrapper creates an entrypoint to the program with the given configs.
@@ -72,7 +73,7 @@ func (bs *Bootstrapper) Boot() int {
 	}
 
 	config := NewEnvConfig(bs.name)
-	if err := config.Register(LoggingConfigToken, &LoggingConfig{}); err != nil {
+	if err := config.Register(LoggingConfigToken, &logging.Config{}); err != nil {
 		logging.LogEmergencyError("failed to register logging config (%s)", err)
 		return 1
 	}
@@ -116,7 +117,7 @@ func (bs *Bootstrapper) Boot() int {
 
 	logger.InfoWithFields(m, "Process starting")
 
-	runner := NewProcessRunner(
+	runner := process.NewRunner(
 		container,
 		bs.runnerConfigFuncs...,
 	)

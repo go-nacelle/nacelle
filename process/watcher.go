@@ -1,16 +1,18 @@
-package nacelle
+package process
 
 import (
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/efritz/nacelle/logging"
 )
 
 type (
 	processWatcher struct {
 		shutdownCallback func()
-		logger           Logger
+		logger           logging.Logger
 		shutdownTimeout  time.Duration
 		startErrors      <-chan errMeta
 		errChan          chan<- error
@@ -29,7 +31,7 @@ const (
 
 func newWatcher(
 	shutdownCallback func(),
-	logger Logger,
+	logger logging.Logger,
 	shutdownTimeout time.Duration,
 	startErrors <-chan errMeta,
 	errChan chan<- error,
@@ -100,7 +102,7 @@ func (w *processWatcher) watchErrors() {
 				continue
 			}
 		} else {
-			w.logger.Error("%s returned a fatal error", err.process.Name())
+			w.logger.Error("%s returned a fatal error (%s)", err.process.Name(), err.err.Error())
 			w.errChan <- err.err
 		}
 

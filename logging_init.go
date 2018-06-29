@@ -14,7 +14,7 @@ var (
 )
 
 func InitLogging(config Config) (Logger, error) {
-	c := &LoggingConfig{}
+	c := &logging.Config{}
 	if err := config.Fetch(LoggingConfigToken, c); err != nil {
 		return nil, ErrBadConfig
 	}

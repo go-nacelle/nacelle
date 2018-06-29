@@ -1,12 +1,15 @@
-package nacelle
+package process
 
 import (
 	"fmt"
 	"sync"
 
 	"github.com/aphistic/sweet"
-	"github.com/efritz/nacelle/service"
 	. "github.com/onsi/gomega"
+
+	"github.com/efritz/nacelle/config"
+	"github.com/efritz/nacelle/logging"
+	"github.com/efritz/nacelle/service"
 )
 
 type RunnerSuite struct{}
@@ -14,7 +17,7 @@ type RunnerSuite struct{}
 func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	var (
 		container, _ = service.NewContainer()
-		runner       = NewProcessRunner(container)
+		runner       = NewRunner(container)
 		initChan     = make(chan string)
 		startChan    = make(chan string)
 		errChan      = make(chan error)
@@ -25,7 +28,7 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 		p := &mockProcess{}
 		c := make(chan struct{})
 
-		p.init = func(config Config) error {
+		p.init = func(config config.Config) error {
 			initChan <- name
 			return nil
 		}
@@ -71,7 +74,7 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, NewNilLogger()) {
+		for err := range runner.Run(nil, logging.NewNilLogger()) {
 			errChan <- err
 		}
 	}()
@@ -130,7 +133,7 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 	var (
 		container, _ = service.NewContainer()
-		runner       = NewProcessRunner(container)
+		runner       = NewRunner(container)
 		startChan    = make(chan string)
 		errChan      = make(chan error)
 		numStopped   = 0
@@ -140,7 +143,7 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 		p := &mockProcess{}
 		c := make(chan struct{})
 
-		p.init = func(config Config) error {
+		p.init = func(config config.Config) error {
 			return nil
 		}
 
@@ -179,7 +182,7 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, NewNilLogger()) {
+		for err := range runner.Run(nil, logging.NewNilLogger()) {
 			errChan <- err
 		}
 	}()
@@ -214,7 +217,7 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	var (
 		container, _ = service.NewContainer()
-		runner       = NewProcessRunner(container)
+		runner       = NewRunner(container)
 		stopChan     = make(chan string)
 		errChan      = make(chan error)
 	)
@@ -223,7 +226,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 		p := &mockProcess{}
 		c := make(chan struct{})
 
-		p.init = func(config Config) error {
+		p.init = func(config config.Config) error {
 			return nil
 		}
 
@@ -263,7 +266,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, NewNilLogger()) {
+		for err := range runner.Run(nil, logging.NewNilLogger()) {
 			errChan <- err
 		}
 	}()
@@ -287,7 +290,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	var (
 		container, _ = service.NewContainer()
-		runner       = NewProcessRunner(container)
+		runner       = NewRunner(container)
 		initChan     = make(chan string)
 		stopChan     = make(chan string)
 		errChan      = make(chan error)
@@ -297,7 +300,7 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 		p := &mockProcess{}
 		c := make(chan struct{})
 
-		p.init = func(config Config) error {
+		p.init = func(config config.Config) error {
 			initChan <- name
 			return initError
 		}
@@ -338,7 +341,7 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, NewNilLogger()) {
+		for err := range runner.Run(nil, logging.NewNilLogger()) {
 			errChan <- err
 		}
 	}()
@@ -375,11 +378,11 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 // Mocks
 
 type mockProcess struct {
-	init  func(config Config) error
+	init  func(config config.Config) error
 	start func() error
 	stop  func() error
 }
 
-func (p *mockProcess) Init(config Config) error { return p.init(config) }
-func (p *mockProcess) Start() error             { return p.start() }
-func (p *mockProcess) Stop() error              { return p.stop() }
+func (p *mockProcess) Init(config config.Config) error { return p.init(config) }
+func (p *mockProcess) Start() error                    { return p.start() }
+func (p *mockProcess) Stop() error                     { return p.stop() }

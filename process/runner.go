@@ -1,17 +1,31 @@
-package nacelle
+package process
 
 import (
 	"fmt"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/efritz/nacelle/config"
+	"github.com/efritz/nacelle/logging"
+	"github.com/efritz/nacelle/service"
 )
 
 type (
+	Container interface {
+		RegisterInitializer(Initializer, ...InitializerConfigFunc)
+		RegisterProcess(Process, ...ProcessConfigFunc)
+	}
+
+	Runner interface {
+		Container
+		Run(config.Config, logging.Logger) <-chan error
+	}
+
 	// ProcessRunner maintains a set of registered initializers and processes,
 	// starts them in order, and then monitors their results.
-	ProcessRunner struct {
-		container       ServiceContainer
+	runner struct {
+		container       service.Container
 		initializers    []*initializerMeta
 		processes       map[int][]*processMeta
 		done            chan struct{}
@@ -28,12 +42,12 @@ type (
 
 var ErrInitTimeout = fmt.Errorf("init method did not finish within timeout")
 
-// NewProcessRunner creates a new process runner with the given service container.
-func NewProcessRunner(
-	container ServiceContainer,
-	runnerConfigs ...ProcessRunnerConfigFunc,
-) *ProcessRunner {
-	runner := &ProcessRunner{
+// NewRunner creates a new process runner with the given service container.
+func NewRunner(
+	container service.Container,
+	runnerConfigs ...RunnerConfigFunc,
+) Runner {
+	runner := &runner{
 		container:    container,
 		initializers: []*initializerMeta{},
 		processes:    map[int][]*processMeta{},
@@ -51,7 +65,7 @@ func NewProcessRunner(
 
 // RegisterInitializer registers an initializer with the given configuration. The
 // order the initializers are run mirrors the order of registration.
-func (pr *ProcessRunner) RegisterInitializer(
+func (pr *runner) RegisterInitializer(
 	initializer Initializer,
 	initializerConfigs ...InitializerConfigFunc,
 ) {
@@ -66,7 +80,7 @@ func (pr *ProcessRunner) RegisterInitializer(
 
 // RegisterProcess registers a process with the given configuration. The order
 // of process registration is arbitrary.
-func (pr *ProcessRunner) RegisterProcess(
+func (pr *runner) RegisterProcess(
 	process Process,
 	processConfigs ...ProcessConfigFunc,
 ) {
@@ -107,7 +121,7 @@ func (pr *ProcessRunner) RegisterProcess(
 //
 // If any process has started, the error channel returned from Run will remain open
 // until all running processes have exited.
-func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
+func (pr *runner) Run(config config.Config, logger logging.Logger) <-chan error {
 	n := 0
 	for _, ps := range pr.processes {
 		n += len(ps)
@@ -148,7 +162,7 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 // within a graceful shutdown period). This method will block until the runner
 // has exited or the timeout period has elapsed. In the later case, an error
 // is returned.
-func (pr *ProcessRunner) Shutdown(timeout time.Duration) error {
+func (pr *runner) Shutdown(timeout time.Duration) error {
 	pr.once.Do(func() {
 		close(pr.halt)
 	})
@@ -164,7 +178,7 @@ func (pr *ProcessRunner) Shutdown(timeout time.Duration) error {
 //
 // Internals
 
-func (pr *ProcessRunner) getPriorities() []int {
+func (pr *runner) getPriorities() []int {
 	priorities := []int{}
 	for priority := range pr.processes {
 		priorities = append(priorities, priority)
@@ -174,7 +188,7 @@ func (pr *ProcessRunner) getPriorities() []int {
 	return priorities
 }
 
-func (pr *ProcessRunner) runInitializers(config Config, logger Logger) error {
+func (pr *runner) runInitializers(config config.Config, logger logging.Logger) error {
 	logger.Info("Running initializers")
 
 	for _, initializer := range pr.initializers {
@@ -204,10 +218,10 @@ func (pr *ProcessRunner) runInitializers(config Config, logger Logger) error {
 	return nil
 }
 
-func (pr *ProcessRunner) runProcesses(
+func (pr *runner) runProcesses(
 	priorities []int,
-	config Config,
-	logger Logger,
+	config config.Config,
+	logger logging.Logger,
 	startErrors chan errMeta,
 	errChan chan error,
 	wg *sync.WaitGroup,
@@ -264,11 +278,11 @@ func (pr *ProcessRunner) runProcesses(
 	return true
 }
 
-func (pr *ProcessRunner) initAndStartProcesses(
+func (pr *runner) initAndStartProcesses(
 	processes []*processMeta,
 	priority int,
-	config Config,
-	logger Logger,
+	config config.Config,
+	logger logging.Logger,
 	wg *sync.WaitGroup,
 	startErrors chan<- errMeta,
 ) error {
@@ -306,9 +320,9 @@ func (pr *ProcessRunner) initAndStartProcesses(
 	return nil
 }
 
-func (pr *ProcessRunner) watch(
+func (pr *runner) watch(
 	priorities []int,
-	logger Logger,
+	logger logging.Logger,
 	startErrors <-chan errMeta,
 	errChan chan<- error,
 ) {
@@ -335,13 +349,13 @@ func (pr *ProcessRunner) watch(
 	watcher.watch()
 }
 
-func (pr *ProcessRunner) stopProcesessBelowPriority(priorities []int, p int, logger Logger, errChan chan<- error) {
+func (pr *runner) stopProcesessBelowPriority(priorities []int, p int, logger logging.Logger, errChan chan<- error) {
 	for i := p - 1; i >= 0; i-- {
 		pr.stopProcesses(pr.processes[priorities[i]], priorities[i], logger, errChan)
 	}
 }
 
-func (pr *ProcessRunner) stopProcesses(processes []*processMeta, priority int, logger Logger, errChan chan<- error) {
+func (pr *runner) stopProcesses(processes []*processMeta, priority int, logger logging.Logger, errChan chan<- error) {
 	logger.Debug("Stopping processes at priority %d", priority)
 
 	for _, process := range processes {
@@ -358,7 +372,7 @@ func (pr *ProcessRunner) stopProcesses(processes []*processMeta, priority int, l
 //
 // Helpers
 
-func initWithTimeout(initializer Initializer, config Config, timeout time.Duration) error {
+func initWithTimeout(initializer Initializer, config config.Config, timeout time.Duration) error {
 	ch := make(chan error)
 
 	go func() {
