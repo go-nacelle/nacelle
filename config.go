@@ -60,8 +60,8 @@ type (
 		PostLoad() error
 	}
 
-	// EnvConfig is a Config object that reads from the OS environment.
-	EnvConfig struct {
+	// envConfig is a Config object that reads from the OS environment.
+	envConfig struct {
 		prefix string
 		chunks map[interface{}]interface{}
 		loaded bool
@@ -98,7 +98,7 @@ var (
 // NewEnvConfig creates a EnvConfig object with the given prefix. If supplied,
 // the {PREFIX}{NAME} envvar is read before falling back to the {NAME} envvar.
 func NewEnvConfig(prefix string) Config {
-	return &EnvConfig{
+	return &envConfig{
 		prefix: prefix,
 		chunks: map[interface{}]interface{}{},
 	}
@@ -106,7 +106,7 @@ func NewEnvConfig(prefix string) Config {
 
 // Register associates a zero-valued struct whose exported fields should be tagged
 // as `env:"name"` with a key. It is an error to register the same key twice.
-func (c *EnvConfig) Register(key interface{}, config interface{}) error {
+func (c *envConfig) Register(key interface{}, config interface{}) error {
 	if c.loaded {
 		return ErrAlreadyLoaded
 	}
@@ -120,14 +120,14 @@ func (c *EnvConfig) Register(key interface{}, config interface{}) error {
 }
 
 // MustRegister calls Register and panics on error.
-func (c *EnvConfig) MustRegister(key interface{}, config interface{}) {
+func (c *envConfig) MustRegister(key interface{}, config interface{}) {
 	if err := c.Register(key, config); err != nil {
 		panic(err.Error())
 	}
 }
 
 // Get retrieves the populated struct by its key.
-func (c *EnvConfig) Get(key interface{}) (interface{}, error) {
+func (c *envConfig) Get(key interface{}) (interface{}, error) {
 	if !c.loaded {
 		return nil, ErrNotLoaded
 	}
@@ -140,7 +140,7 @@ func (c *EnvConfig) Get(key interface{}) (interface{}, error) {
 }
 
 // MustGet calls Get and panics on error.
-func (c *EnvConfig) MustGet(key interface{}) interface{} {
+func (c *envConfig) MustGet(key interface{}) interface{} {
 	config, err := c.Get(key)
 	if err != nil {
 		panic(err.Error())
@@ -151,7 +151,7 @@ func (c *EnvConfig) MustGet(key interface{}) interface{} {
 
 // Fetch populates the target struct with the field values in the config struct
 // registered to the given key.
-func (c *EnvConfig) Fetch(key interface{}, target interface{}) error {
+func (c *envConfig) Fetch(key interface{}, target interface{}) error {
 	config, err := c.Get(key)
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func isExported(name string) bool {
 }
 
 // MustFetch calls Fetch and panics on error.
-func (c *EnvConfig) MustFetch(key interface{}, target interface{}) {
+func (c *envConfig) MustFetch(key interface{}, target interface{}) {
 	if err := c.Fetch(key, target); err != nil {
 		panic(err.Error())
 	}
@@ -231,7 +231,7 @@ func (c *EnvConfig) MustFetch(key interface{}, target interface{}) {
 // the environment. The values that are pulled from the environment are attempted to
 // be treated as JSON and, on failure, are treated as a string before assigning them
 // to registered struct fields. This allows lists and map types to be expressed easily.
-func (c *EnvConfig) Load() []error {
+func (c *envConfig) Load() []error {
 	c.loaded = true
 
 	errors := []error{}
@@ -245,7 +245,7 @@ func (c *EnvConfig) Load() []error {
 // ToMap will serialize the loaded config structs into a map. If a struct field has a
 // `mask:"true"` tag it will be omitted form the result. If a struct field has the tag
 // `display:"name"`, then the tag's value will be used in place of the field name.
-func (c *EnvConfig) ToMap() (map[string]interface{}, error) {
+func (c *envConfig) ToMap() (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 
 	for _, chunk := range c.chunks {
