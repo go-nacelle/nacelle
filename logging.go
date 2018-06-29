@@ -6,10 +6,9 @@ import (
 
 type (
 	Logger        = logging.Logger
-	ReplayLogger  = logging.ReplayLogger
 	Fields        = logging.Fields
-	LoggingConfig = logging.Config
 	LogLevel      = logging.LogLevel
+	LoggingConfig = logging.Config
 )
 
 const (
