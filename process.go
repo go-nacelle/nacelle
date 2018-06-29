@@ -10,6 +10,9 @@ type (
 	ProcessConfigFunc     = process.ProcessConfigFunc
 	InitializerConfigFunc = process.InitializerConfigFunc
 	RunnerConfigFunc      = process.RunnerConfigFunc
+
+	// ServiceInitializerFunc is an InitializerFunc with a service container argument.
+	ServiceInitializerFunc func(config Config, container ServiceContainer) error
 )
 
 var (
@@ -21,3 +24,10 @@ var (
 	WithInitializerTimeout = process.WithInitializerTimeout
 	WithProcessInitTimeout = process.WithProcessInitTimeout
 )
+
+// WrapServiceInitializerFunc creates an InitializerFunc from a ServiceInitializerFunc and a container.
+func WrapServiceInitializerFunc(container ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
+	return InitializerFunc(func(config Config) error {
+		return f(config, container)
+	})
+}

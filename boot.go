@@ -35,6 +35,12 @@ type (
 	// function should register initializers and processes and inject values
 	// into the service container where necessary.
 	AppInitFunc func(ProcessContainer, ServiceContainer) error
+
+	configToken string
+)
+
+var (
+	loggingConfigToken = configToken("nacelle-logging")
 )
 
 // NewBootstrapper creates an entrypoint to the program with the given configs.
@@ -45,7 +51,7 @@ func NewBootstrapper(
 	bootstrapperConfigs ...BootstrapperConfigFunc,
 ) *Bootstrapper {
 	config := &bootstrapperConfig{
-		loggingInitFunc: InitLogging,
+		loggingInitFunc: defaultLogginInitFunc,
 	}
 
 	for _, f := range bootstrapperConfigs {
@@ -73,7 +79,7 @@ func (bs *Bootstrapper) Boot() int {
 	}
 
 	config := NewEnvConfig(bs.name)
-	if err := config.Register(LoggingConfigToken, &logging.Config{}); err != nil {
+	if err := config.Register(loggingConfigToken, &logging.Config{}); err != nil {
 		logging.LogEmergencyError("failed to register logging config (%s)", err)
 		return 1
 	}
