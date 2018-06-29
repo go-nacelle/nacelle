@@ -127,15 +127,20 @@ func (pr *ProcessRunner) Run(config Config, logger Logger) <-chan error {
 		wg          = &sync.WaitGroup{}
 	)
 
-	if !pr.runProcesses(priorities, config, logger, startErrors, errChan, wg) {
+	if !pr.runProcesses(
+		priorities,
+		config,
+		logger,
+		startErrors,
+		errChan,
+		wg,
+	) {
 		return errChan
 	}
 
 	logger.Info("All processes running")
-
 	go pr.watch(priorities, logger, startErrors, errChan)
 	go closeAfterWait(wg, startErrors)
-
 	return chainUntilHalt(errChan, pr.done)
 }
 
