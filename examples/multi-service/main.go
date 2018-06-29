@@ -2,7 +2,8 @@ package main
 
 import (
 	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/process"
+	basegrpc "github.com/efritz/nacelle/base/grpc"
+	basehttp "github.com/efritz/nacelle/base/http"
 
 	"github.com/efritz/nacelle/examples/multi-service/grpc"
 	"github.com/efritz/nacelle/examples/multi-service/http"
@@ -11,15 +12,15 @@ import (
 
 func setupConfigs(config nacelle.Config) error {
 	config.MustRegister(secret.ConfigToken, &secret.Config{})
-	config.MustRegister(process.HTTPConfigToken, &process.HTTPConfig{})
-	config.MustRegister(process.GRPCConfigToken, &process.GRPCConfig{})
+	config.MustRegister(basehttp.ConfigToken, &basehttp.Config{})
+	config.MustRegister(basegrpc.ConfigToken, &basegrpc.Config{})
 	return nil
 }
 
-func setupProcesses(runner *nacelle.ProcessRunner, container nacelle.ServiceContainer) error {
+func setupProcesses(runner nacelle.ProcessContainer, container nacelle.ServiceContainer) error {
 	runner.RegisterInitializer(nacelle.WrapServiceInitializerFunc(container, secret.Init))
-	runner.RegisterProcess(process.NewHTTPServer(http.NewEndpointSet()), nacelle.WithProcessName("http"))
-	runner.RegisterProcess(process.NewGRPCServer(grpc.NewEndpointSet()), nacelle.WithProcessName("grpc"))
+	runner.RegisterProcess(basehttp.NewServer(http.NewEndpointSet()), nacelle.WithProcessName("http"))
+	runner.RegisterProcess(basegrpc.NewServer(grpc.NewEndpointSet()), nacelle.WithProcessName("grpc"))
 	return nil
 }
 
