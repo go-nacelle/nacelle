@@ -1,7 +1,7 @@
-package log
+package logging
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -17,8 +17,8 @@ type Config struct {
 }
 
 var (
-	ErrIllegalLevel    = errors.New("illegal log level")
-	ErrIllegalEncoding = errors.New("illegal log encoding")
+	ErrIllegalLevel    = fmt.Errorf("illegal log level")
+	ErrIllegalEncoding = fmt.Errorf("illegal log encoding")
 )
 
 func (c *Config) PostLoad() error {

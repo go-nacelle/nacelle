@@ -2,8 +2,9 @@ package nacelle
 
 import (
 	"github.com/aphistic/sweet"
-	"github.com/efritz/nacelle/log"
 	. "github.com/onsi/gomega"
+
+	"github.com/efritz/nacelle/logging"
 )
 
 type ServiceSuite struct{}
@@ -12,7 +13,7 @@ func (s *ServiceSuite) TestGetLogger(t sweet.T) {
 	container, err := MakeServiceContainer()
 	Expect(err).To(BeNil())
 
-	logger, err := log.InitGomolShim(&LoggingConfig{
+	logger, err := logging.InitGomolShim(&LoggingConfig{
 		LogLevel: "warning",
 	})
 

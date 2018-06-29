@@ -1,4 +1,4 @@
-package log
+package logging
 
 type (
 	logShim interface {

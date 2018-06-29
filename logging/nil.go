@@ -1,4 +1,4 @@
-package log
+package logging
 
 type NilShim struct{}
 

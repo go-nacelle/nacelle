@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/log"
 	"github.com/efritz/nacelle/process/internal"
 )
 
@@ -82,7 +81,7 @@ func (s *GRPCSuite) TestInitError(t sweet.T) {
 
 func makeGRPCServer(initializer func(nacelle.Config, *grpc.Server) error) *GRPCServer {
 	server := NewGRPCServer(GRPCServerInitializerFunc(initializer))
-	server.Logger = log.NewNilLogger()
+	server.Logger = nacelle.NewNilLogger()
 	return server
 }
 

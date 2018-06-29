@@ -6,8 +6,6 @@ import (
 
 	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
-
-	"github.com/efritz/nacelle/log"
 )
 
 type RunnerSuite struct{}

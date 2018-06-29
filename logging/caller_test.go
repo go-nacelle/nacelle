@@ -1,4 +1,4 @@
-package log
+package logging
 
 import (
 	"encoding/json"
@@ -48,9 +48,9 @@ func (s *CallerSuite) testBasic(init func(*Config) (Logger, error)) {
 	// must be updated.
 	start := 27
 
-	Expect(data1["caller"]).To(Equal(fmt.Sprintf("log/caller_test.go:%d", start+0)))
-	Expect(data2["caller"]).To(Equal(fmt.Sprintf("log/caller_test.go:%d", start+1)))
-	Expect(data3["caller"]).To(Equal(fmt.Sprintf("log/caller_test.go:%d", start+2)))
+	Expect(data1["caller"]).To(Equal(fmt.Sprintf("logging/caller_test.go:%d", start+0)))
+	Expect(data2["caller"]).To(Equal(fmt.Sprintf("logging/caller_test.go:%d", start+1)))
+	Expect(data3["caller"]).To(Equal(fmt.Sprintf("logging/caller_test.go:%d", start+2)))
 }
 
 func (s *CallerSuite) testReplay(init func(*Config) (Logger, error)) {
@@ -85,9 +85,9 @@ func (s *CallerSuite) testReplay(init func(*Config) (Logger, error)) {
 	// must be updated.
 	start := 63
 
-	Expect(data1["caller"]).To(Equal(fmt.Sprintf("log/caller_test.go:%d", start+0)))
-	Expect(data2["caller"]).To(Equal(fmt.Sprintf("log/caller_test.go:%d", start+1)))
-	Expect(data3["caller"]).To(Equal(fmt.Sprintf("log/caller_test.go:%d", start+2)))
+	Expect(data1["caller"]).To(Equal(fmt.Sprintf("logging/caller_test.go:%d", start+0)))
+	Expect(data2["caller"]).To(Equal(fmt.Sprintf("logging/caller_test.go:%d", start+1)))
+	Expect(data3["caller"]).To(Equal(fmt.Sprintf("logging/caller_test.go:%d", start+2)))
 }
 
 func (s *CallerSuite) testRollup(init func(*Config) (Logger, error)) {
@@ -122,8 +122,8 @@ func (s *CallerSuite) testRollup(init func(*Config) (Logger, error)) {
 	// must be updated.
 	start := 100
 
-	Expect(data1["caller"]).To(Equal(fmt.Sprintf("log/caller_test.go:%d", start)))
-	Expect(data2["caller"]).To(Equal(fmt.Sprintf("log/caller_test.go:%d", start)))
+	Expect(data1["caller"]).To(Equal(fmt.Sprintf("logging/caller_test.go:%d", start)))
+	Expect(data2["caller"]).To(Equal(fmt.Sprintf("logging/caller_test.go:%d", start)))
 }
 
 func (s *CallerSuite) testFields(init func(*Config) (Logger, error)) {

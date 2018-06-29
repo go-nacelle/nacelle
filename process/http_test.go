@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/log"
 )
 
 type HTTPSuite struct{}
@@ -60,7 +59,7 @@ func (s *HTTPSuite) TestBadConfig(t sweet.T) {
 		return nil
 	})
 
-	server.Logger = log.NewNilLogger()
+	server.Logger = nacelle.NewNilLogger()
 	Expect(server.Init(makeConfig(HTTPConfigToken, &emptyConfig{}))).To(Equal(ErrBadHTTPConfig))
 }
 
@@ -92,7 +91,7 @@ func (s *HTTPSuite) TestInitError(t sweet.T) {
 
 func makeHTTPServer(initializer func(nacelle.Config, *http.Server) error) *HTTPServer {
 	server := NewHTTPServer(HTTPServerInitializerFunc(initializer))
-	server.Logger = log.NewNilLogger()
+	server.Logger = nacelle.NewNilLogger()
 	return server
 }
 
