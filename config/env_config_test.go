@@ -10,15 +10,15 @@ import (
 )
 
 type (
-	ConfigSuite   struct{}
-	TestConfigKey struct{}
+	EnvConfigSuite struct{}
+	TestConfigKey  struct{}
 )
 
-func (s *ConfigSuite) SetUpTest(t sweet.T) {
+func (s *EnvConfigSuite) SetUpTest(t sweet.T) {
 	os.Clearenv()
 }
 
-func (s *ConfigSuite) TestSimpleConfig(t sweet.T) {
+func (s *EnvConfigSuite) TestSimpleConfig(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -40,7 +40,7 @@ func (s *ConfigSuite) TestSimpleConfig(t sweet.T) {
 	Expect(chunk.Z).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *ConfigSuite) TestNestedJSONDeserialization(t sweet.T) {
+func (s *EnvConfigSuite) TestNestedJSONDeserialization(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestEmbeddedJSONConfig{}
@@ -60,7 +60,7 @@ func (s *ConfigSuite) TestNestedJSONDeserialization(t sweet.T) {
 	Expect(chunk.P2).To(Equal(&TestJSONPayload{V1: 5, V2: 6.28, V3: false}))
 }
 
-func (s *ConfigSuite) TestRequired(t sweet.T) {
+func (s *EnvConfigSuite) TestRequired(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestRequiredConfig{}
@@ -73,7 +73,7 @@ func (s *ConfigSuite) TestRequired(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("no value supplied for field 'X'")))
 }
 
-func (s *ConfigSuite) TestRequiredBadTag(t sweet.T) {
+func (s *EnvConfigSuite) TestRequiredBadTag(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestBadRequiredConfig{}
@@ -86,7 +86,7 @@ func (s *ConfigSuite) TestRequiredBadTag(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("field 'X' has an invalid required tag")))
 }
 
-func (s *ConfigSuite) TestDefault(t sweet.T) {
+func (s *EnvConfigSuite) TestDefault(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestDefaultConfig{}
@@ -103,7 +103,7 @@ func (s *ConfigSuite) TestDefault(t sweet.T) {
 	Expect(chunk.Y).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *ConfigSuite) TestBadType(t sweet.T) {
+func (s *EnvConfigSuite) TestBadType(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -121,7 +121,7 @@ func (s *ConfigSuite) TestBadType(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("value supplied for field 'Z' cannot be coerced into the expected type")))
 }
 
-func (s *ConfigSuite) TestBadDefaultType(t sweet.T) {
+func (s *EnvConfigSuite) TestBadDefaultType(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestBadDefaultConfig{}
@@ -134,7 +134,7 @@ func (s *ConfigSuite) TestBadDefaultType(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("default value for field 'X' cannot be coerced into the expected type")))
 }
 
-func (s *ConfigSuite) TestUnprefixed(t sweet.T) {
+func (s *EnvConfigSuite) TestUnprefixed(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -155,7 +155,7 @@ func (s *ConfigSuite) TestUnprefixed(t sweet.T) {
 	Expect(chunk.Y).To(Equal(456))
 }
 
-func (s *ConfigSuite) TestToMap(t sweet.T) {
+func (s *EnvConfigSuite) TestToMap(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk1 = &TestSimpleConfig{}
@@ -183,7 +183,7 @@ func (s *ConfigSuite) TestToMap(t sweet.T) {
 	Expect(dump["p2"]).To(MatchJSON(`{"v_int": 5, "v_float": 6.28, "v_bool": false}`))
 }
 
-func (s *ConfigSuite) TestMask(t sweet.T) {
+func (s *EnvConfigSuite) TestMask(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestMaskConfig{}
@@ -203,7 +203,7 @@ func (s *ConfigSuite) TestMask(t sweet.T) {
 	Expect(dump["x"]).To(Equal("foo"))
 }
 
-func (s *ConfigSuite) TestBadMaskTag(t sweet.T) {
+func (s *EnvConfigSuite) TestBadMaskTag(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestBadMaskTagConfig{}
@@ -216,7 +216,7 @@ func (s *ConfigSuite) TestBadMaskTag(t sweet.T) {
 	Expect(err).To(MatchError("field 'X' has an invalid mask tag"))
 }
 
-func (s *ConfigSuite) TestPostLoadConfig(t sweet.T) {
+func (s *EnvConfigSuite) TestPostLoadConfig(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestPostLoadConfig{}
@@ -233,7 +233,7 @@ func (s *ConfigSuite) TestPostLoadConfig(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("X must be positive")))
 }
 
-func (s *ConfigSuite) TestUnsettableFields(t sweet.T) {
+func (s *EnvConfigSuite) TestUnsettableFields(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestUnsettableConfig{}
@@ -246,14 +246,14 @@ func (s *ConfigSuite) TestUnsettableFields(t sweet.T) {
 	Expect(errors).To(ContainElement(MatchError("field 'x' can not be set")))
 }
 
-func (s *ConfigSuite) TestRegistrationAfterLoad(t sweet.T) {
+func (s *EnvConfigSuite) TestRegistrationAfterLoad(t sweet.T) {
 	config := NewEnvConfig("app")
 	config.Register("pre-load", struct{}{})
 	config.Load()
 	Expect(config.Register("post-load", nil)).To(Equal(ErrAlreadyLoaded))
 }
 
-func (s *ConfigSuite) TestDuplicateRegistration(t sweet.T) {
+func (s *EnvConfigSuite) TestDuplicateRegistration(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -265,7 +265,7 @@ func (s *ConfigSuite) TestDuplicateRegistration(t sweet.T) {
 	Expect(err2).To(MatchError("duplicate config key `dup`"))
 }
 
-func (s *ConfigSuite) TestMustRegisterPanics(t sweet.T) {
+func (s *EnvConfigSuite) TestMustRegisterPanics(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -278,25 +278,25 @@ func (s *ConfigSuite) TestMustRegisterPanics(t sweet.T) {
 	}).To(Panic())
 }
 
-func (s *ConfigSuite) TestGetBeforeLoad(t sweet.T) {
+func (s *EnvConfigSuite) TestGetBeforeLoad(t sweet.T) {
 	_, err := NewEnvConfig("app").Get("pre-load")
 	Expect(err).To(Equal(ErrNotLoaded))
 }
 
-func (s *ConfigSuite) TestGetUnregisteredKey(t sweet.T) {
+func (s *EnvConfigSuite) TestGetUnregisteredKey(t sweet.T) {
 	config := NewEnvConfig("app")
 	config.Load()
 	_, err := config.Get("unregistered")
 	Expect(err).To(MatchError("unregistered config key `unregistered`"))
 }
 
-func (s *ConfigSuite) TestMustGetPanics(t sweet.T) {
+func (s *EnvConfigSuite) TestMustGetPanics(t sweet.T) {
 	Expect(func() {
 		NewEnvConfig("app").MustGet("unregistered")
 	}).To(Panic())
 }
 
-func (s *ConfigSuite) TestFetch(t sweet.T) {
+func (s *EnvConfigSuite) TestFetch(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -316,7 +316,7 @@ func (s *ConfigSuite) TestFetch(t sweet.T) {
 	Expect(target.Z).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *ConfigSuite) TestFetchIsomorphicType(t sweet.T) {
+func (s *EnvConfigSuite) TestFetchIsomorphicType(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -336,7 +336,7 @@ func (s *ConfigSuite) TestFetchIsomorphicType(t sweet.T) {
 	Expect(target.Z).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *ConfigSuite) TestFetchBadType(t sweet.T) {
+func (s *EnvConfigSuite) TestFetchBadType(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestSimpleConfig{}
@@ -353,7 +353,7 @@ func (s *ConfigSuite) TestFetchBadType(t sweet.T) {
 	Expect(config.Fetch("simple", target)).NotTo(BeNil())
 }
 
-func (s *ConfigSuite) TestFetchPostLoadWithConversion(t sweet.T) {
+func (s *EnvConfigSuite) TestFetchPostLoadWithConversion(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = &TestPostLoadConversion{}
@@ -370,7 +370,7 @@ func (s *ConfigSuite) TestFetchPostLoadWithConversion(t sweet.T) {
 	Expect(target.duration).To(Equal(time.Second * 3))
 }
 
-func (s *ConfigSuite) TestFetchWithConfigTagRoundtrip(t sweet.T) {
+func (s *EnvConfigSuite) TestFetchWithConfigTagRoundtrip(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")
 		chunk  = MustApplyTagModifiers(&TestPostLoadConversion{}, NewEnvTagPrefixer("foo"))
@@ -386,7 +386,7 @@ func (s *ConfigSuite) TestFetchWithConfigTagRoundtrip(t sweet.T) {
 	Expect(target.duration).To(Equal(time.Second * 3))
 }
 
-func (s *ConfigSuite) TestSerializeKey(t sweet.T) {
+func (s *EnvConfigSuite) TestSerializeKey(t sweet.T) {
 	Expect(serializeKey("foo")).To(Equal("foo"))
 	Expect(serializeKey(TestStringer{})).To(Equal("bar"))
 	Expect(serializeKey(TestConfigKey{})).To(Equal("TestConfigKey"))
