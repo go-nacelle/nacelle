@@ -10,7 +10,7 @@ import (
 type ServiceSuite struct{}
 
 func (s *ServiceSuite) TestGetLogger(t sweet.T) {
-	container, err := MakeServiceContainer()
+	container, err := NewContainer()
 	Expect(err).To(BeNil())
 
 	logger, err := logging.InitGomolShim(&logging.Config{
@@ -23,13 +23,13 @@ func (s *ServiceSuite) TestGetLogger(t sweet.T) {
 }
 
 func (s *ServiceSuite) TestGetUnregisteredLogger(t sweet.T) {
-	container, err := MakeServiceContainer()
+	container, err := NewContainer()
 	Expect(err).To(BeNil())
 	Expect(container.GetLogger()).NotTo(BeNil())
 }
 
 func (s *ServiceSuite) TestSetBadLogger(t sweet.T) {
-	container, err := MakeServiceContainer()
+	container, err := NewContainer()
 	Expect(err).To(BeNil())
 	Expect(container.Set("logger", struct{}{})).To(MatchError("logger instance is not a nacelle.Logger"))
 }
