@@ -20,7 +20,7 @@ var (
 	ErrBadConfig = fmt.Errorf("discovery config not registered properly")
 )
 
-func makeClient(config nacelle.Config, container *nacelle.ServiceContainer) (reception.Client, error) {
+func makeClient(config nacelle.Config, container nacelle.ServiceContainer) (reception.Client, error) {
 	discoveryConfig := &Config{}
 	if err := config.Fetch(ConfigToken, discoveryConfig); err != nil {
 		return nil, ErrBadConfig

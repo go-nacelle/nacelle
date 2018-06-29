@@ -20,7 +20,10 @@ const (
 )
 
 var (
-	NewNilLogger     = logging.NewNilLogger
-	NewReplayAdapter = logging.NewReplayAdapter
-	NewRollupAdapter = logging.NewRollupAdapter
+	NewNilLogger       = logging.NewNilLogger
+	NewReplayAdapter   = logging.NewReplayAdapter
+	NewRollupAdapter   = logging.NewRollupAdapter
+	LogEmergencyError  = logging.LogEmergencyError
+	LogEmergencyErrors = logging.LogEmergencyErrors
+	EmergencyLogger    = logging.EmergencyLogger
 )

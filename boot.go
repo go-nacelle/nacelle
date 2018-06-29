@@ -1,6 +1,11 @@
 package nacelle
 
-import "os"
+import (
+	"os"
+
+	"github.com/efritz/nacelle/logging"
+	"github.com/efritz/nacelle/service"
+)
 
 type (
 	// Bootstrapper wraps the entrypoint to the program.
@@ -28,7 +33,7 @@ type (
 	// configuration loading, sanity checks, and setting up loggers. This
 	// function should register initializers and processes and inject values
 	// into the service container where necessary.
-	AppInitFunc func(*ProcessRunner, *ServiceContainer) error
+	AppInitFunc func(*ProcessRunner, ServiceContainer) error
 )
 
 // NewBootstrapper creates an entrypoint to the program with the given configs.
@@ -60,31 +65,31 @@ func NewBootstrapper(
 // method does not return in any meaningful way (it blocks until
 // the associated process runner has completed).
 func (bs *Bootstrapper) Boot() int {
-	container, err := MakeServiceContainer()
+	container, err := service.NewContainer()
 	if err != nil {
-		logEmergencyError("failed to create service container (%s)", err)
+		logging.LogEmergencyError("failed to create service container (%s)", err)
 		return 1
 	}
 
 	config := NewEnvConfig(bs.name)
 	if err := config.Register(LoggingConfigToken, &LoggingConfig{}); err != nil {
-		logEmergencyError("failed to register logging config (%s)", err)
+		logging.LogEmergencyError("failed to register logging config (%s)", err)
 		return 1
 	}
 
 	if err := bs.configSetupFunc(config); err != nil {
-		logEmergencyError("failed to register configs (%s)", err)
+		logging.LogEmergencyError("failed to register configs (%s)", err)
 		return 1
 	}
 
 	if errs := config.Load(); len(errs) > 0 {
-		logEmergencyErrors("Failed to load configuration (%s)", errs)
+		logging.LogEmergencyErrors("Failed to load configuration (%s)", errs)
 		return 1
 	}
 
 	logger, err := bs.loggingInitFunc(config)
 	if err != nil {
-		logEmergencyError("failed to initialize logging (%s)", err)
+		logging.LogEmergencyError("failed to initialize logging (%s)", err)
 		return 1
 	}
 
@@ -92,7 +97,7 @@ func (bs *Bootstrapper) Boot() int {
 
 	defer func() {
 		if err := logger.Sync(); err != nil {
-			logEmergencyError("failed to sync logs on shutdown (%s)", err)
+			logging.LogEmergencyError("failed to sync logs on shutdown (%s)", err)
 		}
 	}()
 

@@ -11,7 +11,7 @@ type (
 	// ProcessRunner maintains a set of registered initializers and processes,
 	// starts them in order, and then monitors their results.
 	ProcessRunner struct {
-		container       *ServiceContainer
+		container       ServiceContainer
 		initializers    []*initializerMeta
 		processes       map[int][]*processMeta
 		done            chan struct{}
@@ -30,7 +30,7 @@ var ErrInitTimeout = fmt.Errorf("init method did not finish within timeout")
 
 // NewProcessRunner creates a new process runner with the given service container.
 func NewProcessRunner(
-	container *ServiceContainer,
+	container ServiceContainer,
 	runnerConfigs ...ProcessRunnerConfigFunc,
 ) *ProcessRunner {
 	runner := &ProcessRunner{

@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/aphistic/sweet"
+	"github.com/efritz/nacelle/service"
 	. "github.com/onsi/gomega"
 )
 
@@ -12,7 +13,7 @@ type RunnerSuite struct{}
 
 func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	var (
-		container, _ = MakeServiceContainer()
+		container, _ = service.NewContainer()
 		runner       = NewProcessRunner(container)
 		initChan     = make(chan string)
 		startChan    = make(chan string)
@@ -128,7 +129,7 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 
 func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 	var (
-		container, _ = MakeServiceContainer()
+		container, _ = service.NewContainer()
 		runner       = NewProcessRunner(container)
 		startChan    = make(chan string)
 		errChan      = make(chan error)
@@ -212,7 +213,7 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 
 func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	var (
-		container, _ = MakeServiceContainer()
+		container, _ = service.NewContainer()
 		runner       = NewProcessRunner(container)
 		stopChan     = make(chan string)
 		errChan      = make(chan error)
@@ -285,7 +286,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 
 func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	var (
-		container, _ = MakeServiceContainer()
+		container, _ = service.NewContainer()
 		runner       = NewProcessRunner(container)
 		initChan     = make(chan string)
 		stopChan     = make(chan string)

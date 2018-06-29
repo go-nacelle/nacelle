@@ -1,4 +1,4 @@
-package nacelle
+package service
 
 import (
 	"github.com/aphistic/sweet"
@@ -13,7 +13,7 @@ func (s *ServiceSuite) TestGetLogger(t sweet.T) {
 	container, err := MakeServiceContainer()
 	Expect(err).To(BeNil())
 
-	logger, err := logging.InitGomolShim(&LoggingConfig{
+	logger, err := logging.InitGomolShim(&logging.Config{
 		LogLevel: "warning",
 	})
 

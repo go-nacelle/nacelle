@@ -11,7 +11,7 @@ import (
 // TODO - name should be part of config?
 
 func InitAnnouncer(name string, onDisconnect func(error)) nacelle.ServiceInitializerFunc {
-	return func(config nacelle.Config, container *nacelle.ServiceContainer) error {
+	return func(config nacelle.Config, container nacelle.ServiceContainer) error {
 		client, err := makeClient(config, container)
 		if err != nil {
 			return err
@@ -38,7 +38,7 @@ func InitAnnouncer(name string, onDisconnect func(error)) nacelle.ServiceInitial
 }
 
 func InitHotBackup(name string, onDisconnect func(error)) nacelle.ServiceInitializerFunc {
-	return func(config nacelle.Config, container *nacelle.ServiceContainer) error {
+	return func(config nacelle.Config, container nacelle.ServiceContainer) error {
 		client, err := makeClient(config, container)
 		if err != nil {
 			return err
@@ -63,7 +63,7 @@ func InitHotBackup(name string, onDisconnect func(error)) nacelle.ServiceInitial
 }
 
 func InitWatcher(name string, f func(*reception.ServiceState)) nacelle.ServiceInitializerFunc {
-	return func(config nacelle.Config, container *nacelle.ServiceContainer) error {
+	return func(config nacelle.Config, container nacelle.ServiceContainer) error {
 		client, err := makeClient(config, container)
 		if err != nil {
 			return err
