@@ -7,6 +7,7 @@ import (
 	"github.com/aphistic/sweet"
 	"github.com/efritz/glock"
 	"github.com/efritz/nacelle"
+	"github.com/efritz/nacelle/service"
 	. "github.com/onsi/gomega"
 )
 
@@ -16,7 +17,7 @@ func (s *WorkerSuite) TestRunAndStop(t sweet.T) {
 	var (
 		spec     = newMockWorkerSpec()
 		clock    = glock.NewMockClock()
-		worker   = newWorker(spec, clock)
+		worker   = makeWorker(spec, clock)
 		tickChan = make(chan struct{})
 		errChan  = make(chan error)
 	)
@@ -65,7 +66,7 @@ func (s *WorkerSuite) TestBadInject(t sweet.T) {
 func (s *WorkerSuite) TestInitError(t sweet.T) {
 	var (
 		spec   = newMockWorkerSpec()
-		worker = NewWorker(spec)
+		worker = makeWorker(spec, glock.NewRealClock())
 	)
 
 	spec.init = func(config nacelle.Config, worker *Worker) error {
@@ -80,7 +81,7 @@ func (s *WorkerSuite) TestTickError(t sweet.T) {
 	var (
 		spec    = newMockWorkerSpec()
 		clock   = glock.NewMockClock()
-		worker  = newWorker(spec, clock)
+		worker  = makeWorker(spec, clock)
 		errChan = make(chan error)
 	)
 
@@ -98,6 +99,12 @@ func (s *WorkerSuite) TestTickError(t sweet.T) {
 	clock.BlockingAdvance(time.Second * 5)
 	Eventually(errChan).Should(Receive(MatchError("utoh")))
 	Expect(worker.IsDone()).To(BeTrue())
+}
+
+func makeWorker(spec WorkerSpec, clock glock.Clock) *Worker {
+	worker := newWorker(spec, clock)
+	worker.Container, _ = service.NewContainer()
+	return worker
 }
 
 //

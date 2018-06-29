@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/efritz/nacelle"
+	"github.com/efritz/nacelle/service"
 )
 
 type HTTPSuite struct{}
@@ -92,6 +93,7 @@ func (s *HTTPSuite) TestInitError(t sweet.T) {
 func makeHTTPServer(initializer func(nacelle.Config, *http.Server) error) *HTTPServer {
 	server := NewHTTPServer(HTTPServerInitializerFunc(initializer))
 	server.Logger = nacelle.NewNilLogger()
+	server.Container, _ = service.NewContainer()
 	return server
 }
 

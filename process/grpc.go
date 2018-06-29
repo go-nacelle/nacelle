@@ -12,8 +12,8 @@ import (
 
 type (
 	GRPCServer struct {
-		Logger        nacelle.Logger            `service:"logger"`
-		Container     *nacelle.ServiceContainer `service:"container"`
+		Logger        nacelle.Logger           `service:"logger"`
+		Container     nacelle.ServiceContainer `service:"container"`
 		configToken   interface{}
 		initializer   GRPCServerInitializer
 		listener      *net.TCPListener

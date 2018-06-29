@@ -7,6 +7,7 @@ import (
 	"github.com/aphistic/sweet"
 	"github.com/aphistic/sweet-junit"
 	"github.com/efritz/nacelle"
+	"github.com/efritz/nacelle/service"
 	. "github.com/onsi/gomega"
 )
 
@@ -42,8 +43,8 @@ func makeConfig(token, base interface{}) nacelle.Config {
 type A struct{ X int }
 type B struct{ X float64 }
 
-func makeBadContainer() *nacelle.ServiceContainer {
-	container := nacelle.NewServiceContainer()
+func makeBadContainer() nacelle.ServiceContainer {
+	container, _ := service.NewContainer()
 	container.Set("A", &B{})
 	return container
 }

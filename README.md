@@ -114,7 +114,7 @@ method. This example uses the former.
 
 ```go
 type CacheInitializer struct{
-    Container *nacelle.ServiceContainer `service:"container"`
+    Container nacelle.ServiceContainer `service:"container"`
 }
 
 func (i *CacheInitializer) Init(config nacelle.Config) error {

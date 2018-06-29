@@ -12,7 +12,7 @@ import (
 
 type (
 	Worker struct {
-		Container    *nacelle.ServiceContainer `service:"container"`
+		Container    nacelle.ServiceContainer `service:"container"`
 		configToken  interface{}
 		spec         WorkerSpec
 		clock        glock.Clock

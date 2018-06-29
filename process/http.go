@@ -13,8 +13,8 @@ import (
 
 type (
 	HTTPServer struct {
-		Logger          nacelle.Logger            `service:"logger"`
-		Container       *nacelle.ServiceContainer `service:"container"`
+		Logger          nacelle.Logger           `service:"logger"`
+		Container       nacelle.ServiceContainer `service:"container"`
 		configToken     interface{}
 		initializer     HTTPServerInitializer
 		listener        *net.TCPListener

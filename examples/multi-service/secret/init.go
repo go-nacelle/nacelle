@@ -7,7 +7,7 @@ import (
 	"github.com/efritz/nacelle"
 )
 
-func Init(config nacelle.Config, container *nacelle.ServiceContainer) error {
+func Init(config nacelle.Config, container nacelle.ServiceContainer) error {
 	secretConfig := &Config{}
 	if err := config.Fetch(ConfigToken, secretConfig); err != nil {
 		return err

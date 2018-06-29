@@ -12,6 +12,7 @@ import (
 
 	"github.com/efritz/nacelle"
 	"github.com/efritz/nacelle/process/internal"
+	"github.com/efritz/nacelle/service"
 )
 
 type GRPCSuite struct{}
@@ -82,6 +83,7 @@ func (s *GRPCSuite) TestInitError(t sweet.T) {
 func makeGRPCServer(initializer func(nacelle.Config, *grpc.Server) error) *GRPCServer {
 	server := NewGRPCServer(GRPCServerInitializerFunc(initializer))
 	server.Logger = nacelle.NewNilLogger()
+	server.Container, _ = service.NewContainer()
 	return server
 }
 
