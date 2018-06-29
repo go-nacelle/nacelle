@@ -4,16 +4,19 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type (
 	processWatcher struct {
 		shutdownCallback func()
 		logger           Logger
+		shutdownTimeout  time.Duration
 		startErrors      <-chan errMeta
 		errChan          chan<- error
 		halt             <-chan struct{}
 		directives       chan watcherDirective
+		draining         chan struct{}
 	}
 
 	watcherDirective int
@@ -27,6 +30,7 @@ const (
 func newWatcher(
 	shutdownCallback func(),
 	logger Logger,
+	shutdownTimeout time.Duration,
 	startErrors <-chan errMeta,
 	errChan chan<- error,
 	halt <-chan struct{},
@@ -34,10 +38,12 @@ func newWatcher(
 	return &processWatcher{
 		shutdownCallback: shutdownCallback,
 		logger:           logger,
+		shutdownTimeout:  shutdownTimeout,
 		startErrors:      startErrors,
 		errChan:          errChan,
 		halt:             halt,
 		directives:       make(chan watcherDirective),
+		draining:         make(chan struct{}),
 	}
 }
 
@@ -45,18 +51,22 @@ func (w *processWatcher) watch() {
 	go w.watchSignal()
 	go w.watchErrors()
 	go w.watchHaltChan()
+	go w.watchShutdownTimeout()
 
-	stopped := false
 	for directive := range w.directives {
 		if directive == directiveAbort {
 			return
 		}
 
-		if !stopped {
-			stopped = true
-			w.logger.Info("Starting graceful shutdown")
-			w.shutdownCallback()
+		select {
+		case <-w.draining:
+			continue
+		default:
 		}
+
+		close(w.draining)
+		w.logger.Info("Starting graceful shutdown")
+		w.shutdownCallback()
 	}
 }
 
@@ -69,13 +79,13 @@ func (w *processWatcher) watchSignal() {
 	for range sigChan {
 		if urgent {
 			w.logger.Error("Received second signal, no longer waiting for graceful exit")
-			w.directives <- directiveAbort
+			w.abort()
 			return
 		}
 
 		urgent = true
 		w.logger.Info("Received signal, starting graceful shutdown")
-		w.directives <- directiveShutdown
+		w.shutdown()
 	}
 }
 
@@ -94,14 +104,28 @@ func (w *processWatcher) watchErrors() {
 			w.errChan <- err.err
 		}
 
-		w.directives <- directiveShutdown
+		w.shutdown()
 	}
 
-	w.directives <- directiveShutdown
+	w.shutdown()
 }
 
 func (w *processWatcher) watchHaltChan() {
 	<-w.halt
 	w.logger.Info("Received external shutdown request")
+	w.shutdown()
+}
+
+func (w *processWatcher) watchShutdownTimeout() {
+	<-w.draining
+	<-time.After(w.shutdownTimeout)
+	w.abort()
+}
+
+func (w *processWatcher) abort() {
+	w.directives <- directiveAbort
+}
+
+func (w *processWatcher) shutdown() {
 	w.directives <- directiveShutdown
 }

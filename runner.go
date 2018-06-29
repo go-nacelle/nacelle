@@ -12,12 +12,13 @@ type (
 	// ProcessRunner maintains a set of registered initializers and processes,
 	// starts them in order, and then monitors their results.
 	ProcessRunner struct {
-		container    *ServiceContainer
-		initializers []*initializerMeta
-		processes    map[int][]*processMeta
-		done         chan struct{}
-		halt         chan struct{}
-		once         *sync.Once
+		container       *ServiceContainer
+		initializers    []*initializerMeta
+		processes       map[int][]*processMeta
+		done            chan struct{}
+		halt            chan struct{}
+		once            *sync.Once
+		shutdownTimeout time.Duration
 	}
 
 	errMeta struct {
@@ -312,6 +313,8 @@ func (pr *ProcessRunner) watch(
 	startErrors <-chan errMeta,
 	errChan chan<- error,
 ) {
+	defer close(pr.done)
+
 	callback := func() {
 		pr.stopProcesessBelowPriority(
 			priorities,
@@ -321,8 +324,15 @@ func (pr *ProcessRunner) watch(
 		)
 	}
 
-	defer close(pr.done)
-	watcher := newWatcher(callback, logger, startErrors, errChan, pr.halt)
+	watcher := newWatcher(
+		callback,
+		logger,
+		pr.shutdownTimeout,
+		startErrors,
+		errChan,
+		pr.halt,
+	)
+
 	watcher.watch()
 }
 
