@@ -1,4 +1,4 @@
-package process
+package grpc
 
 import "google.golang.org/grpc"
 

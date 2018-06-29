@@ -1,3 +1,0 @@
-# Nacelle Process
-
-TODO

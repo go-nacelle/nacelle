@@ -1,4 +1,4 @@
-package process
+package grpc
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/process/internal"
+	"github.com/efritz/nacelle/base/grpc/internal"
 	"github.com/efritz/nacelle/service"
 )
 

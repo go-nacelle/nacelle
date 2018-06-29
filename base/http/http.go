@@ -1,4 +1,4 @@
-package process
+package http
 
 import (
 	"context"
@@ -106,4 +106,13 @@ func (s *HTTPServer) Stop() (err error) {
 	})
 
 	return
+}
+
+func makeListener(port int) (*net.TCPListener, error) {
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("0.0.0.0:%d", port))
+	if err != nil {
+		return nil, err
+	}
+
+	return net.ListenTCP("tcp", addr)
 }

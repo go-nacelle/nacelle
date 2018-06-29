@@ -1,4 +1,4 @@
-package process
+package worker
 
 type (
 	workerOptions struct {
