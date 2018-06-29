@@ -14,7 +14,6 @@ type (
 	LogLevel      = log.LogLevel
 
 	loggingConfigToken string
-	logFunc            func(log.Fields, string, ...interface{})
 )
 
 const (
