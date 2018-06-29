@@ -1,7 +1,7 @@
 package process
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -27,7 +27,7 @@ type (
 	}
 )
 
-var ErrBadWorkerConfig = errors.New("worker config not registered properly")
+var ErrBadWorkerConfig = fmt.Errorf("worker config not registered properly")
 
 func NewWorker(spec WorkerSpec, configs ...WorkerConfigFunc) *Worker {
 	return newWorker(spec, glock.NewRealClock())

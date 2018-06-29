@@ -2,7 +2,7 @@ package process
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -33,7 +33,7 @@ type (
 	HTTPServerInitializerFunc func(nacelle.Config, *http.Server) error
 )
 
-var ErrBadHTTPConfig = errors.New("HTTP config not registered properly")
+var ErrBadHTTPConfig = fmt.Errorf("HTTP config not registered properly")
 
 func (f HTTPServerInitializerFunc) Init(config nacelle.Config, server *http.Server) error {
 	return f(config, server)

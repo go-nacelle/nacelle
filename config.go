@@ -2,7 +2,6 @@ package nacelle
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -83,10 +82,10 @@ const (
 
 var (
 	// ErrAlreadyLoaded is returned on a second call to Config#Load.
-	ErrAlreadyLoaded = errors.New("config already loaded")
+	ErrAlreadyLoaded = fmt.Errorf("config already loaded")
 
 	// ErrNotLoaded is returned on a call to Get without first calling Load.
-	ErrNotLoaded = errors.New("config not loaded")
+	ErrNotLoaded = fmt.Errorf("config not loaded")
 
 	replacer = strings.NewReplacer(
 		"\n", `\n`,

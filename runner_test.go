@@ -1,7 +1,7 @@
 package nacelle
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/aphistic/sweet"
@@ -72,7 +72,7 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, log.NewNilLogger()) {
+		for err := range runner.Run(nil, NewNilLogger()) {
 			errChan <- err
 		}
 	}()
@@ -180,7 +180,7 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, log.NewNilLogger()) {
+		for err := range runner.Run(nil, NewNilLogger()) {
 			errChan <- err
 		}
 	}()
@@ -247,8 +247,8 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	}
 
 	var (
-		startError = errors.New("error in start")
-		stopError  = errors.New("error in stop")
+		startError = fmt.Errorf("error in start")
+		stopError  = fmt.Errorf("error in stop")
 
 		proc1 = makeProcess("proc1", nil, nil)
 		proc2 = makeProcess("proc2", nil, stopError)
@@ -264,7 +264,7 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, log.NewNilLogger()) {
+		for err := range runner.Run(nil, NewNilLogger()) {
 			errChan <- err
 		}
 	}()
@@ -318,7 +318,7 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	}
 
 	var (
-		initError = errors.New("error in init")
+		initError = fmt.Errorf("error in init")
 
 		proc1 = makeProcess("proc1", nil)
 		proc2 = makeProcess("proc2", nil)
@@ -339,7 +339,7 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, log.NewNilLogger()) {
+		for err := range runner.Run(nil, NewNilLogger()) {
 			errChan <- err
 		}
 	}()

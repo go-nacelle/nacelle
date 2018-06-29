@@ -1,7 +1,7 @@
 package process
 
 import (
-	"errors"
+	"fmt"
 	"net"
 	"sync"
 
@@ -30,7 +30,7 @@ type (
 	GRPCServerInitializerFunc func(nacelle.Config, *grpc.Server) error
 )
 
-var ErrBadGRPCConfig = errors.New("gRPC config not registered properly")
+var ErrBadGRPCConfig = fmt.Errorf("gRPC config not registered properly")
 
 func (f GRPCServerInitializerFunc) Init(config nacelle.Config, server *grpc.Server) error {
 	return f(config, server)

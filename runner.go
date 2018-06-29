@@ -1,7 +1,6 @@
 package nacelle
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -156,7 +155,7 @@ func (pr *ProcessRunner) Shutdown(timeout time.Duration) error {
 
 	select {
 	case <-time.After(timeout):
-		return errors.New("process runner did not complete within timeout")
+		return fmt.Errorf("process runner did not complete within timeout")
 	case <-pr.done:
 		return nil
 	}

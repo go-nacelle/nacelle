@@ -1,7 +1,7 @@
 package discovery
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"time"
 )
@@ -25,9 +25,9 @@ type (
 
 var (
 	ConfigToken       = configToken("nacelle-discovery")
-	ErrIllegalBackend = errors.New("illegal discovery backend")
-	ErrIllegalTTL     = errors.New("TTL must be greater than the refresh interval")
-	ErrIllegalHost    = errors.New("hostname cannot be determined")
+	ErrIllegalBackend = fmt.Errorf("illegal discovery backend")
+	ErrIllegalTTL     = fmt.Errorf("TTL must be greater than the refresh interval")
+	ErrIllegalHost    = fmt.Errorf("hostname cannot be determined")
 )
 
 func (c *Config) PostLoad() error {

@@ -1,7 +1,6 @@
 package process
 
 import (
-	"errors"
 	"fmt"
 	"time"
 )
@@ -21,7 +20,7 @@ type (
 
 var (
 	HTTPConfigToken  = MakeHTTPConfigToken("default")
-	ErrBadCertConfig = errors.New("cert file and key file must both be supplied or both be omitted")
+	ErrBadCertConfig = fmt.Errorf("cert file and key file must both be supplied or both be omitted")
 )
 
 func MakeHTTPConfigToken(name string) interface{} {

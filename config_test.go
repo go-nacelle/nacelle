@@ -1,7 +1,7 @@
 package nacelle
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -463,7 +463,7 @@ type (
 
 func (c *TestPostLoadConfig) PostLoad() error {
 	if c.X < 0 {
-		return errors.New("X must be positive")
+		return fmt.Errorf("X must be positive")
 	}
 
 	return nil

@@ -1,7 +1,7 @@
 package discovery
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/efritz/reception"
 
@@ -17,7 +17,7 @@ var (
 		"zookeeper": initZk,
 	}
 
-	ErrBadConfig = errors.New("discovery config not registered properly")
+	ErrBadConfig = fmt.Errorf("discovery config not registered properly")
 )
 
 func makeClient(config nacelle.Config, container *nacelle.ServiceContainer) (reception.Client, error) {
