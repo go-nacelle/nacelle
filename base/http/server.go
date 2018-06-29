@@ -12,11 +12,11 @@ import (
 )
 
 type (
-	HTTPServer struct {
+	Server struct {
 		Logger          nacelle.Logger           `service:"logger"`
 		Container       nacelle.ServiceContainer `service:"container"`
 		configToken     interface{}
-		initializer     HTTPServerInitializer
+		initializer     ServerInitializer
 		listener        *net.TCPListener
 		server          *http.Server
 		once            *sync.Once
@@ -26,33 +26,33 @@ type (
 		shutdownTimeout time.Duration
 	}
 
-	HTTPServerInitializer interface {
+	ServerInitializer interface {
 		Init(nacelle.Config, *http.Server) error
 	}
 
-	HTTPServerInitializerFunc func(nacelle.Config, *http.Server) error
+	ServerInitializerFunc func(nacelle.Config, *http.Server) error
 )
 
-var ErrBadHTTPConfig = fmt.Errorf("HTTP config not registered properly")
+var ErrBadConfig = fmt.Errorf("HTTP config not registered properly")
 
-func (f HTTPServerInitializerFunc) Init(config nacelle.Config, server *http.Server) error {
+func (f ServerInitializerFunc) Init(config nacelle.Config, server *http.Server) error {
 	return f(config, server)
 }
 
-func NewHTTPServer(initializer HTTPServerInitializer, configs ...HTTPServerConfigFunc) *HTTPServer {
-	options := getHTTPOptions(configs)
+func NewServer(initializer ServerInitializer, configs ...ConfigFunc) *Server {
+	options := getOptions(configs)
 
-	return &HTTPServer{
+	return &Server{
 		configToken: options.configToken,
 		initializer: initializer,
 		once:        &sync.Once{},
 	}
 }
 
-func (s *HTTPServer) Init(config nacelle.Config) (err error) {
-	httpConfig := &HTTPConfig{}
+func (s *Server) Init(config nacelle.Config) (err error) {
+	httpConfig := &Config{}
 	if err = config.Fetch(s.configToken, httpConfig); err != nil {
-		return ErrBadHTTPConfig
+		return ErrBadConfig
 	}
 
 	s.listener, err = makeListener(httpConfig.HTTPPort)
@@ -73,7 +73,7 @@ func (s *HTTPServer) Init(config nacelle.Config) (err error) {
 	return s.initializer.Init(config, s.server)
 }
 
-func (s *HTTPServer) Start() error {
+func (s *Server) Start() error {
 	defer s.listener.Close()
 	defer s.server.Close()
 
@@ -96,7 +96,7 @@ func (s *HTTPServer) Start() error {
 	return nil
 }
 
-func (s *HTTPServer) Stop() (err error) {
+func (s *Server) Stop() (err error) {
 	s.once.Do(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 		defer cancel()

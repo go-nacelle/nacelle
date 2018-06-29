@@ -15,9 +15,9 @@ import (
 	"github.com/efritz/nacelle/service"
 )
 
-type GRPCSuite struct{}
+type ServerSuite struct{}
 
-func (s *GRPCSuite) TestServeAndStop(t sweet.T) {
+func (s *ServerSuite) TestServeAndStop(t sweet.T) {
 	server := makeGRPCServer(func(config nacelle.Config, server *grpc.Server) error {
 		internal.RegisterTestServiceServer(server, &upperService{})
 
@@ -27,7 +27,7 @@ func (s *GRPCSuite) TestServeAndStop(t sweet.T) {
 	os.Setenv("GRPC_PORT", "0")
 	defer os.Clearenv()
 
-	err := server.Init(makeConfig(GRPCConfigToken, &GRPCConfig{}))
+	err := server.Init(makeConfig(ConfigToken, &Config{}))
 	Expect(err).To(BeNil())
 
 	go server.Start()
@@ -45,27 +45,27 @@ func (s *GRPCSuite) TestServeAndStop(t sweet.T) {
 	Expect(resp.GetText()).To(Equal("FOOBAR"))
 }
 
-func (s *GRPCSuite) TestBadConfig(t sweet.T) {
+func (s *ServerSuite) TestBadConfig(t sweet.T) {
 	server := makeGRPCServer(func(config nacelle.Config, server *grpc.Server) error {
 		return nil
 	})
 
-	err := server.Init(makeConfig(GRPCConfigToken, &emptyConfig{}))
-	Expect(err).To(Equal(ErrBadGRPCConfig))
+	err := server.Init(makeConfig(ConfigToken, &emptyConfig{}))
+	Expect(err).To(Equal(ErrBadConfig))
 }
 
-func (s *GRPCSuite) TestBadInjection(t sweet.T) {
-	server := NewGRPCServer(&badInjectionGRPCInitializer{})
+func (s *ServerSuite) TestBadInjection(t sweet.T) {
+	server := NewServer(&badInjectionInitializer{})
 	server.Container = makeBadContainer()
 
 	os.Setenv("GRPC_PORT", "0")
 	defer os.Clearenv()
 
-	err := server.Init(makeConfig(GRPCConfigToken, &GRPCConfig{}))
+	err := server.Init(makeConfig(ConfigToken, &Config{}))
 	Expect(err.Error()).To(ContainSubstring("ServiceA"))
 }
 
-func (s *GRPCSuite) TestInitError(t sweet.T) {
+func (s *ServerSuite) TestInitError(t sweet.T) {
 	server := makeGRPCServer(func(config nacelle.Config, server *grpc.Server) error {
 		return fmt.Errorf("utoh")
 	})
@@ -73,15 +73,15 @@ func (s *GRPCSuite) TestInitError(t sweet.T) {
 	os.Setenv("GRPC_PORT", "0")
 	defer os.Clearenv()
 
-	err := server.Init(makeConfig(GRPCConfigToken, &GRPCConfig{}))
+	err := server.Init(makeConfig(ConfigToken, &Config{}))
 	Expect(err).To(MatchError("utoh"))
 }
 
 //
 // Helpers
 
-func makeGRPCServer(initializer func(nacelle.Config, *grpc.Server) error) *GRPCServer {
-	server := NewGRPCServer(GRPCServerInitializerFunc(initializer))
+func makeGRPCServer(initializer func(nacelle.Config, *grpc.Server) error) *Server {
+	server := NewServer(ServerInitializerFunc(initializer))
 	server.Logger = nacelle.NewNilLogger()
 	server.Container, _ = service.NewContainer()
 	return server
@@ -99,10 +99,10 @@ func (us *upperService) ToUpper(ctx context.Context, r *internal.UpperRequest) (
 //
 // Bad Injection
 
-type badInjectionGRPCInitializer struct {
+type badInjectionInitializer struct {
 	ServiceA *A `service:"A"`
 }
 
-func (i *badInjectionGRPCInitializer) Init(nacelle.Config, *grpc.Server) error {
+func (i *badInjectionInitializer) Init(nacelle.Config, *grpc.Server) error {
 	return nil
 }

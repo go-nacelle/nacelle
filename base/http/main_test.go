@@ -18,14 +18,14 @@ func TestMain(m *testing.M) {
 		s.RegisterPlugin(junit.NewPlugin())
 
 		s.AddSuite(&ConfigSuite{})
-		s.AddSuite(&HTTPSuite{})
+		s.AddSuite(&ServerSuite{})
 	})
 }
 
 //
 // Config
 
-// type emptyConfig struct{}
+type emptyConfig struct{}
 
 func makeConfig(token, base interface{}) nacelle.Config {
 	config := nacelle.NewEnvConfig("")

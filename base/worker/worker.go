@@ -27,14 +27,14 @@ type (
 	}
 )
 
-var ErrBadWorkerConfig = fmt.Errorf("worker config not registered properly")
+var ErrBadConfig = fmt.Errorf("worker config not registered properly")
 
-func NewWorker(spec WorkerSpec, configs ...WorkerConfigFunc) *Worker {
+func NewWorker(spec WorkerSpec, configs ...ConfigFunc) *Worker {
 	return newWorker(spec, glock.NewRealClock())
 }
 
-func newWorker(spec WorkerSpec, clock glock.Clock, configs ...WorkerConfigFunc) *Worker {
-	options := getWorkerOptions(configs)
+func newWorker(spec WorkerSpec, clock glock.Clock, configs ...ConfigFunc) *Worker {
+	options := getOptions(configs)
 
 	return &Worker{
 		configToken: options.configToken,
@@ -59,9 +59,9 @@ func (w *Worker) HaltChan() <-chan struct{} {
 }
 
 func (w *Worker) Init(config nacelle.Config) error {
-	workerConfig := &WorkerConfig{}
+	workerConfig := &Config{}
 	if err := config.Fetch(w.configToken, workerConfig); err != nil {
-		return ErrBadWorkerConfig
+		return ErrBadConfig
 	}
 
 	w.tickInterval = workerConfig.WorkerTickInterval

@@ -9,17 +9,17 @@ type ConfigSuite struct{}
 
 func (s *ConfigSuite) TestHTTPCertConfiguration(t sweet.T) {
 	// Non-TLS
-	c := &HTTPConfig{}
+	c := &Config{}
 	Expect(c.PostLoad()).To(BeNil())
 
 	// Successful TLS Config
-	c = &HTTPConfig{HTTPCertFile: "cert", HTTPKeyFile: "key"}
+	c = &Config{HTTPCertFile: "cert", HTTPKeyFile: "key"}
 	Expect(c.PostLoad()).To(BeNil())
 
 	// Incomplete
-	c = &HTTPConfig{HTTPCertFile: "cert"}
+	c = &Config{HTTPCertFile: "cert"}
 	Expect(c.PostLoad()).To(Equal(ErrBadCertConfig))
 
-	c = &HTTPConfig{HTTPKeyFile: "key"}
+	c = &Config{HTTPKeyFile: "key"}
 	Expect(c.PostLoad()).To(Equal(ErrBadCertConfig))
 }

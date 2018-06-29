@@ -11,11 +11,11 @@ import (
 )
 
 type (
-	GRPCServer struct {
+	Server struct {
 		Logger        nacelle.Logger           `service:"logger"`
 		Container     nacelle.ServiceContainer `service:"container"`
 		configToken   interface{}
-		initializer   GRPCServerInitializer
+		initializer   ServerInitializer
 		listener      *net.TCPListener
 		server        *grpc.Server
 		once          *sync.Once
@@ -23,23 +23,23 @@ type (
 		serverOptions []grpc.ServerOption
 	}
 
-	GRPCServerInitializer interface {
+	ServerInitializer interface {
 		Init(nacelle.Config, *grpc.Server) error
 	}
 
-	GRPCServerInitializerFunc func(nacelle.Config, *grpc.Server) error
+	ServerInitializerFunc func(nacelle.Config, *grpc.Server) error
 )
 
-var ErrBadGRPCConfig = fmt.Errorf("gRPC config not registered properly")
+var ErrBadConfig = fmt.Errorf("gRPC config not registered properly")
 
-func (f GRPCServerInitializerFunc) Init(config nacelle.Config, server *grpc.Server) error {
+func (f ServerInitializerFunc) Init(config nacelle.Config, server *grpc.Server) error {
 	return f(config, server)
 }
 
-func NewGRPCServer(initializer GRPCServerInitializer, configs ...GRPCServerConfigFunc) *GRPCServer {
-	options := getGRPCOptions(configs)
+func NewServer(initializer ServerInitializer, configs ...ConfigFunc) *Server {
+	options := getOptions(configs)
 
-	return &GRPCServer{
+	return &Server{
 		configToken:   options.configToken,
 		initializer:   initializer,
 		once:          &sync.Once{},
@@ -47,10 +47,10 @@ func NewGRPCServer(initializer GRPCServerInitializer, configs ...GRPCServerConfi
 	}
 }
 
-func (s *GRPCServer) Init(config nacelle.Config) (err error) {
-	grpcConfig := &GRPCConfig{}
+func (s *Server) Init(config nacelle.Config) (err error) {
+	grpcConfig := &Config{}
 	if err = config.Fetch(s.configToken, grpcConfig); err != nil {
-		return ErrBadGRPCConfig
+		return ErrBadConfig
 	}
 
 	s.listener, err = makeListener(grpcConfig.GRPCPort)
@@ -68,7 +68,7 @@ func (s *GRPCServer) Init(config nacelle.Config) (err error) {
 	return
 }
 
-func (s *GRPCServer) Start() error {
+func (s *Server) Start() error {
 	defer s.listener.Close()
 
 	s.Logger.Info("Serving gRPC on port %d", s.port)
@@ -81,7 +81,7 @@ func (s *GRPCServer) Start() error {
 	return nil
 }
 
-func (s *GRPCServer) Stop() error {
+func (s *Server) Stop() error {
 	s.once.Do(func() {
 		s.Logger.Info("Shutting down gRPC server")
 		s.server.GracefulStop()

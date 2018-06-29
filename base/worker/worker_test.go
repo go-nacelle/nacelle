@@ -29,7 +29,7 @@ func (s *WorkerSuite) TestRunAndStop(t sweet.T) {
 		return nil
 	}
 
-	err := worker.Init(makeConfig(WorkerConfigToken, &WorkerConfig{RawWorkerTickInterval: 5}))
+	err := worker.Init(makeConfig(ConfigToken, &Config{RawWorkerTickInterval: 5}))
 	Expect(err).To(BeNil())
 
 	go func() {
@@ -50,15 +50,15 @@ func (s *WorkerSuite) TestRunAndStop(t sweet.T) {
 
 func (s *WorkerSuite) TestBadConfig(t sweet.T) {
 	worker := NewWorker(newMockWorkerSpec())
-	err := worker.Init(makeConfig(WorkerConfigToken, &emptyConfig{}))
-	Expect(err).To(Equal(ErrBadWorkerConfig))
+	err := worker.Init(makeConfig(ConfigToken, &emptyConfig{}))
+	Expect(err).To(Equal(ErrBadConfig))
 }
 
 func (s *WorkerSuite) TestBadInject(t sweet.T) {
 	worker := NewWorker(&badInjectWorkerSpec{})
 	worker.Container = makeBadContainer()
 
-	err := worker.Init(makeConfig(WorkerConfigToken, &WorkerConfig{RawWorkerTickInterval: 5}))
+	err := worker.Init(makeConfig(ConfigToken, &Config{RawWorkerTickInterval: 5}))
 	Expect(err).NotTo(BeNil())
 	Expect(err.Error()).To(ContainSubstring("ServiceA"))
 }
@@ -73,7 +73,7 @@ func (s *WorkerSuite) TestInitError(t sweet.T) {
 		return fmt.Errorf("utoh")
 	}
 
-	err := worker.Init(makeConfig(WorkerConfigToken, &WorkerConfig{RawWorkerTickInterval: 5}))
+	err := worker.Init(makeConfig(ConfigToken, &Config{RawWorkerTickInterval: 5}))
 	Expect(err).To(MatchError("utoh"))
 }
 
@@ -89,7 +89,7 @@ func (s *WorkerSuite) TestTickError(t sweet.T) {
 		return fmt.Errorf("utoh")
 	}
 
-	err := worker.Init(makeConfig(WorkerConfigToken, &WorkerConfig{RawWorkerTickInterval: 5}))
+	err := worker.Init(makeConfig(ConfigToken, &Config{RawWorkerTickInterval: 5}))
 	Expect(err).To(BeNil())
 
 	go func() {
