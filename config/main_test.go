@@ -1,4 +1,4 @@
-package nacelle
+package config
 
 import (
 	"testing"
@@ -14,7 +14,7 @@ func TestMain(m *testing.M) {
 	sweet.Run(m, func(s *sweet.S) {
 		s.RegisterPlugin(junit.NewPlugin())
 
-		s.AddSuite(&ServiceSuite{})
-		s.AddSuite(&RunnerSuite{})
+		s.AddSuite(&ConfigSuite{})
+		s.AddSuite(&ConfigTagsSuite{})
 	})
 }

@@ -1,4 +1,4 @@
-package nacelle
+package config
 
 import (
 	"reflect"
