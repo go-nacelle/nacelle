@@ -18,7 +18,11 @@ func setupConfigs(config nacelle.Config) error {
 }
 
 func setupProcesses(runner nacelle.ProcessContainer, container nacelle.ServiceContainer) error {
-	runner.RegisterInitializer(nacelle.WrapServiceInitializerFunc(container, secret.Init))
+	runner.RegisterInitializer(
+		nacelle.WrapServiceInitializerFunc(container, secret.Init),
+		nacelle.WithInitializerName("secret"),
+	)
+
 	runner.RegisterProcess(basehttp.NewServer(http.NewEndpointSet()), nacelle.WithProcessName("http"))
 	runner.RegisterProcess(basegrpc.NewServer(grpc.NewEndpointSet()), nacelle.WithProcessName("grpc"))
 	return nil
