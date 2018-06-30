@@ -96,8 +96,9 @@ func setupConsoleLogger(c *Config) error {
 	tpl, err := newGomolConsoleTemplate(
 		c.LogColorize,
 		c.LogShortTime,
-		c.LogMultilineFields,
-		c.LogAttrBlacklist,
+		c.LogDisplayFields,
+		c.LogDisplayMultilineFields,
+		c.LogFieldBlacklist,
 	)
 
 	if err != nil {
@@ -113,14 +114,14 @@ func setupJSONLogger() {
 	gomol.AddLogger(newJSONLogger())
 }
 
-func newGomolConsoleTemplate(color, shortTime, multilineFields bool, blacklist []string) (*gomol.Template, error) {
+func newGomolConsoleTemplate(color, shortTime, displayFields, displayMultilineFields bool, blacklist []string) (*gomol.Template, error) {
 	var (
 		attrPrefix  = " "
 		attrPadding = ""
 		attrSuffix  = ""
 	)
 
-	if multilineFields {
+	if displayMultilineFields {
 		attrPrefix = "\n    "
 		attrPadding = " "
 		attrSuffix = "\n"
@@ -152,8 +153,11 @@ func newGomolConsoleTemplate(color, shortTime, multilineFields bool, blacklist [
 			`{{color}}` +
 			`[{{ucase .LevelName | printf "%1.1s"}}] ` +
 			fmt.Sprintf(`[{{.Timestamp.Format "%s"}}] {{.Message}}`, timeFormat) +
-			`{{reset}}` +
-			fieldsTemplate
+			`{{reset}}`
+
+	if displayFields {
+		text += fieldsTemplate
+	}
 
 	if !color {
 		text = removeColor(text)

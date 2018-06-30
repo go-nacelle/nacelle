@@ -6,14 +6,15 @@ import (
 )
 
 type Config struct {
-	LogLevel            string `env:"LOG_LEVEL" default:"info"`
-	LogEncoding         string `env:"LOG_ENCODING" default:"console"`
-	LogColorize         bool   `env:"LOG_COLORIZE" default:"true"`
-	LogInitialFields    Fields `env:"LOG_FIELDS"`
-	LogShortTime        bool   `env:"LOG_SHORT_TIME" default:"false"`
-	LogMultilineFields  bool   `env:"LOG_MULTILINE_FIELDS" default:"true"`
-	RawLogAttrBlacklist string `env:"LOG_ATTR_BLACKLIST" default:""`
-	LogAttrBlacklist    []string
+	LogLevel                  string `env:"LOG_LEVEL" default:"info"`
+	LogEncoding               string `env:"LOG_ENCODING" default:"console"`
+	LogColorize               bool   `env:"LOG_COLORIZE" default:"true"`
+	LogInitialFields          Fields `env:"LOG_FIELDS"`
+	LogShortTime              bool   `env:"LOG_SHORT_TIME" default:"false"`
+	LogDisplayFields          bool   `env:"LOG_DISPLAY_FIELDS" default:"true"`
+	LogDisplayMultilineFields bool   `env:"LOG_DISPLAY_MULTILINE_FIELDS" default:"true"`
+	RawLogFieldBlacklist      string `env:"LOG_FIELD_BLACKLIST" default:""`
+	LogFieldBlacklist         []string
 }
 
 var (
@@ -32,9 +33,9 @@ func (c *Config) PostLoad() error {
 		return ErrIllegalEncoding
 	}
 
-	for _, s := range strings.Split(c.RawLogAttrBlacklist, ",") {
-		c.LogAttrBlacklist = append(
-			c.LogAttrBlacklist,
+	for _, s := range strings.Split(c.RawLogFieldBlacklist, ",") {
+		c.LogFieldBlacklist = append(
+			c.LogFieldBlacklist,
 			strings.ToLower(strings.TrimSpace(s)),
 		)
 	}
