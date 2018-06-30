@@ -3,12 +3,12 @@ package process
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
 
 	"github.com/efritz/nacelle/config"
-	"github.com/efritz/nacelle/logging"
 	"github.com/efritz/nacelle/service"
 )
 
@@ -17,15 +17,17 @@ type RunnerSuite struct{}
 func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	var (
 		container, _ = service.NewContainer()
-		runner       = NewRunner(container)
+		cx           = NewContainer()
+		runner       = NewRunner(cx, container)
 		initChan     = make(chan string)
 		startChan    = make(chan string)
 		errChan      = make(chan error)
-		numStopped   = 0
+		numStopped   = uint32(0)
 	)
 
 	makeProcess := func(name string) Process {
 		p := &mockProcess{}
+		o := &sync.Once{}
 		c := make(chan struct{})
 
 		p.init = func(config config.Config) error {
@@ -39,11 +41,9 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 			return nil
 		}
 
-		o := &sync.Once{}
-
 		p.stop = func() error {
 			o.Do(func() {
-				numStopped++
+				atomic.AddUint32(&numStopped, 1)
 				close(c)
 			})
 
@@ -63,18 +63,18 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 		n2 string
 	)
 
-	runner.RegisterInitializer(makeProcess("init1"))
-	runner.RegisterInitializer(makeProcess("init2"))
-	runner.RegisterInitializer(makeProcess("init3"))
-	runner.RegisterProcess(proc1, WithPriority(1))
-	runner.RegisterProcess(proc2, WithPriority(2))
-	runner.RegisterProcess(proc3, WithPriority(1))
-	runner.RegisterProcess(proc4, WithPriority(2))
+	cx.RegisterInitializer(makeProcess("init1"))
+	cx.RegisterInitializer(makeProcess("init2"))
+	cx.RegisterInitializer(makeProcess("init3"))
+	cx.RegisterProcess(proc1, WithPriority(1))
+	cx.RegisterProcess(proc2, WithPriority(2))
+	cx.RegisterProcess(proc3, WithPriority(1))
+	cx.RegisterProcess(proc4, WithPriority(2))
 
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, logging.NewNilLogger()) {
+		for err := range runner.Run(nil) {
 			errChan <- err
 		}
 	}()
@@ -127,13 +127,14 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	Consistently(errChan).ShouldNot(BeClosed())
 	proc1.Stop()
 	Eventually(errChan).Should(BeClosed())
-	Expect(numStopped).To(Equal(4))
+	Expect(numStopped).To(Equal(uint32(4)))
 }
 
 func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 	var (
 		container, _ = service.NewContainer()
-		runner       = NewRunner(container)
+		cx           = NewContainer() // TODO - rename all instances
+		runner       = NewRunner(cx, container)
 		startChan    = make(chan string)
 		errChan      = make(chan error)
 		numStopped   = 0
@@ -141,6 +142,7 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 
 	makeProcess := func(name string) Process {
 		p := &mockProcess{}
+		o := &sync.Once{}
 		c := make(chan struct{})
 
 		p.init = func(config config.Config) error {
@@ -152,8 +154,6 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 			<-c
 			return nil
 		}
-
-		o := &sync.Once{}
 
 		p.stop = func() error {
 			o.Do(func() {
@@ -174,15 +174,15 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 		proc4 = makeProcess("proc4")
 	)
 
-	runner.RegisterProcess(proc1, WithPriority(1), WithSilentExit())
-	runner.RegisterProcess(proc2, WithPriority(2), WithSilentExit())
-	runner.RegisterProcess(proc3, WithPriority(1))
-	runner.RegisterProcess(proc4, WithPriority(2))
+	cx.RegisterProcess(proc1, WithPriority(1), WithSilentExit())
+	cx.RegisterProcess(proc2, WithPriority(2), WithSilentExit())
+	cx.RegisterProcess(proc3, WithPriority(1))
+	cx.RegisterProcess(proc4, WithPriority(2))
 
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, logging.NewNilLogger()) {
+		for err := range runner.Run(nil) {
 			errChan <- err
 		}
 	}()
@@ -217,7 +217,8 @@ func (s *RunnerSuite) TestRunNonBlockingProcesses(t sweet.T) {
 func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	var (
 		container, _ = service.NewContainer()
-		runner       = NewRunner(container)
+		cx           = NewContainer()
+		runner       = NewRunner(cx, container)
 		stopChan     = make(chan string)
 		errChan      = make(chan error)
 	)
@@ -258,15 +259,15 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 		proc4 = makeProcess("proc4", startError, nil)
 	)
 
-	runner.RegisterProcess(proc1, WithPriority(1))
-	runner.RegisterProcess(proc2, WithPriority(2), WithProcessName("foo"))
-	runner.RegisterProcess(proc3, WithPriority(3))
-	runner.RegisterProcess(proc4, WithPriority(4), WithProcessName("bar"))
+	cx.RegisterProcess(proc1, WithPriority(1))
+	cx.RegisterProcess(proc2, WithPriority(2), WithProcessName("foo"))
+	cx.RegisterProcess(proc3, WithPriority(3))
+	cx.RegisterProcess(proc4, WithPriority(4), WithProcessName("bar"))
 
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, logging.NewNilLogger()) {
+		for err := range runner.Run(nil) {
 			errChan <- err
 		}
 	}()
@@ -274,11 +275,13 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 	// Whoops
 	Eventually(errChan).Should(Receive(MatchError("bar returned a fatal error (error in start)")))
 
-	// Processes stopped with reversed priority
-	Eventually(stopChan).Should(Receive(Equal("proc4")))
-	Eventually(stopChan).Should(Receive(Equal("proc3")))
-	Eventually(stopChan).Should(Receive(Equal("proc2")))
-	Eventually(stopChan).Should(Receive(Equal("proc1")))
+	// All procesess stopped
+	var n1, n2, n3, n4 string
+	Eventually(stopChan).Should(Receive(&n1))
+	Eventually(stopChan).Should(Receive(&n2))
+	Eventually(stopChan).Should(Receive(&n3))
+	Eventually(stopChan).Should(Receive(&n4))
+	Expect([]string{n1, n2, n3, n4}).To(ConsistOf([]string{"proc1", "proc2", "proc3", "proc4"}))
 
 	// Check additional errors on top
 	Eventually(errChan).Should(Receive(MatchError("foo returned error from stop (error in stop)")))
@@ -290,7 +293,8 @@ func (s *RunnerSuite) TestProcessError(t sweet.T) {
 func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 	var (
 		container, _ = service.NewContainer()
-		runner       = NewRunner(container)
+		cx           = NewContainer()
+		runner       = NewRunner(cx, container)
 		initChan     = make(chan string)
 		stopChan     = make(chan string)
 		errChan      = make(chan error)
@@ -332,16 +336,16 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 		n2 string
 	)
 
-	runner.RegisterProcess(proc1, WithPriority(1))
-	runner.RegisterProcess(proc2, WithPriority(2))
-	runner.RegisterProcess(proc3, WithPriority(3))
-	runner.RegisterProcess(proc4, WithPriority(3), WithProcessName("foo"))
-	runner.RegisterProcess(proc5, WithPriority(3))
+	cx.RegisterProcess(proc1, WithPriority(1))
+	cx.RegisterProcess(proc2, WithPriority(2))
+	cx.RegisterProcess(proc3, WithPriority(3))
+	cx.RegisterProcess(proc4, WithPriority(3), WithProcessName("foo"))
+	cx.RegisterProcess(proc5, WithPriority(3))
 
 	go func() {
 		defer close(errChan)
 
-		for err := range runner.Run(nil, logging.NewNilLogger()) {
+		for err := range runner.Run(nil) {
 			errChan <- err
 		}
 	}()
@@ -365,8 +369,7 @@ func (s *RunnerSuite) TestInitializationError(t sweet.T) {
 
 	Eventually(stopChan).Should(Receive(&n1))
 	Eventually(stopChan).Should(Receive(&n2))
-	Expect(n1).To(Equal("proc2"))
-	Expect(n2).To(Equal("proc1"))
+	Expect([]string{n1, n2}).To(ConsistOf([]string{"proc1", "proc2"}))
 	Consistently(stopChan).ShouldNot(Receive())
 
 	// Check errors

@@ -6,19 +6,21 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/efritz/glock"
 	"github.com/efritz/nacelle/logging"
 )
 
 type (
 	processWatcher struct {
-		shutdownCallback func()
-		logger           logging.Logger
-		shutdownTimeout  time.Duration
-		startErrors      <-chan errMeta
-		errChan          chan<- error
-		halt             <-chan struct{}
-		directives       chan watcherDirective
-		draining         chan struct{}
+		errChan         <-chan errMeta
+		outChan         chan<- error
+		halt            <-chan struct{}
+		logger          logging.Logger
+		clock           glock.Clock
+		shutdownTimeout time.Duration
+		directives      chan watcherDirective
+		draining        chan struct{}
+		done            chan struct{}
 	}
 
 	watcherDirective int
@@ -29,32 +31,49 @@ const (
 	directiveShutdown
 )
 
+var shutdownSignals = []os.Signal{
+	os.Interrupt,
+	syscall.SIGTERM,
+}
+
 func newWatcher(
-	shutdownCallback func(),
-	logger logging.Logger,
-	shutdownTimeout time.Duration,
-	startErrors <-chan errMeta,
-	errChan chan<- error,
+	errChan <-chan errMeta,
+	outChan chan<- error,
 	halt <-chan struct{},
+	configs ...watcherConfigFunc,
 ) *processWatcher {
-	return &processWatcher{
-		shutdownCallback: shutdownCallback,
-		logger:           logger,
-		shutdownTimeout:  shutdownTimeout,
-		startErrors:      startErrors,
-		errChan:          errChan,
-		halt:             halt,
-		directives:       make(chan watcherDirective),
-		draining:         make(chan struct{}),
+	watcher := &processWatcher{
+		errChan:    errChan,
+		outChan:    outChan,
+		halt:       halt,
+		logger:     logging.NewNilLogger(),
+		clock:      glock.NewRealClock(),
+		directives: make(chan watcherDirective),
+		draining:   make(chan struct{}),
+		done:       make(chan struct{}),
 	}
+
+	for _, f := range configs {
+		f(watcher)
+	}
+
+	return watcher
 }
 
 func (w *processWatcher) watch() {
+	go w.control()
 	go w.watchSignal()
 	go w.watchErrors()
 	go w.watchHaltChan()
 	go w.watchShutdownTimeout()
+}
 
+func (w *processWatcher) wait() {
+	<-w.done
+	close(w.directives)
+}
+
+func (w *processWatcher) control() {
 	for directive := range w.directives {
 		if directive == directiveAbort {
 			return
@@ -68,17 +87,26 @@ func (w *processWatcher) watch() {
 
 		close(w.draining)
 		w.logger.Info("Starting graceful shutdown")
-		w.shutdownCallback()
 	}
 }
 
 func (w *processWatcher) watchSignal() {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
-	signal.Notify(sigChan, syscall.SIGTERM)
+	var (
+		urgent  = false
+		signals = make(chan os.Signal, 1)
+	)
 
-	urgent := false
-	for range sigChan {
+	for _, s := range shutdownSignals {
+		signal.Notify(signals, s)
+	}
+
+	for {
+		select {
+		case <-w.done:
+			return
+		case <-signals:
+		}
+
 		if urgent {
 			w.logger.Error("Received second signal, no longer waiting for graceful exit")
 			w.abort()
@@ -92,18 +120,19 @@ func (w *processWatcher) watchSignal() {
 }
 
 func (w *processWatcher) watchErrors() {
-	defer close(w.errChan)
+	defer close(w.done)
+	defer close(w.outChan)
 
-	for err := range w.startErrors {
+	for err := range w.errChan {
 		if err.err == nil {
-			w.logger.Info("%s has stopped cleanly", err.process.Name())
+			w.logger.Info("%s has stopped cleanly", err.source.Name())
 
-			if err.process.silentExit {
+			if err.silentExit {
 				continue
 			}
 		} else {
-			w.logger.Error("%s returned a fatal error (%s)", err.process.Name(), err.err.Error())
-			w.errChan <- err.err
+			w.logger.Error("%s returned a fatal error (%s)", err.source.Name(), err.err.Error())
+			w.outChan <- err.err
 		}
 
 		w.shutdown()
@@ -113,15 +142,32 @@ func (w *processWatcher) watchErrors() {
 }
 
 func (w *processWatcher) watchHaltChan() {
-	<-w.halt
+	select {
+	case <-w.done:
+		return
+	case <-w.halt:
+	}
+
 	w.logger.Info("Received external shutdown request")
 	w.shutdown()
 }
 
 func (w *processWatcher) watchShutdownTimeout() {
-	<-w.draining
-	<-time.After(w.shutdownTimeout)
-	w.abort()
+	if w.shutdownTimeout == 0 {
+		return
+	}
+
+	select {
+	case <-w.done:
+		return
+	case <-w.draining:
+	}
+
+	select {
+	case <-w.done:
+	case <-w.clock.After(w.shutdownTimeout):
+		w.abort()
+	}
 }
 
 func (w *processWatcher) abort() {
