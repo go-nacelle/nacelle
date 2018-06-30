@@ -72,7 +72,7 @@ func NewBootstrapper(
 // method does not return in any meaningful way (it blocks until
 // the associated process runner has completed).
 func (bs *Bootstrapper) Boot() int {
-	container, err := service.NewContainer()
+	serviceContainer, err := service.NewContainer()
 	if err != nil {
 		logging.LogEmergencyError("failed to create service container (%s)", err)
 		return 1
@@ -110,7 +110,7 @@ func (bs *Bootstrapper) Boot() int {
 
 	logger.Info("Logging initialized")
 
-	if err := container.Set("logger", logger); err != nil {
+	if err := serviceContainer.Set("logger", logger); err != nil {
 		logger.Error("Failed to register logger to service container (%s)", err)
 		return 1
 	}
@@ -121,22 +121,29 @@ func (bs *Bootstrapper) Boot() int {
 		return 1
 	}
 
-	logger.InfoWithFields(m, "Process starting")
+	logger.InfoWithFields(m, "Config loaded from environment")
+
+	bs.runnerConfigFuncs = append(
+		bs.runnerConfigFuncs,
+		process.WithLogger(logger),
+	)
+
+	processContainer := process.NewContainer()
 
 	runner := process.NewRunner(
-		container,
+		processContainer,
+		serviceContainer,
 		bs.runnerConfigFuncs...,
 	)
 
-	if err := bs.initFunc(runner, container); err != nil {
+	if err := bs.initFunc(processContainer, serviceContainer); err != nil {
 		logger.Error("Failed to run initialization function (%s)", err.Error())
 		return 1
 	}
 
 	statusCode := 0
-	for err := range runner.Run(config, logger) {
+	for range runner.Run(config) {
 		statusCode = 1
-		logger.Error("Encountered runtime error (%s)", err.Error())
 	}
 
 	logger.Info("All processes have stopped")
