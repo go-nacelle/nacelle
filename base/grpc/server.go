@@ -19,6 +19,7 @@ type (
 		listener      *net.TCPListener
 		server        *grpc.Server
 		once          *sync.Once
+		stopped       chan struct{}
 		port          int
 		serverOptions []grpc.ServerOption
 	}
@@ -43,6 +44,7 @@ func NewServer(initializer ServerInitializer, configs ...ConfigFunc) *Server {
 		configToken:   options.configToken,
 		initializer:   initializer,
 		once:          &sync.Once{},
+		stopped:       make(chan struct{}),
 		serverOptions: options.serverOptions,
 	}
 }
@@ -74,7 +76,11 @@ func (s *Server) Start() error {
 	s.Logger.Info("Serving gRPC on port %d", s.port)
 
 	if err := s.server.Serve(s.listener); err != nil {
-		return err
+		select {
+		case <-s.stopped:
+		default:
+			return err
+		}
 	}
 
 	s.Logger.Info("No longer serving gRPC on port %d", s.port)
@@ -84,6 +90,7 @@ func (s *Server) Start() error {
 func (s *Server) Stop() error {
 	s.once.Do(func() {
 		s.Logger.Info("Shutting down gRPC server")
+		close(s.stopped)
 		s.server.GracefulStop()
 	})
 
