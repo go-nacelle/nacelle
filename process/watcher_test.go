@@ -7,8 +7,9 @@ import (
 
 	"github.com/aphistic/sweet"
 	"github.com/efritz/glock"
-	"github.com/efritz/nacelle"
 	. "github.com/onsi/gomega"
+
+	"github.com/efritz/nacelle/config"
 )
 
 type WatcherSuite struct{}
@@ -17,8 +18,7 @@ func (s *WatcherSuite) TestNoErrors(t sweet.T) {
 	var (
 		errChan = make(chan errMeta)
 		outChan = make(chan error)
-		halt    = make(chan struct{})
-		watcher = newWatcher(errChan, outChan, halt)
+		watcher = newWatcher(errChan, outChan)
 	)
 
 	watcher.watch()
@@ -41,8 +41,7 @@ func (s *WatcherSuite) TestFatalErrorBeginsShutdown(t sweet.T) {
 	var (
 		errChan = make(chan errMeta)
 		outChan = make(chan error)
-		halt    = make(chan struct{})
-		watcher = newWatcher(errChan, outChan, halt)
+		watcher = newWatcher(errChan, outChan)
 	)
 
 	watcher.watch()
@@ -71,8 +70,7 @@ func (s *WatcherSuite) TestNilErrorBeginsShutdown(t sweet.T) {
 	var (
 		errChan = make(chan errMeta)
 		outChan = make(chan error)
-		halt    = make(chan struct{})
-		watcher = newWatcher(errChan, outChan, halt)
+		watcher = newWatcher(errChan, outChan)
 	)
 
 	watcher.watch()
@@ -90,12 +88,14 @@ func (s *WatcherSuite) TestSignals(t sweet.T) {
 	var (
 		errChan = make(chan errMeta)
 		outChan = make(chan error)
-		halt    = make(chan struct{})
-		watcher = newWatcher(errChan, outChan, halt)
+		watcher = newWatcher(errChan, outChan)
 	)
 
 	defer close(errChan)
 	watcher.watch()
+
+	// Try to ensure watcher is waiting on signal
+	<-time.After(time.Millisecond * 100)
 
 	// First signal
 	syscall.Kill(syscall.Getpid(), shutdownSignals[0])
@@ -111,13 +111,12 @@ func (s *WatcherSuite) TestExternalHaltRequestBeginsShutdown(t sweet.T) {
 	var (
 		errChan = make(chan errMeta)
 		outChan = make(chan error)
-		halt    = make(chan struct{})
-		watcher = newWatcher(errChan, outChan, halt)
+		watcher = newWatcher(errChan, outChan)
 	)
 
 	watcher.watch()
 
-	close(halt)
+	watcher.halt()
 	Eventually(watcher.shutdownSignal).Should(BeClosed())
 
 	// Cleanup
@@ -129,12 +128,10 @@ func (s *WatcherSuite) TestShutdownTimeout(t sweet.T) {
 	var (
 		errChan = make(chan errMeta)
 		outChan = make(chan error)
-		halt    = make(chan struct{})
 		clock   = glock.NewMockClock()
 		watcher = newWatcher(
 			errChan,
 			outChan,
-			halt,
 			withWatcherClock(clock),
 			withWatcherShutdownTimeout(time.Second*10),
 		)
@@ -143,7 +140,7 @@ func (s *WatcherSuite) TestShutdownTimeout(t sweet.T) {
 	defer close(errChan)
 	watcher.watch()
 
-	close(halt)
+	watcher.halt()
 	Consistently(outChan).ShouldNot(BeClosed())
 	clock.BlockingAdvance(time.Second * 10)
 	Eventually(outChan).Should(BeClosed())
@@ -153,7 +150,7 @@ func (s *WatcherSuite) TestShutdownTimeout(t sweet.T) {
 //
 
 func makeNamedInitializer(name string) namedInitializer {
-	initializer := InitializerFunc(func(nacelle.Config) error {
+	initializer := InitializerFunc(func(config.Config) error {
 		return nil
 	})
 

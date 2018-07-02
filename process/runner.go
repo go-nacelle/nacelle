@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/efritz/glock"
+
 	"github.com/efritz/nacelle/config"
 	"github.com/efritz/nacelle/logging"
 	"github.com/efritz/nacelle/service"
@@ -34,14 +35,13 @@ type (
 	runner struct {
 		processes       Container
 		services        service.Container
-		logger          logging.Logger
-		clock           glock.Clock
-		done            chan struct{}
-		halt            chan struct{}
-		once            *sync.Once
+		watcher         *processWatcher
 		errChan         chan errMeta
+		outChan         chan error
 		wg              *sync.WaitGroup
 		shutdownTimeout time.Duration
+		logger          logging.Logger
+		clock           glock.Clock
 	}
 
 	namedInjectable interface {
@@ -69,70 +69,68 @@ func NewRunner(
 	services service.Container,
 	runnerConfigs ...RunnerConfigFunc,
 ) Runner {
-	runner := &runner{
-		processes: processes,
-		services:  services,
-		logger:    logging.NewNilLogger(),
-		clock:     glock.NewRealClock(),
-		done:      make(chan struct{}),
-		halt:      make(chan struct{}),
-		once:      &sync.Once{},
-		errChan:   make(chan errMeta),
-		wg:        &sync.WaitGroup{},
-	}
-
-	for _, f := range runnerConfigs {
-		f(runner)
-	}
-
-	return runner
-}
-
-func (r *runner) Run(config config.Config) <-chan error {
 	// There can be one init error plus one start and one stop error
 	// per started process. Make the output channel buffer as large
 	// as the maximum number of errors.
-	outChan := make(chan error, r.processes.NumProcesses()*2+1)
+	maxErrs := processes.NumProcesses()*2 + 1
+
+	errChan := make(chan errMeta)
+	outChan := make(chan error, maxErrs)
+
+	r := &runner{
+		processes: processes,
+		services:  services,
+		errChan:   errChan,
+		outChan:   outChan,
+		wg:        &sync.WaitGroup{},
+		logger:    logging.NewNilLogger(),
+		clock:     glock.NewRealClock(),
+	}
+
+	for _, f := range runnerConfigs {
+		f(r)
+	}
 
 	// Create a watcher around the meta error channel (written to by
 	// the runner) and the output channel (read by the boot process).
 	// Pass our own logger and clock instances and the requested
 	// shutdown timeout.
 
-	watcher := newWatcher(
-		r.errChan,
+	r.watcher = newWatcher(
+		errChan,
 		outChan,
-		r.halt,
 		withWatcherLogger(r.logger),
 		withWatcherClock(r.clock),
 		withWatcherShutdownTimeout(r.shutdownTimeout),
 	)
 
+	return r
+}
+
+func (r *runner) Run(config config.Config) <-chan error {
 	// Start watching things before running anything. This ensures that
 	// we start listening for shutdown requests and intercepted signals
 	// as soon as anything starts being initialized.
 
-	watcher.watch()
+	r.watcher.watch()
 
 	// Run the initializers in sequence. IF there were no errors, begin
 	// initializing and running processes in priority/registration order.
 
-	if r.runInitializers(config, watcher) {
-		r.runProcesses(config, watcher)
+	if r.runInitializers(config) {
+		r.runProcesses(config)
 	}
 
-	return outChan
+	return r.outChan
 }
 
 func (r *runner) Shutdown(timeout time.Duration) error {
-	r.once.Do(func() {
-		close(r.halt)
-	})
+	r.watcher.halt()
 
 	select {
 	case <-r.clock.After(timeout):
 		return fmt.Errorf("process runner did not shutdown within timeout")
-	case <-r.done:
+	case <-r.watcher.done:
 		return nil
 	}
 }
@@ -140,7 +138,7 @@ func (r *runner) Shutdown(timeout time.Duration) error {
 //
 // Running and Watching
 
-func (r *runner) runInitializers(config config.Config, watcher *processWatcher) bool {
+func (r *runner) runInitializers(config config.Config) bool {
 	r.logger.Info("Running initializers")
 
 	for _, initializer := range r.processes.GetInitializers() {
@@ -150,7 +148,7 @@ func (r *runner) runInitializers(config config.Config, watcher *processWatcher) 
 			return false
 		}
 
-		if err := r.initWithTimeout(initializer, config, watcher); err != nil {
+		if err := r.initWithTimeout(initializer, config); err != nil {
 			r.errChan <- errMeta{err, initializer, false}
 			close(r.errChan)
 			return false
@@ -160,7 +158,7 @@ func (r *runner) runInitializers(config config.Config, watcher *processWatcher) 
 	return true
 }
 
-func (r *runner) runProcesses(config config.Config, watcher *processWatcher) {
+func (r *runner) runProcesses(config config.Config) {
 	r.logger.Info("Running processes")
 
 	if !r.injectProcesses() {
@@ -175,12 +173,12 @@ func (r *runner) runProcesses(config config.Config, watcher *processWatcher) {
 
 	success := true
 	for index := 0; index < r.processes.NumPriorities(); index++ {
-		if !r.initProcessesAtPriorityIndex(config, watcher, index) {
+		if !r.initProcessesAtPriorityIndex(config, index) {
 			success = false
 			break
 		}
 
-		r.startProcessesAtPriorityIndex(watcher, index)
+		r.startProcessesAtPriorityIndex(index)
 	}
 
 	// Wait for all booted processes to exit any Start/Stop methods,
@@ -234,15 +232,11 @@ func (r *runner) inject(v namedInjectable) error {
 //
 // Initialization
 
-func (r *runner) initProcessesAtPriorityIndex(
-	config config.Config,
-	watcher *processWatcher,
-	index int,
-) bool {
+func (r *runner) initProcessesAtPriorityIndex(config config.Config, index int) bool {
 	r.logger.Info("Initializing processes at priority index %d", index)
 
 	for _, process := range r.processes.GetProcessesAtPriorityIndex(index) {
-		if err := r.initWithTimeout(process, config, watcher); err != nil {
+		if err := r.initWithTimeout(process, config); err != nil {
 			r.errChan <- errMeta{err, process, false}
 			return false
 		}
@@ -251,11 +245,7 @@ func (r *runner) initProcessesAtPriorityIndex(
 	return true
 }
 
-func (r *runner) initWithTimeout(
-	initializer namedInitializer,
-	config config.Config,
-	watcher *processWatcher,
-) error {
+func (r *runner) initWithTimeout(initializer namedInitializer, config config.Config) error {
 	// Run the initializer in a goroutine. Write its return value
 	// to a buffered channel so that it does not block if we happen
 	// to abandon the read (on timeout or during shutdown).
@@ -281,7 +271,7 @@ func (r *runner) initWithTimeout(
 		// Init completed, return its value
 		return err
 
-	case <-watcher.shutdownSignal:
+	case <-r.watcher.shutdownSignal:
 		// Watcher is shutting down, ignore the return value of this call
 		return fmt.Errorf("aborting initialization of %s", initializer.Name())
 
@@ -309,7 +299,7 @@ func (r *runner) init(initializer namedInitializer, config config.Config) error 
 //
 // Process Starting
 
-func (r *runner) startProcessesAtPriorityIndex(watcher *processWatcher, index int) {
+func (r *runner) startProcessesAtPriorityIndex(index int) {
 	r.logger.Info("Starting processes at priority index %d", index)
 
 	// For each process group, we create a goroutine that will shutdown
@@ -322,7 +312,7 @@ func (r *runner) startProcessesAtPriorityIndex(watcher *processWatcher, index in
 
 	go func() {
 		defer r.wg.Done()
-		<-watcher.shutdownSignal
+		<-r.watcher.shutdownSignal
 		r.stopProcessesAtPriorityIndex(index)
 	}()
 
@@ -359,7 +349,7 @@ func (r *runner) stopProcessesAtPriorityIndex(index int) {
 	r.logger.Info("Stopping processes at priority index %d", index)
 
 	// Call stop on all processes at this priority index in parallel. We
-	// add one ot the wait group for each routine to ensure that we do
+	// add one to the wait group for each routine to ensure that we do
 	// not close the err channel until all possible error producers have
 	// exited.
 

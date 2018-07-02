@@ -5,17 +5,17 @@ import (
 	"time"
 
 	"github.com/aphistic/sweet"
-	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/config"
 	. "github.com/onsi/gomega"
+
+	"github.com/efritz/nacelle/config"
 )
 
 type ContainerSuite struct{}
 
 func (s *ContainerSuite) TestInitializers(t sweet.T) {
-	i1 := InitializerFunc(func(nacelle.Config) error { return fmt.Errorf("a") })
-	i2 := InitializerFunc(func(nacelle.Config) error { return fmt.Errorf("b") })
-	i3 := InitializerFunc(func(nacelle.Config) error { return fmt.Errorf("c") })
+	i1 := InitializerFunc(func(config.Config) error { return fmt.Errorf("a") })
+	i2 := InitializerFunc(func(config.Config) error { return fmt.Errorf("b") })
+	i3 := InitializerFunc(func(config.Config) error { return fmt.Errorf("c") })
 
 	c := NewContainer()
 	c.RegisterInitializer(i1)
@@ -43,12 +43,12 @@ func (s *ContainerSuite) TestInitializers(t sweet.T) {
 
 func (s *ContainerSuite) TestProcesses(t sweet.T) {
 	c := NewContainer()
-	c.RegisterProcess(&noopProcess{"a"})
-	c.RegisterProcess(&noopProcess{"b"}, WithProcessName("b"), WithPriority(5))
-	c.RegisterProcess(&noopProcess{"c"}, WithProcessName("c"), WithPriority(2))
-	c.RegisterProcess(&noopProcess{"d"}, WithProcessName("d"), WithPriority(3))
-	c.RegisterProcess(&noopProcess{"e"}, WithProcessName("e"), WithPriority(2))
-	c.RegisterProcess(&noopProcess{"f"}, WithProcessName("f"))
+	c.RegisterProcess(newInitFailProcess("a"))
+	c.RegisterProcess(newInitFailProcess("b"), WithProcessName("b"), WithPriority(5))
+	c.RegisterProcess(newInitFailProcess("c"), WithProcessName("c"), WithPriority(2))
+	c.RegisterProcess(newInitFailProcess("d"), WithProcessName("d"), WithPriority(3))
+	c.RegisterProcess(newInitFailProcess("e"), WithProcessName("e"), WithPriority(2))
+	c.RegisterProcess(newInitFailProcess("f"), WithProcessName("f"))
 
 	Expect(c.NumProcesses()).To(Equal(6))
 	Expect(c.NumPriorities()).To(Equal(4))
@@ -89,10 +89,14 @@ func (s *ContainerSuite) TestProcesses(t sweet.T) {
 //
 //
 
-type noopProcess struct {
+type initFailProcess struct {
 	name string
 }
 
-func (p *noopProcess) Init(config config.Config) error { return fmt.Errorf("%s", p.name) }
-func (p *noopProcess) Start() error                    { return nil }
-func (p *noopProcess) Stop() error                     { return nil }
+func newInitFailProcess(name string) Process {
+	return &initFailProcess{name: name}
+}
+
+func (p *initFailProcess) Init(config config.Config) error { return fmt.Errorf("%s", p.name) }
+func (p *initFailProcess) Start() error                    { return nil }
+func (p *initFailProcess) Stop() error                     { return nil }

@@ -11,33 +11,33 @@ import (
 	"github.com/efritz/nacelle/logging"
 )
 
-// processWatcher coordinates goroutines to detect when an
-// application should begin a shutdown or abort process. A
-// graceful exit will happen on any of the following:
+// processWatcher coordinates goroutines to detect when an application should
+// begin a shutdown or abort process. A graceful exit will happen on any of the
+// following conditions:
 //   - the errChan closing
 //   - the halt channel closing
 //   - receiving a SIGINT or SIGKILL
 //   - a non-nil error from a process
 //   - a nil error from a process without silent exit
 //
-// An immediate abort will happen on any fo the following:
+// An immediate abort will happen on any of the following conditions:
 //   - receiving a second SIGINT or SIGKILL
 //   - the timeout duration elapsing after shutdown begins
 //
-// The watcher will close the outChan after the errChan closes
-// or after aborting.
+// The watcher will close the outChan after the errChan closes or after aborting.
 type processWatcher struct {
 	errChan         <-chan errMeta
 	outChan         chan<- error
-	halt            <-chan struct{}
-	logger          logging.Logger
-	clock           glock.Clock
-	shutdownTimeout time.Duration
+	done            chan struct{}
+	haltSignal      chan struct{}
 	abortSignal     chan struct{}
 	shutdownSignal  chan struct{}
-	done            chan struct{}
+	haltOnce        *sync.Once
 	abortOnce       *sync.Once
 	shutdownOnce    *sync.Once
+	shutdownTimeout time.Duration
+	logger          logging.Logger
+	clock           glock.Clock
 }
 
 var shutdownSignals = []syscall.Signal{
@@ -48,20 +48,20 @@ var shutdownSignals = []syscall.Signal{
 func newWatcher(
 	errChan <-chan errMeta,
 	outChan chan<- error,
-	halt <-chan struct{},
 	configs ...watcherConfigFunc,
 ) *processWatcher {
 	watcher := &processWatcher{
 		errChan:        errChan,
 		outChan:        outChan,
-		halt:           halt,
-		logger:         logging.NewNilLogger(),
-		clock:          glock.NewRealClock(),
+		done:           make(chan struct{}),
+		haltSignal:     make(chan struct{}),
 		abortSignal:    make(chan struct{}),
 		shutdownSignal: make(chan struct{}),
-		done:           make(chan struct{}),
+		haltOnce:       &sync.Once{},
 		abortOnce:      &sync.Once{},
 		shutdownOnce:   &sync.Once{},
+		logger:         logging.NewNilLogger(),
+		clock:          glock.NewRealClock(),
 	}
 
 	for _, f := range configs {
@@ -161,7 +161,7 @@ func (w *processWatcher) watchHaltChan() {
 	select {
 	case <-w.done:
 		return
-	case <-w.halt:
+	case <-w.haltSignal:
 		// Wait for an external signal
 	}
 
@@ -189,6 +189,12 @@ func (w *processWatcher) watchShutdownTimeout() {
 		// on shutdown indefinitely.
 		w.abort()
 	}
+}
+
+func (w *processWatcher) halt() {
+	w.haltOnce.Do(func() {
+		close(w.haltSignal)
+	})
 }
 
 func (w *processWatcher) shutdown() {
