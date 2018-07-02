@@ -17,14 +17,14 @@ func setupConfigs(config nacelle.Config) error {
 	return nil
 }
 
-func setupProcesses(runner nacelle.ProcessContainer, container nacelle.ServiceContainer) error {
-	runner.RegisterInitializer(
-		nacelle.WrapServiceInitializerFunc(container, secret.Init),
+func setupProcesses(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+	processes.RegisterInitializer(
+		nacelle.WrapServiceInitializerFunc(services, secret.Init),
 		nacelle.WithInitializerName("secret"),
 	)
 
-	runner.RegisterProcess(basehttp.NewServer(http.NewEndpointSet()), nacelle.WithProcessName("http"))
-	runner.RegisterProcess(basegrpc.NewServer(grpc.NewEndpointSet()), nacelle.WithProcessName("grpc"))
+	processes.RegisterProcess(basehttp.NewServer(http.NewEndpointSet()), nacelle.WithProcessName("http"))
+	processes.RegisterProcess(basegrpc.NewServer(grpc.NewEndpointSet()), nacelle.WithProcessName("grpc"))
 	return nil
 }
 

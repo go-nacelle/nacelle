@@ -7,13 +7,13 @@ import (
 	"github.com/efritz/nacelle"
 )
 
-func Init(config nacelle.Config, container nacelle.ServiceContainer) error {
+func Init(config nacelle.Config, services nacelle.ServiceContainer) error {
 	secretConfig := &Config{}
 	if err := config.Fetch(ConfigToken, secretConfig); err != nil {
 		return err
 	}
 
-	logger := container.GetLogger()
+	logger := services.GetLogger()
 
 	redisAddr := fmt.Sprintf(
 		"%s:%d",
@@ -27,7 +27,7 @@ func Init(config nacelle.Config, container nacelle.ServiceContainer) error {
 		deepjoy.WithLogger(&logAdapter{logger}),
 	)
 
-	return container.Set("secret-service", &secretService{
+	return services.Set("secret-service", &secretService{
 		ttl:    secretConfig.RedisTTL,
 		prefix: secretConfig.RedisPrefix,
 		client: client,
