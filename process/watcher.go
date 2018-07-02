@@ -80,11 +80,6 @@ func (w *processWatcher) watch() {
 	go w.watchShutdownTimeout()
 }
 
-// wait will unblock once the output channel has closed.
-func (w *processWatcher) wait() {
-	<-w.done
-}
-
 //
 //
 

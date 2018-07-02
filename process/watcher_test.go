@@ -34,7 +34,7 @@ func (s *WatcherSuite) TestNoErrors(t sweet.T) {
 	Eventually(outChan).Should(BeClosed())
 
 	// Ensure we unblock
-	watcher.wait()
+	Eventually(outChan).Should(BeClosed())
 }
 
 func (s *WatcherSuite) TestFatalErrorBeginsShutdown(t sweet.T) {
@@ -65,7 +65,6 @@ func (s *WatcherSuite) TestFatalErrorBeginsShutdown(t sweet.T) {
 	// And the same behavior above applies
 	close(errChan)
 	Eventually(outChan).Should(BeClosed())
-	watcher.wait()
 }
 
 func (s *WatcherSuite) TestNilErrorBeginsShutdown(t sweet.T) {
@@ -84,7 +83,7 @@ func (s *WatcherSuite) TestNilErrorBeginsShutdown(t sweet.T) {
 
 	// Cleanup
 	close(errChan)
-	watcher.wait()
+	Eventually(outChan).Should(BeClosed())
 }
 
 func (s *WatcherSuite) TestSignals(t sweet.T) {
@@ -106,9 +105,6 @@ func (s *WatcherSuite) TestSignals(t sweet.T) {
 	Consistently(watcher.abortSignal).ShouldNot(BeClosed())
 	syscall.Kill(syscall.Getpid(), shutdownSignals[0])
 	Eventually(watcher.abortSignal).Should(BeClosed())
-
-	// Cleanup
-	watcher.wait()
 }
 
 func (s *WatcherSuite) TestExternalHaltRequestBeginsShutdown(t sweet.T) {
@@ -126,7 +122,7 @@ func (s *WatcherSuite) TestExternalHaltRequestBeginsShutdown(t sweet.T) {
 
 	// Cleanup
 	close(errChan)
-	watcher.wait()
+	Eventually(outChan).Should(BeClosed())
 }
 
 func (s *WatcherSuite) TestShutdownTimeout(t sweet.T) {
@@ -151,7 +147,6 @@ func (s *WatcherSuite) TestShutdownTimeout(t sweet.T) {
 	Consistently(outChan).ShouldNot(BeClosed())
 	clock.BlockingAdvance(time.Second * 10)
 	Eventually(outChan).Should(BeClosed())
-	watcher.wait()
 }
 
 //

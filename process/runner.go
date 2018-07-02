@@ -12,23 +12,22 @@ import (
 )
 
 type (
-	// Runner wraps a process container. Given a loaded configuration
-	// object, it can run the registered initializers and processes
-	// and wait for them to exit (cleanly or via shutdown request).
+	// Runner wraps a process container. Given a loaded configuration object,
+	// it can run the registered initializers and processes and wait for them
+	// to exit (cleanly or via shutdown request).
 	Runner interface {
-		// Run takes a loaded configuration object, then starts and
-		// monitors the registered items in the process container.
-		// This method returns a channel of errors. Each error from
-		// an initializer or a process will be sent on this channel
-		// (nil errors are ignored). This channel will close once
-		// all processes have exited (or, alternatively, when the
+		// Run takes a loaded configuration object, then starts and monitors
+		// the registered items in the process container. This method returns
+		// a channel of errors. Each error from an initializer or a process will
+		// be sent on this channel (nil errors are ignored). This channel will
+		// close once all processes have exited (or, alternatively, when the
 		// shutdown timeout has elapsed).
 		Run(config.Config) <-chan error
 
-		// Shutdown will begin a graceful exit of all processes. This
-		// method will block until the runner has exited (the channel
-		// from the Run method has closed) or the given duration has
-		// elapsed. In the later case a non-nil error is returned.
+		// Shutdown will begin a graceful exit of all processes. This method
+		// will block until the runner has exited (the channel from the Run
+		// method has closed) or the given duration has elapsed. In the later
+		// case a non-nil error is returned.
 		Shutdown(time.Duration) error
 	}
 
@@ -63,8 +62,8 @@ type (
 	}
 )
 
-// NewRunner creates a process runner from the given process and
-// service containers.
+// NewRunner creates a process runner from the given process and service
+// containers.
 func NewRunner(
 	processes Container,
 	services service.Container,
@@ -90,7 +89,15 @@ func NewRunner(
 }
 
 func (r *runner) Run(config config.Config) <-chan error {
+	// There can be one init error plus one start and one stop error
+	// per started process. Make the output channel buffer as large
+	// as the maximum number of errors.
 	outChan := make(chan error, r.processes.NumProcesses()*2+1)
+
+	// Create a watcher around the meta error channel (written to by
+	// the runner) and the output channel (read by the boot process).
+	// Pass our own logger and clock instances and the requested
+	// shutdown timeout.
 
 	watcher := newWatcher(
 		r.errChan,
@@ -101,13 +108,19 @@ func (r *runner) Run(config config.Config) <-chan error {
 		withWatcherShutdownTimeout(r.shutdownTimeout),
 	)
 
+	// Start watching things before running anything. This ensures that
+	// we start listening for shutdown requests and intercepted signals
+	// as soon as anything starts being initialized.
+
 	watcher.watch()
+
+	// Run the initializers in sequence. IF there were no errors, begin
+	// initializing and running processes in priority/registration order.
 
 	if r.runInitializers(config, watcher) {
 		r.runProcesses(config, watcher)
 	}
 
-	go watcher.wait()
 	return outChan
 }
 
@@ -147,12 +160,18 @@ func (r *runner) runInitializers(config config.Config, watcher *processWatcher) 
 	return true
 }
 
-func (r *runner) runProcesses(config config.Config, watcher *processWatcher) bool {
+func (r *runner) runProcesses(config config.Config, watcher *processWatcher) {
 	r.logger.Info("Running processes")
 
 	if !r.injectProcesses() {
-		return false
+		return
 	}
+
+	// For each priority index, attempt to initialize the processes
+	// in sequence. Then, start all processes in a goroutine. If there
+	// is any synchronous error occurs (either due to an Init call
+	// returning a non-nil error, or the watcher has begun shutdown),
+	// stop booting up processes adn simply wait for them to spin down.
 
 	success := true
 	for index := 0; index < r.processes.NumPriorities(); index++ {
@@ -161,22 +180,24 @@ func (r *runner) runProcesses(config config.Config, watcher *processWatcher) boo
 			break
 		}
 
-		r.startProcessesAtPriorityIndex(
-			watcher,
-			index,
-		)
+		r.startProcessesAtPriorityIndex(watcher, index)
 	}
+
+	// Wait for all booted processes to exit any Start/Stop methods,
+	// then close the channel that receives their errors. This will
+	// signal to the watcher to do its own cleanup (and close the
+	// output channel).
 
 	go func() {
 		r.wg.Wait()
 		close(r.errChan)
 	}()
 
-	if success {
-		r.logger.Info("All processes have started")
+	if !success {
+		return
 	}
 
-	return true
+	r.logger.Info("All processes have started")
 }
 
 //
@@ -235,26 +256,37 @@ func (r *runner) initWithTimeout(
 	config config.Config,
 	watcher *processWatcher,
 ) error {
-	var timeoutCh <-chan time.Time
-	if timeout := initializer.InitTimeout(); timeout > 0 {
-		timeoutCh = r.clock.After(timeout)
-	}
+	// Run the initializer in a goroutine. Write its return value
+	// to a buffered channel so that it does not block if we happen
+	// to abandon the read (on timeout or during shutdown).
 
-	ch := make(chan error)
+	ch := make(chan error, 1)
 
 	go func() {
 		defer close(ch)
 		ch <- r.init(initializer, config)
 	}()
 
+	// Create a timeout channel for the initialization timeout.
+	// If timeout is zero, then we use a nil channel (which will
+	// never receive).
+
+	var timeoutCh <-chan time.Time
+	if timeout := initializer.InitTimeout(); timeout > 0 {
+		timeoutCh = r.clock.After(timeout)
+	}
+
 	select {
 	case err := <-ch:
+		// Init completed, return its value
 		return err
 
 	case <-watcher.shutdownSignal:
+		// Watcher is shutting down, ignore the return value of this call
 		return fmt.Errorf("aborting initialization of %s", initializer.Name())
 
 	case <-timeoutCh:
+		// Initialization took too long, return an error
 		return fmt.Errorf("%s did not initialize within timeout", initializer.Name())
 	}
 }
@@ -280,7 +312,14 @@ func (r *runner) init(initializer namedInitializer, config config.Config) error 
 func (r *runner) startProcessesAtPriorityIndex(watcher *processWatcher, index int) {
 	r.logger.Info("Starting processes at priority index %d", index)
 
+	// For each process group, we create a goroutine that will shutdown
+	// all processes once the watcher begins shutting down. We add one to
+	// the wait group to "bridge the gap" between the exit of the start
+	// methods and the call to a stop method -- this situation is likely
+	// rare, but would cause a panic.
+
 	r.wg.Add(1)
+
 	go func() {
 		defer r.wg.Done()
 		<-watcher.shutdownSignal
@@ -290,22 +329,26 @@ func (r *runner) startProcessesAtPriorityIndex(watcher *processWatcher, index in
 	for _, process := range r.processes.GetProcessesAtPriorityIndex(index) {
 		r.wg.Add(1)
 
-		go func(process *ProcessMeta) {
+		go func(p *ProcessMeta) {
 			defer r.wg.Done()
-
-			r.logger.Info("Starting %s", process.Name())
-			err := process.Start()
-
-			if err != nil {
-				err = fmt.Errorf(
-					"%s returned a fatal error (%s)",
-					process.Name(),
-					err.Error(),
-				)
-			}
-
-			r.errChan <- errMeta{err, process, process.silentExit}
+			r.startProcess(p)
 		}(process)
+	}
+}
+
+func (r *runner) startProcess(process *ProcessMeta) {
+	r.logger.Info("Starting %s", process.Name())
+
+	if err := process.Start(); err != nil {
+		wrappedErr := fmt.Errorf(
+			"%s returned a fatal error (%s)",
+			process.Name(),
+			err.Error(),
+		)
+
+		r.errChan <- errMeta{wrappedErr, process, false}
+	} else {
+		r.errChan <- errMeta{nil, process, process.silentExit}
 	}
 }
 
@@ -315,8 +358,14 @@ func (r *runner) startProcessesAtPriorityIndex(watcher *processWatcher, index in
 func (r *runner) stopProcessesAtPriorityIndex(index int) {
 	r.logger.Info("Stopping processes at priority index %d", index)
 
+	// Call stop on all processes at this priority index in parallel. We
+	// add one ot the wait group for each routine to ensure that we do
+	// not close the err channel until all possible error producers have
+	// exited.
+
 	for _, process := range r.processes.GetProcessesAtPriorityIndex(index) {
 		r.wg.Add(1)
+
 		go func(process *ProcessMeta) {
 			defer r.wg.Done()
 
