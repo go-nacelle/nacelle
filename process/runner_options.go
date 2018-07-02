@@ -7,11 +7,9 @@ import (
 	"github.com/efritz/nacelle/logging"
 )
 
-type (
-	// RunnerConfigFunc is a function used to configure an instance
-	// of a ProcessRunner.
-	RunnerConfigFunc func(*runner)
-)
+// RunnerConfigFunc is a function used to configure an instance
+// of a ProcessRunner.
+type RunnerConfigFunc func(*runner)
 
 // WithLogger sets the logger used by the runner.
 func WithLogger(logger logging.Logger) RunnerConfigFunc {

@@ -12,8 +12,23 @@ import (
 )
 
 type (
+	// Runner wraps a process container. Given a loaded configuration
+	// object, it can run the registered initializers and processes
+	// and wait for them to exit (cleanly or via shutdown request).
 	Runner interface {
+		// Run takes a loaded configuration object, then starts and
+		// monitors the registered items in the process container.
+		// This method returns a channel of errors. Each error from
+		// an initializer or a process will be sent on this channel
+		// (nil errors are ignored). This channel will close once
+		// all processes have exited (or, alternatively, when the
+		// shutdown timeout has elapsed).
 		Run(config.Config) <-chan error
+
+		// Shutdown will begin a graceful exit of all processes. This
+		// method will block until the runner has exited (the channel
+		// from the Run method has closed) or the given duration has
+		// elapsed. In the later case a non-nil error is returned.
 		Shutdown(time.Duration) error
 	}
 
@@ -29,8 +44,27 @@ type (
 		wg              *sync.WaitGroup
 		shutdownTimeout time.Duration
 	}
+
+	namedInjectable interface {
+		Name() string
+		Wrapped() interface{}
+	}
+
+	namedInitializer interface {
+		Initializer
+		Name() string
+		InitTimeout() time.Duration
+	}
+
+	errMeta struct {
+		err        error
+		source     namedInitializer
+		silentExit bool
+	}
 )
 
+// NewRunner creates a process runner from the given process and
+// service containers.
 func NewRunner(
 	processes Container,
 	services service.Container,
@@ -83,7 +117,7 @@ func (r *runner) Shutdown(timeout time.Duration) error {
 	})
 
 	select {
-	case <-time.After(timeout):
+	case <-r.clock.After(timeout):
 		return fmt.Errorf("process runner did not shutdown within timeout")
 	case <-r.done:
 		return nil
@@ -120,10 +154,7 @@ func (r *runner) runProcesses(config config.Config, watcher *processWatcher) boo
 		return false
 	}
 
-	var (
-		success = true
-	)
-
+	success := true
 	for index := 0; index < r.processes.NumPriorities(); index++ {
 		if !r.initProcessesAtPriorityIndex(config, watcher, index) {
 			success = false
@@ -220,7 +251,7 @@ func (r *runner) initWithTimeout(
 	case err := <-ch:
 		return err
 
-	case <-watcher.draining:
+	case <-watcher.shutdownSignal:
 		return fmt.Errorf("aborting initialization of %s", initializer.Name())
 
 	case <-timeoutCh:
@@ -252,11 +283,8 @@ func (r *runner) startProcessesAtPriorityIndex(watcher *processWatcher, index in
 	r.wg.Add(1)
 	go func() {
 		defer r.wg.Done()
-		<-watcher.draining
-
-		r.stopProcessesAtPriorityIndex(
-			index,
-		)
+		<-watcher.shutdownSignal
+		r.stopProcessesAtPriorityIndex(index)
 	}()
 
 	for _, process := range r.processes.GetProcessesAtPriorityIndex(index) {

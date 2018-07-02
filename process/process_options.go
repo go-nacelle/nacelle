@@ -18,7 +18,7 @@ func WithPriority(priority int) ProcessConfigFunc {
 	return func(meta *ProcessMeta) { meta.priority = priority }
 }
 
-// WithSilentExit allows a process to exit without causing the progrma to halt.
+// WithSilentExit allows a process to exit without causing the program to halt.
 // The default is the opposite, where the completion of any registered process
 // (even successful) causes a graceful shutdown of the other processes.
 func WithSilentExit() ProcessConfigFunc {
