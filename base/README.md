@@ -2,6 +2,6 @@
 
 This package contains base implementations for common processes.
 
-- [HTTP server](https://github.com/efritz/nacelle/tree/master/base/http)
-- [grPC server](https://github.com/efritz/nacelle/tree/master/base/grpc)
-- [generic worker process](https://github.com/efritz/nacelle/tree/master/base/worker)
+- [HTTP Server](https://github.com/efritz/nacelle/tree/master/base/http)
+- [gRPC Server](https://github.com/efritz/nacelle/tree/master/base/grpc)
+- [Generic Worker Process](https://github.com/efritz/nacelle/tree/master/base/worker)
