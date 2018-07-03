@@ -11,6 +11,9 @@ before_script:
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 script:
-  - go test -coverprofile=c.out -covermode=atomic
+  # Test
+  - go test ./... -coverprofile=c.out -covermode=atomic
+  # Ensure examples build
+  - for app in $(ls examples/ -F | grep /); do go build "github.com/efritz/nacelle/examples/$app"; done
 after_script:
   - ./cc-test-reporter after-build --coverage-input-type gocov --exit-code $TRAVIS_TEST_RESULT
