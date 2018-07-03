@@ -1,13 +1,15 @@
 package main
 
+//go:generate protoc grpc/secret.proto --go_out=plugins=grpc:grpc -I grpc/
+
 import (
 	"github.com/efritz/nacelle"
 	basegrpc "github.com/efritz/nacelle/base/grpc"
 	basehttp "github.com/efritz/nacelle/base/http"
 
-	"github.com/efritz/nacelle/examples/multi-service/grpc"
-	"github.com/efritz/nacelle/examples/multi-service/http"
-	"github.com/efritz/nacelle/examples/multi-service/secret"
+	"github.com/efritz/nacelle/examples/multi-process/grpc"
+	"github.com/efritz/nacelle/examples/multi-process/http"
+	"github.com/efritz/nacelle/examples/multi-process/secret"
 )
 
 func setupConfigs(config nacelle.Config) error {
@@ -18,11 +20,9 @@ func setupConfigs(config nacelle.Config) error {
 }
 
 func setupProcesses(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
-	processes.RegisterInitializer(
-		nacelle.WrapServiceInitializerFunc(services, secret.Init),
-		nacelle.WithInitializerName("secret"),
-	)
+	initSecret := nacelle.WrapServiceInitializerFunc(services, secret.Init)
 
+	processes.RegisterInitializer(initSecret, nacelle.WithInitializerName("secret"))
 	processes.RegisterProcess(basehttp.NewServer(http.NewEndpointSet()), nacelle.WithProcessName("http"))
 	processes.RegisterProcess(basegrpc.NewServer(grpc.NewEndpointSet()), nacelle.WithProcessName("grpc"))
 	return nil
@@ -30,11 +30,11 @@ func setupProcesses(processes nacelle.ProcessContainer, services nacelle.Service
 
 func main() {
 	boostrapper := nacelle.NewBootstrapper(
-		"app",
+		"multi-process-example",
 		setupConfigs,
 		setupProcesses,
 		nacelle.WithLoggingFields(nacelle.Fields{
-			"app_name": "app",
+			"app_name": "multi-process-example",
 		}),
 	)
 

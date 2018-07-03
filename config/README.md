@@ -91,12 +91,13 @@ instead of true.
 
 ```go
 func setupConfigs(config nacelle.Config) error {
-    config.MustRegister(
-        ConfigToken,
+    modifiedConfig := nacelle.MustApplyTagModifiers(
         &Config{},
         nacelle.NewEnvTagPrefixer("Q"),
         nacelle.NewDefaultTagSetter("B", "false"),
     )
+
+    config.MustRegister(ConfigToken, modifiedConfig)
 
     // ...
     return nil

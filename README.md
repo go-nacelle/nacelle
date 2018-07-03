@@ -20,6 +20,15 @@ Nacelle is a microservice framework written in Go.
 For example usage, see [the examples](https://github.com/efritz/nacelle/tree/master/examples)
 provided along with in this project.
 
+## Frameworks
+
+The following frameworks are built on top of nacelle to provide rich features
+to a single *primary* process.
+
+- [chevron](https://github.com/efritz/chevron), an HTTP framework
+- [scarf](https://github.com/efritz/scarf), a gRPC framework
+
+
 ## Documentation
 
 - [Logging](https://github.com/efritz/nacelle/tree/master/logging)

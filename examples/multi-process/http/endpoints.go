@@ -9,7 +9,7 @@ import (
 	"github.com/efritz/response"
 	"github.com/gorilla/mux"
 
-	"github.com/efritz/nacelle/examples/multi-service/secret"
+	"github.com/efritz/nacelle/examples/multi-process/secret"
 )
 
 type EndpointSet struct {

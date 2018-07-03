@@ -78,14 +78,14 @@ func (w *Worker) Start() error {
 
 loop:
 	for {
+		if err := w.spec.Tick(); err != nil {
+			return err
+		}
+
 		select {
 		case <-w.halt:
 			break loop
 		case <-w.clock.After(w.tickInterval):
-		}
-
-		if err := w.spec.Tick(); err != nil {
-			return err
 		}
 	}
 

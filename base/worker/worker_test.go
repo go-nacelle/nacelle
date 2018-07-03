@@ -36,6 +36,8 @@ func (s *WorkerSuite) TestRunAndStop(t sweet.T) {
 		errChan <- worker.Start()
 	}()
 
+	Eventually(tickChan).Should(Receive())
+	Consistently(tickChan).ShouldNot(Receive())
 	clock.BlockingAdvance(time.Second * 5)
 	Eventually(tickChan).Should(Receive())
 	Consistently(tickChan).ShouldNot(Receive())
@@ -96,7 +98,6 @@ func (s *WorkerSuite) TestTickError(t sweet.T) {
 		errChan <- worker.Start()
 	}()
 
-	clock.BlockingAdvance(time.Second * 5)
 	Eventually(errChan).Should(Receive(MatchError("utoh")))
 	Expect(worker.IsDone()).To(BeTrue())
 }

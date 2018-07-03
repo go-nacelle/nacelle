@@ -8,7 +8,9 @@ type (
 )
 
 var (
-	NewEnvConfig        = config.NewEnvConfig
-	NewEnvTagPrefixer   = config.NewEnvTagPrefixer
-	NewDefaultTagSetter = config.NewDefaultTagSetter
+	NewEnvConfig          = config.NewEnvConfig
+	NewEnvTagPrefixer     = config.NewEnvTagPrefixer
+	NewDefaultTagSetter   = config.NewDefaultTagSetter
+	ApplyTagModifiers     = config.ApplyTagModifiers
+	MustApplyTagModifiers = config.MustApplyTagModifiers
 )

@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/examples/multi-service/secret"
 	"google.golang.org/grpc"
+
+	"github.com/efritz/nacelle/examples/multi-process/secret"
 )
 
 type EndpointSet struct {

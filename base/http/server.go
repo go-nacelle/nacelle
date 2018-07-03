@@ -77,16 +77,24 @@ func (s *Server) Start() error {
 	defer s.listener.Close()
 	defer s.server.Close()
 
-	if s.certFile == "" {
-		s.Logger.Info("Serving HTTP on port %d", s.port)
-		if err := s.server.Serve(s.listener); err != http.ErrServerClosed {
-			return err
-		}
-
-		s.Logger.Info("No longer serving HTTP on port %d", s.port)
-		return nil
+	if s.certFile != "" {
+		return s.serveTLS()
 	}
 
+	return s.serve()
+}
+
+func (s *Server) serve() error {
+	s.Logger.Info("Serving HTTP on port %d", s.port)
+	if err := s.server.Serve(s.listener); err != http.ErrServerClosed {
+		return err
+	}
+
+	s.Logger.Info("No longer serving HTTP on port %d", s.port)
+	return nil
+}
+
+func (s *Server) serveTLS() error {
 	s.Logger.Info("Serving HTTP/TLS on port %d", s.port)
 	if err := s.server.ServeTLS(s.listener, s.certFile, s.keyFile); err != http.ErrServerClosed {
 		return err
