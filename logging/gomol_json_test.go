@@ -2,6 +2,7 @@ package logging
 
 import (
 	"bytes"
+	"fmt"
 	"time"
 
 	"github.com/aphistic/gomol"
@@ -28,32 +29,34 @@ func (s *GomolJSONSuite) TestShutdownLogger(t sweet.T) {
 
 func (s *GomolJSONSuite) TestLogm(t sweet.T) {
 	var (
-		logger = newJSONLogger()
-		buffer = bytes.NewBuffer(nil)
+		logger    = newJSONLogger()
+		buffer    = bytes.NewBuffer(nil)
+		timestamp = time.Unix(1503939881, 0)
 	)
 
 	logger.stream = buffer
 
 	logger.Logm(
-		time.Unix(1503939881, 0),
+		timestamp,
 		gomol.LevelFatal,
 		Fields{"attr1": 4321},
 		"test 1234",
 	)
 
-	Expect(string(buffer.Bytes())).To(MatchJSON(`{
+	Expect(string(buffer.Bytes())).To(MatchJSON(fmt.Sprintf(`{
 		"level": "fatal",
 		"message": "test 1234",
-		"timestamp": "2017-08-28T12:04:41.000-0500",
+		"timestamp": "%s",
 		"attr1": 4321
-	}`))
+	}`, timestamp.Format(JSONTimeFormat))))
 }
 
 func (s *GomolJSONSuite) TestBaseAttrs(t sweet.T) {
 	var (
-		logger = newJSONLogger()
-		buffer = bytes.NewBuffer(nil)
-		base   = gomol.NewBase()
+		logger    = newJSONLogger()
+		buffer    = bytes.NewBuffer(nil)
+		base      = gomol.NewBase()
+		timestamp = time.Unix(1503939881, 0)
 	)
 
 	base.SetAttr("attr1", 7890)
@@ -63,7 +66,7 @@ func (s *GomolJSONSuite) TestBaseAttrs(t sweet.T) {
 	logger.stream = buffer
 
 	logger.Logm(
-		time.Unix(1503939881, 0),
+		timestamp,
 		gomol.LevelDebug,
 		Fields{
 			"attr1": 4321,
@@ -72,12 +75,12 @@ func (s *GomolJSONSuite) TestBaseAttrs(t sweet.T) {
 		"test 1234",
 	)
 
-	Expect(string(buffer.Bytes())).To(MatchJSON(`{
+	Expect(string(buffer.Bytes())).To(MatchJSON(fmt.Sprintf(`{
 			"level": "debug",
 			"message": "test 1234",
-			"timestamp": "2017-08-28T12:04:41.000-0500",
+			"timestamp": "%s",
 			"attr1": 4321,
 			"attr2": "val2",
 			"attr3": "val3"
-		}`))
+		}`, timestamp.Format(JSONTimeFormat))))
 }

@@ -10,12 +10,16 @@ import (
 type LoggerSuite struct{}
 
 func (s *LoggerSuite) TestNormalizeTimeValues(t sweet.T) {
-	fields := Fields{
-		"foo":  "bar",
-		"bar":  time.Unix(1503939881, 0),
-		"baz":  time.Unix(1503939891, 0),
-		"bonk": []bool{true, false, true},
-	}
+	var (
+		t1     = time.Unix(1503939881, 0)
+		t2     = time.Unix(1503939891, 0)
+		fields = Fields{
+			"foo":  "bar",
+			"bar":  t1,
+			"baz":  t2,
+			"bonk": []bool{true, false, true},
+		}
+	)
 
 	// Modifies object in-place
 	Expect(fields.normalizeTimeValues()).To(Equal(fields))
@@ -25,8 +29,8 @@ func (s *LoggerSuite) TestNormalizeTimeValues(t sweet.T) {
 	Expect(fields["bonk"]).To(Equal([]bool{true, false, true}))
 
 	// Times converted to ISO 8601
-	Expect(fields["bar"]).To(Equal("2017-08-28T12:04:41.000-0500"))
-	Expect(fields["baz"]).To(Equal("2017-08-28T12:04:51.000-0500"))
+	Expect(time.Parse(JSONTimeFormat, fields["bar"].(string))).To(Equal(t1))
+	Expect(time.Parse(JSONTimeFormat, fields["baz"].(string))).To(Equal(t2))
 }
 
 func (s *LoggerSuite) TestNormalizeTimeValuesOnNilFields(t sweet.T) {
