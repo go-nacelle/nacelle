@@ -21,7 +21,8 @@ func (s *ConfigTagsSuite) TestEnvTagPrefixer(t sweet.T) {
 }
 
 func (s *ConfigTagsSuite) TestDefaultTagSetter(t sweet.T) {
-	obj, err := ApplyTagModifiers(&TempTest{},
+	obj, err := ApplyTagModifiers(
+		&TempTest{},
 		NewDefaultTagSetter("X", "r"),
 		NewDefaultTagSetter("Y", "null"),
 	)

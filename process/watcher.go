@@ -102,8 +102,10 @@ func (w *processWatcher) watchErrors() {
 			}
 
 			if err.err == nil {
-				// Always log this
-				w.logger.Info("%s has stopped cleanly", err.source.Name())
+				w.logger.Info(
+					"%s has stopped cleanly",
+					err.source.Name(),
+				)
 
 				// If we got a nil error but the process was marked
 				// as something not necessarily long-running, stop
@@ -114,8 +116,11 @@ func (w *processWatcher) watchErrors() {
 					continue
 				}
 			} else {
-				// Always log this
-				w.logger.Error("%s returned a fatal error (%s)", err.source.Name(), err.err.Error())
+				w.logger.Error(
+					"%s returned a fatal error (%s)",
+					err.source.Name(),
+					err.err.Error(),
+				)
 
 				// Inform the client of the watcher of this fatal error
 				w.outChan <- err.err

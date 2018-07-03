@@ -13,7 +13,7 @@ type Config struct {
 	LogShortTime              bool   `env:"LOG_SHORT_TIME" default:"false"`
 	LogDisplayFields          bool   `env:"LOG_DISPLAY_FIELDS" default:"true"`
 	LogDisplayMultilineFields bool   `env:"LOG_DISPLAY_MULTILINE_FIELDS" default:"true"`
-	RawLogFieldBlacklist      string `env:"LOG_FIELD_BLACKLIST" default:""`
+	RawLogFieldBlacklist      string `env:"LOG_FIELD_BLACKLIST"`
 	LogFieldBlacklist         []string
 }
 
