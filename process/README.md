@@ -2,7 +2,7 @@
 
 Nacelle applications are organized into three distinct categories:
 
-- A **service** is a shared APIs. Services exist in support of a *process*.
+- A **service** is a shared API. Services exist in support of a *process*.
 Services do not respond to user requests, are not externally accessible, and
 are generally *inactive* - they do not process something continuously and
 only have observable behavior when they are
@@ -21,6 +21,233 @@ Several common low-level processes (an HTTP server, a gRPC server, and a generic
 worker process) implementations are available in the
 [base package](https://github.com/efritz/nacelle/tree/master/base).
 
+## Setup
+
+A nacelle bootstrapper instance is created with two function pointers: a function to
+register configs required by the application and a function to register the initializers
+and processes themselves. The structure of an application will look similar to the
+following.
+
+```go
+func setupConfigs(config nacelle.Config) error {
+    // ...
+    return nil
+}
+
+func setupProcesses(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+    // ...
+    return nil
+}
+
+func main() {
+    nacelle.NewBootstrapper("app-name", setupConfigs, setupProcesses).BootAndExit()
+}
+```
+
+In the following examples, we assume this layout and will simply denote in which functions
+additional code must be added.
+
+For usage of the configuration object, see the
+[config](https://github.com/efritz/nacelle/tree/master/config) package.
+
+An initializer can be registered to a process container with the `RegisterInitializer` function.
+Additional options can be provided along with the initializer instance (e.g. provide a name for
+the initializer used in logs, set a maximum execution duration, etc). Initializers are run by
+nacelle in the order in which they are registered.
+
+A process can be registered to a process containerw ith the `RegisterProcess` function. Additional
+options can be provided here as well (e.g. provide a name, set the process priority, whether or not
+it should be allowed to exit, etc). Processes are run by their registered priority, then by their
+registration order. The default process priority is zero.
+
 ## Example
 
-TODO
+We give a small inline example here. For additional, fully working examples, see the
+[examples](https://github.com/efritz/nacelle/tree/master/examples) directory.
+
+### Service Example
+
+First, we define a service that implements a simple cache backed by Redis. At this point everything
+is plain Go - there is no nacelle secret sauce.
+
+```go
+import (
+	"fmt"
+	"io"
+	"net/http"
+
+	"github.com/efritz/deepjoy"
+	"github.com/efritz/nacelle"
+	"github.com/garyburd/redigo/redis"
+)
+
+type (
+    Cache interface {
+        Get(string) (string, error)
+        Set(string, string) error
+    }
+
+    RedisCache struct {
+        client deepjoy.Client
+    }
+)
+
+func NewRedisCache(addr string) Cache{
+    return &RedisCache{
+        client: deepjoy.NewClient(addr),
+    }
+}
+
+func (c *RedisCache) Get(key string) (string, error) {
+    return redis.String(c.client.Do("GET", key))
+}
+
+func (c *RedisCache) Set(key, value string) error {
+    _, err := c.client.Do("SET", key, value)
+    return err
+}
+```
+
+### Initializer Example
+
+Next, we create an initializer that adds an instance of the Redis cache defined into a
+shared service container. This will allow multiple processes to use the same cache
+instance. We define a configuration object that allows the remote Redis address to be
+set via an environment variable.
+
+```go
+type (
+    CacheInitializer struct {
+        Container nacelle.ServiceContainer `service:"container"`
+    }
+
+    RedisConfig struct {
+        CacheAddr string `env:"CACHE_ADDR" required:"true"`
+    }
+
+    cacheConfigToken string
+)
+
+var RedisCacheConfigToken = cacheConfigToken("redis-cache")
+
+func NewCacheInitializer() nacelle.Initializer {
+    return &CacheInitializer{}
+}
+
+func (m *CacheInitializer) Init(config nacelle.Config) error {
+    redisConfig := &RedisConfig{}
+    if err := config.Fetch(RedisCacheConfigToken, redisConfig); err != nil {
+        return err
+    }
+
+    return m.Container.Set("cache", NewRedisCache(redisConfig.CacheAddr))
+}
+```
+
+Add the following to the `setupConfigs` method to register the config required by the
+cache initializer.
+
+```go
+config.MustRegister(RedisCacheConfigToken, &RedisConfig{})
+```
+
+And add the following to the `setupProcesses` method to register the initializer itself.
+
+```go
+processes.RegisterInitializer(NewCacheInitializer())
+```
+
+### Process Example
+
+Next, we create an HTTP process. This process is implemented in a very simple way to highlight
+the process structure itself and isn't the recommended way to lay out a server process. For a
+more correct way, see the base HTTP server
+[implementation](https://github.com/efritz/nacelle/tree/master/base/http).
+
+This server defines its own config and requests an instance of the registered cache service from
+the nacelle on init. By the time the server's `Init` method is called, the config will have been
+loaded from the environment services will have been injected into the struct.
+
+```go
+type (
+    Server struct {
+        Logger nacelle.Logger `service:"logger"`
+        Cache  Cache          `service:"cache"`
+        srv    *http.Server
+    }
+
+    ServerConfig struct {
+        Port int `env:"PORT" default:"8080"`
+    }
+
+    serverConfigToken string
+)
+
+var ServerConfigToken = serverConfigToken("server")
+
+func NewServer() nacelle.Process {
+    return &Server{}
+}
+
+func (s *Server) Init(config nacelle.Config) (err error) {
+    serverConfig := &ServerConfig{}
+    if err := config.Fetch(ServerConfigToken, serverConfig); err != nil {
+        return err
+    }
+
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        cacheKey := r.RequestURI
+
+        // Try to read payload from cache
+        payload, err := s.Cache.Get(cacheKey)
+        if err != nil {
+            s.Logger.Error("cache read failure (%s)", err.Error())
+            w.WriteHeader(http.StatusInternalServerError)
+            return
+        }
+
+        if payload == "" {
+            // Not cached, do the work
+            payload = generatePayload(r)
+
+            // Write payload back to cache
+            if err := s.Cache.Set(cacheKey, payload); err != nil {
+                s.Logger.Error("cache write failure (%s)", err.Error())
+                w.WriteHeader(http.StatusInternalServerError)
+                return
+            }
+        }
+
+        // Write to client
+        io.WriteString(w, payload)
+    })
+
+    s.srv = &http.Server{
+        Addr: fmt.Sprintf(":%d", serverConfig.Port),
+    }
+
+    return nil
+}
+
+func (s *Server) Start() error {
+    s.Logger.Info("Server is now accepting clients")
+    return s.srv.ListenAndServe()
+}
+
+func (s *Server) Stop() (err error) {
+    return s.srv.Close()
+}
+```
+
+Add the following to the `setupConfigs` method to register the config required by the
+server process.
+
+```go
+config.MustRegister(ServerConfigToken, &ServerConfig{})
+```
+
+And add the following to the `setupProcesses` method to register the server process itself.
+
+```go
+processes.RegisterProcess(NewServer())
+```
