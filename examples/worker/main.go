@@ -35,11 +35,6 @@ func (s *spec) Tick() error {
 	return nil
 }
 
-func setupWorker(config nacelle.Config, worker *worker.Worker) error {
-	// TODO
-	return nil
-}
-
 //
 //
 
