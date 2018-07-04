@@ -7,3 +7,7 @@ import (
 type (
 	ServiceContainer = service.Container
 )
+
+var (
+	NewServiceContainer = service.NewContainer
+)
