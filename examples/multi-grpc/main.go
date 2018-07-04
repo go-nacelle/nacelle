@@ -1,7 +1,6 @@
 package main
 
 //go:generate protoc hello.proto --go_out=plugins=grpc:. -I.
-//go:generate protoc howdy.proto --go_out=plugins=grpc:. -I.
 
 import (
 	"github.com/efritz/nacelle"

@@ -16,13 +16,13 @@ type (
 		configSetupFunc   ConfigSetupFunc
 		initFunc          AppInitFunc
 		loggingInitFunc   LoggingInitFunc
-		loggingFields     Fields
+		loggingFields     LogFields
 		runnerConfigFuncs []RunnerConfigFunc
 	}
 
 	bootstrapperConfig struct {
 		loggingInitFunc   LoggingInitFunc
-		loggingFields     Fields
+		loggingFields     LogFields
 		runnerConfigFuncs []RunnerConfigFunc
 	}
 

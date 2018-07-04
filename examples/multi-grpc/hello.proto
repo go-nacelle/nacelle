@@ -8,6 +8,14 @@ service HelloService {
     rpc Hello(google.protobuf.Empty) returns (HelloResponse) {}
 }
 
+service HowdyService {
+    rpc Howdy(google.protobuf.Empty) returns (HowdyResponse) {}
+}
+
 message HelloResponse {
+    string message = 1;
+}
+
+message HowdyResponse {
     string message = 1;
 }

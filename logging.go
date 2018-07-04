@@ -5,9 +5,9 @@ import (
 )
 
 type (
-	Logger   = logging.Logger
-	Fields   = logging.Fields
-	LogLevel = logging.LogLevel
+	Logger    = logging.Logger
+	LogLevel  = logging.LogLevel
+	LogFields = logging.Fields
 )
 
 const (

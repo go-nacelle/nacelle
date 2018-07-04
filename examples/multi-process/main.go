@@ -33,7 +33,7 @@ func main() {
 		"multi-process-example",
 		setupConfigs,
 		setupProcesses,
-		nacelle.WithLoggingFields(nacelle.Fields{
+		nacelle.WithLoggingFields(nacelle.LogFields{
 			"app_name": "multi-process-example",
 		}),
 	)

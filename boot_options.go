@@ -21,7 +21,7 @@ func WithLoggingInitFunc(loggingInitFunc LoggingInitFunc) BootstrapperConfigFunc
 }
 
 // WithLoggingFields sets additional fields sent with every log message.
-func WithLoggingFields(loggingFields Fields) BootstrapperConfigFunc {
+func WithLoggingFields(loggingFields LogFields) BootstrapperConfigFunc {
 	return func(c *bootstrapperConfig) { c.loggingFields = loggingFields }
 }
 
