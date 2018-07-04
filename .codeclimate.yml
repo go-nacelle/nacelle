@@ -13,3 +13,4 @@ ratings:
     - "**.go"
 exclude_patterns:
   - "examples/"
+  - "**_test.go"
