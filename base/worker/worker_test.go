@@ -58,7 +58,7 @@ func (s *WorkerSuite) TestBadConfig(t sweet.T) {
 
 func (s *WorkerSuite) TestBadInject(t sweet.T) {
 	worker := NewWorker(&badInjectWorkerSpec{})
-	worker.Container = makeBadContainer()
+	worker.Services = makeBadContainer()
 
 	err := worker.Init(makeConfig(ConfigToken, &Config{RawWorkerTickInterval: 5}))
 	Expect(err).NotTo(BeNil())
@@ -104,7 +104,7 @@ func (s *WorkerSuite) TestTickError(t sweet.T) {
 
 func makeWorker(spec WorkerSpec, clock glock.Clock) *Worker {
 	worker := newWorker(spec, clock)
-	worker.Container, _ = service.NewContainer()
+	worker.Services, _ = service.NewContainer()
 	return worker
 }
 

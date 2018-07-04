@@ -56,7 +56,7 @@ func (s *ServerSuite) TestBadConfig(t sweet.T) {
 
 func (s *ServerSuite) TestBadInjection(t sweet.T) {
 	server := NewServer(&badInjectionInitializer{})
-	server.Container = makeBadContainer()
+	server.Services = makeBadContainer()
 
 	os.Setenv("GRPC_PORT", "0")
 	defer os.Clearenv()
@@ -83,7 +83,7 @@ func (s *ServerSuite) TestInitError(t sweet.T) {
 func makeGRPCServer(initializer func(nacelle.Config, *grpc.Server) error) *Server {
 	server := NewServer(ServerInitializerFunc(initializer))
 	server.Logger = nacelle.NewNilLogger()
-	server.Container, _ = service.NewContainer()
+	server.Services, _ = service.NewContainer()
 	return server
 }
 

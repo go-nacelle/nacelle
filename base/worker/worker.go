@@ -12,7 +12,7 @@ import (
 
 type (
 	Worker struct {
-		Container    nacelle.ServiceContainer `service:"container"`
+		Services     nacelle.ServiceContainer `service:"container"`
 		configToken  interface{}
 		spec         WorkerSpec
 		clock        glock.Clock
@@ -66,7 +66,7 @@ func (w *Worker) Init(config nacelle.Config) error {
 
 	w.tickInterval = workerConfig.WorkerTickInterval
 
-	if err := w.Container.Inject(w.spec); err != nil {
+	if err := w.Services.Inject(w.spec); err != nil {
 		return err
 	}
 

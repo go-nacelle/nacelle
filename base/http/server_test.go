@@ -66,7 +66,7 @@ func (s *ServerSuite) TestBadConfig(t sweet.T) {
 
 func (s *ServerSuite) TestBadInjection(t sweet.T) {
 	server := NewServer(&badInjectionHTTPInitializer{})
-	server.Container = makeBadContainer()
+	server.Services = makeBadContainer()
 
 	os.Setenv("HTTP_PORT", "0")
 	defer os.Clearenv()
@@ -93,7 +93,7 @@ func (s *ServerSuite) TestInitError(t sweet.T) {
 func makeHTTPServer(initializer func(nacelle.Config, *http.Server) error) *Server {
 	server := NewServer(ServerInitializerFunc(initializer))
 	server.Logger = nacelle.NewNilLogger()
-	server.Container, _ = service.NewContainer()
+	server.Services, _ = service.NewContainer()
 	return server
 }
 

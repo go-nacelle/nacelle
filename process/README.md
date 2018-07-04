@@ -118,7 +118,7 @@ set via an environment variable.
 ```go
 type (
     CacheInitializer struct {
-        Container nacelle.ServiceContainer `service:"container"`
+        Services nacelle.ServiceContainer `service:"container"`
     }
 
     RedisConfig struct {
@@ -140,7 +140,7 @@ func (m *CacheInitializer) Init(config nacelle.Config) error {
         return err
     }
 
-    return m.Container.Set("cache", NewRedisCache(redisConfig.CacheAddr))
+    return m.Services.Set("cache", NewRedisCache(redisConfig.CacheAddr))
 }
 ```
 

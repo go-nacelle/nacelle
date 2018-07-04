@@ -13,7 +13,7 @@ import (
 type (
 	Server struct {
 		Logger        nacelle.Logger           `service:"logger"`
-		Container     nacelle.ServiceContainer `service:"container"`
+		Services      nacelle.ServiceContainer `service:"container"`
 		configToken   interface{}
 		initializer   ServerInitializer
 		listener      *net.TCPListener
@@ -60,7 +60,7 @@ func (s *Server) Init(config nacelle.Config) (err error) {
 		return
 	}
 
-	if err := s.Container.Inject(s.initializer); err != nil {
+	if err := s.Services.Inject(s.initializer); err != nil {
 		return err
 	}
 
