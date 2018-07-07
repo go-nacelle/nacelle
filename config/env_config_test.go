@@ -155,6 +155,26 @@ func (s *EnvConfigSuite) TestUnprefixed(t sweet.T) {
 	Expect(chunk.Y).To(Equal(456))
 }
 
+func (s *EnvConfigSuite) TestNormalizedPrefix(t sweet.T) {
+	var (
+		config = NewEnvConfig("$foo-^-bar@")
+		chunk  = &TestSimpleConfig{}
+	)
+
+	os.Setenv("FOO_BAR_X", "foo")
+	os.Setenv("FOO_BAR_Y", "123")
+
+	Expect(config.Register("simple", chunk)).To(BeNil())
+	Expect(config.Load()).To(BeEmpty())
+
+	loadedChunk, err := config.Get("simple")
+	Expect(err).To(BeNil())
+
+	Expect(loadedChunk).To(BeIdenticalTo(chunk))
+	Expect(chunk.X).To(Equal("foo"))
+	Expect(chunk.Y).To(Equal(123))
+}
+
 func (s *EnvConfigSuite) TestToMap(t sweet.T) {
 	var (
 		config = NewEnvConfig("app")

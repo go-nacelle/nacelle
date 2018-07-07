@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -37,13 +38,25 @@ var (
 		"\t", `\t`,
 		"\r", `\r`,
 	)
+
+	replacePattern = regexp.MustCompile(`[^A-Za-z0-9_]+`)
 )
 
 // NewEnvConfig creates a EnvConfig object with the given prefix. If supplied,
-// the {PREFIX}{NAME} envvar is read before falling back to the {NAME} envvar.
+// the {PREFIX}_{NAME} envvar is read before falling back to the {NAME} envvar.
+// The prefix will be normalized (replaces all non-alpha characters with an
+// underscore and trims leading, trailing, and collapses consecutive underscores).
 func NewEnvConfig(prefix string) Config {
+	normalizedPrefix := strings.Trim(
+		string(replacePattern.ReplaceAll(
+			[]byte(prefix),
+			[]byte("_"),
+		)),
+		"_",
+	)
+
 	return &envConfig{
-		prefix: prefix,
+		prefix: normalizedPrefix,
 		chunks: map[interface{}]interface{}{},
 	}
 }
