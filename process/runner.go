@@ -115,7 +115,7 @@ func (r *runner) Run(config config.Config) <-chan error {
 
 	r.watcher.watch()
 
-	// Run the initializers in sequence. IF there were no errors, begin
+	// Run the initializers in sequence. If there were no errors, begin
 	// initializing and running processes in priority/registration order.
 
 	if r.runInitializers(config) {
