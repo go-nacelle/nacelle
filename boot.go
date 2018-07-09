@@ -132,7 +132,7 @@ func (bs *Bootstrapper) Boot() int {
 	health := process.NewHealth()
 
 	if err := serviceContainer.Set("health", health); err != nil {
-		logger.Error("Failed to register health tracker to service container (%s)", err)
+		logger.Error("Failed to register health reporter to service container (%s)", err)
 		return 1
 	}
 
