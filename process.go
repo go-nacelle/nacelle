@@ -7,6 +7,7 @@ type (
 	Initializer           = process.Initializer
 	InitializerFunc       = process.InitializerFunc
 	ProcessContainer      = process.Container
+	Health                = process.Health
 	ProcessConfigFunc     = process.ProcessConfigFunc
 	InitializerConfigFunc = process.InitializerConfigFunc
 	RunnerConfigFunc      = process.RunnerConfigFunc
