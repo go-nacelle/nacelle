@@ -67,6 +67,7 @@ type (
 func NewRunner(
 	processes Container,
 	services service.Container,
+	health Health,
 	runnerConfigs ...RunnerConfigFunc,
 ) Runner {
 	// There can be one init error plus one start and one stop error

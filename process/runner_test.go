@@ -18,7 +18,8 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -107,7 +108,8 @@ func (s *RunnerSuite) TestEarlyExit(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -152,7 +154,8 @@ func (s *RunnerSuite) TestSilentExit(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -186,8 +189,9 @@ func (s *RunnerSuite) TestShutdownTimeout(t sweet.T) {
 	var (
 		services, _  = service.NewContainer()
 		processes    = NewContainer()
+		health       = NewHealth()
 		clock        = glock.NewMockClock()
-		runner       = NewRunner(processes, services, WithClock(clock))
+		runner       = NewRunner(processes, services, health, WithClock(clock))
 		sync         = make(chan struct{})
 		process      = newBlockingProcess(sync)
 		errChan      = make(chan error)
@@ -220,7 +224,8 @@ func (s *RunnerSuite) TestInitializerInjectionError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -267,7 +272,8 @@ func (s *RunnerSuite) TestProcessInjectionError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -327,8 +333,9 @@ func (s *RunnerSuite) TestInitializerInitTimeout(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
+		health      = NewHealth()
 		clock       = glock.NewMockClock()
-		runner      = NewRunner(processes, services, WithClock(clock))
+		runner      = NewRunner(processes, services, health, WithClock(clock))
 		init        = make(chan string)
 		errChan     = make(chan error)
 	)
@@ -363,8 +370,9 @@ func (s *RunnerSuite) TestProcessInitTimeout(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
+		health      = NewHealth()
 		clock       = glock.NewMockClock()
-		runner      = NewRunner(processes, services, WithClock(clock))
+		runner      = NewRunner(processes, services, health, WithClock(clock))
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -401,7 +409,8 @@ func (s *RunnerSuite) TestInitializerError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -446,7 +455,8 @@ func (s *RunnerSuite) TestProcessInitError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -513,7 +523,8 @@ func (s *RunnerSuite) TestProcessStartError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -603,7 +614,8 @@ func (s *RunnerSuite) TestProcessStopError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
