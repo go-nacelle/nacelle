@@ -258,15 +258,6 @@ func (r *runner) initWithTimeout(initializer namedInitializer, config config.Con
 		ch <- r.init(initializer, config)
 	}()
 
-	// Create a timeout channel for the initialization timeout.
-	// If timeout is zero, then we use a nil channel (which will
-	// never receive).
-
-	var timeoutCh <-chan time.Time
-	if timeout := initializer.InitTimeout(); timeout > 0 {
-		timeoutCh = r.clock.After(timeout)
-	}
-
 	select {
 	case err := <-ch:
 		// Init completed, return its value
@@ -276,7 +267,7 @@ func (r *runner) initWithTimeout(initializer namedInitializer, config config.Con
 		// Watcher is shutting down, ignore the return value of this call
 		return fmt.Errorf("aborting initialization of %s", initializer.Name())
 
-	case <-timeoutCh:
+	case <-r.makeTimeoutChan(initializer.InitTimeout()):
 		// Initialization took too long, return an error
 		return fmt.Errorf("%s did not initialize within timeout", initializer.Name())
 	}
@@ -379,4 +370,15 @@ func (r *runner) stop(process *ProcessMeta) error {
 	}
 
 	return nil
+}
+
+//
+// Helpers
+
+func (r *runner) makeTimeoutChan(timeout time.Duration) <-chan time.Time {
+	if timeout == 0 {
+		return nil
+	}
+
+	return r.clock.After(timeout)
 }
