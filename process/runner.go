@@ -118,10 +118,7 @@ func (r *runner) Run(config config.Config) <-chan error {
 	// Run the initializers in sequence. If there were no errors, begin
 	// initializing and running processes in priority/registration order.
 
-	if r.runInitializers(config) {
-		r.runProcesses(config)
-	}
-
+	_ = r.runInitializers(config) && r.runProcesses(config)
 	return r.outChan
 }
 
@@ -159,11 +156,11 @@ func (r *runner) runInitializers(config config.Config) bool {
 	return true
 }
 
-func (r *runner) runProcesses(config config.Config) {
+func (r *runner) runProcesses(config config.Config) bool {
 	r.logger.Info("Running processes")
 
 	if !r.injectProcesses() {
-		return
+		return false
 	}
 
 	// For each priority index, attempt to initialize the processes
@@ -193,10 +190,11 @@ func (r *runner) runProcesses(config config.Config) {
 	}()
 
 	if !success {
-		return
+		return false
 	}
 
 	r.logger.Info("All processes have started")
+	return true
 }
 
 //
