@@ -245,29 +245,34 @@ func (r *runner) initProcessesAtPriorityIndex(config config.Config, index int) b
 }
 
 func (r *runner) initWithTimeout(initializer namedInitializer, config config.Config) error {
-	// Run the initializer in a goroutine. Write its return value
-	// to a buffered channel so that it does not block if we happen
-	// to abandon the read (on timeout or during shutdown).
+	// Run the initializer in a goroutine. We don't want to block
+	// on this in case we want to abandon reading from this channel
+	// (timeout or shutdown). This is only true for initializer
+	// methods (will not be true for process Start methods)..
 
-	ch := make(chan error, 1)
+	errChan := makeErrChan(func() error {
+		return r.init(initializer, config)
+	})
 
-	go func() {
-		defer close(ch)
-		ch <- r.init(initializer, config)
-	}()
+	// Construct a timeout chan for the init (if timeout is set to
+	// zero, this chan is nil and will never yield a value).
+
+	initTimeoutChan := r.makeTimeoutChan(initializer.InitTimeout())
+
+	// Now, wait for one of three results:
+	//   - Init completed, return its value
+	//   - Initialization took too long, return an error
+	//   - Watcher is shutting down, ignore the return value
 
 	select {
-	case err := <-ch:
-		// Init completed, return its value
+	case err := <-errChan:
 		return err
 
-	case <-r.watcher.shutdownSignal:
-		// Watcher is shutting down, ignore the return value of this call
-		return fmt.Errorf("aborting initialization of %s", initializer.Name())
-
-	case <-r.makeTimeoutChan(initializer.InitTimeout()):
-		// Initialization took too long, return an error
+	case <-initTimeoutChan:
 		return fmt.Errorf("%s did not initialize within timeout", initializer.Name())
+
+	case <-r.watcher.shutdownSignal:
+		return fmt.Errorf("aborting initialization of %s", initializer.Name())
 	}
 }
 
@@ -379,4 +384,15 @@ func (r *runner) makeTimeoutChan(timeout time.Duration) <-chan time.Time {
 	}
 
 	return r.clock.After(timeout)
+}
+
+func makeErrChan(f func() error) <-chan error {
+	ch := make(chan error, 1)
+
+	go func() {
+		defer close(ch)
+		ch <- f()
+	}()
+
+	return ch
 }
