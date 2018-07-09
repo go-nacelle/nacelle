@@ -34,10 +34,10 @@ type (
 
 var _ logShim = &rollupShim{}
 
-// NewRollupAdapter returns a logger with functionality to throttle similar messages. Messages begin
-// a roll-up when a second messages with an identical format string is seen in
-// the same window period. All remaining messages logged within that period are
-// captured and emitted as a single message at the end of the window period. The
+// NewRollupAdapter returns a logger with functionality to throttle similar messages.
+// Messages begin a roll-up when a second messages with an identical format string is
+// seen in the same window period. All remaining messages logged within that period
+// are captured and emitted as a single message at the end of the window period. The
 // fields and args are equal to the first rolled-up message.
 func NewRollupAdapter(logger Logger, windowDuration time.Duration) Logger {
 	return adaptShim(newRollupShim(logger, glock.NewRealClock(), windowDuration))
@@ -69,7 +69,6 @@ func (s *rollupShim) LogWithFields(level LogLevel, fields Fields, format string,
 
 	if s.getWindow(format).record(s.logger, s.clock, s.windowDuration, level, fields, format, args...) {
 		// Not rolling up, log immediately
-		// TOOD - explain why layer+2
 		s.logger.LogWithFields(level, fields, format, args...)
 	}
 }
