@@ -17,13 +17,17 @@ type (
 )
 
 var (
-	WithShutdownTimeout    = process.WithShutdownTimeout
-	WithInitializerName    = process.WithInitializerName
-	WithProcessName        = process.WithProcessName
-	WithPriority           = process.WithPriority
-	WithSilentExit         = process.WithSilentExit
-	WithInitializerTimeout = process.WithInitializerTimeout
-	WithProcessInitTimeout = process.WithProcessInitTimeout
+	WithStartTimeout           = process.WithStartTimeout
+	WithHealthCheckBackoff     = process.WithHealthCheckBackoff
+	WithShutdownTimeout        = process.WithShutdownTimeout
+	WithInitializerName        = process.WithInitializerName
+	WithProcessName            = process.WithProcessName
+	WithPriority               = process.WithPriority
+	WithSilentExit             = process.WithSilentExit
+	WithInitializerTimeout     = process.WithInitializerTimeout
+	WithProcessInitTimeout     = process.WithProcessInitTimeout
+	WithProcessStartTimeout    = process.WithProcessStartTimeout
+	WithProcessShutdownTimeout = process.WithProcessShutdownTimeout
 )
 
 // WrapServiceInitializerFunc creates an InitializerFunc from a ServiceInitializerFunc and a container.

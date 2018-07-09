@@ -3,6 +3,7 @@ package process
 import (
 	"time"
 
+	"github.com/efritz/backoff"
 	"github.com/efritz/glock"
 	"github.com/efritz/nacelle/logging"
 )
@@ -19,6 +20,18 @@ func WithLogger(logger logging.Logger) RunnerConfigFunc {
 //WithClock sets the clock used by the runner.
 func WithClock(clock glock.Clock) RunnerConfigFunc {
 	return func(c *runner) { c.clock = clock }
+}
+
+// WithStartTimeout sets the time it will wait for a process to become
+// healthy after startup.
+func WithStartTimeout(timeout time.Duration) RunnerConfigFunc {
+	return func(c *runner) { c.startupTimeout = timeout }
+}
+
+// WithHealthCheckBackoff sets the backoff to use when waiting for processes
+// to become healthy after startup.
+func WithHealthCheckBackoff(backoff backoff.Backoff) RunnerConfigFunc {
+	return func(c *runner) { c.healthCheckBackoff = backoff }
 }
 
 // WithShutdownTimeout sets the maximum time it will wait for a process to

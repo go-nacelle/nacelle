@@ -220,6 +220,79 @@ func (s *RunnerSuite) TestShutdownTimeout(t sweet.T) {
 	Eventually(shutdownChan).Should(Receive(MatchError("process runner did not shutdown within timeout")))
 }
 
+func (s *RunnerSuite) TestProcessStartTimeout(t sweet.T) {
+	var (
+		services, _ = service.NewContainer()
+		processes   = NewContainer()
+		health      = NewHealth()
+		clock       = glock.NewMockClock()
+		init        = make(chan string)
+		start       = make(chan string)
+		stop        = make(chan string)
+		errChan     = make(chan error)
+		runner      = NewRunner(
+			processes,
+			services,
+			health,
+			WithClock(clock),
+			WithStartTimeout(time.Minute),
+		)
+	)
+
+	// Stop the process from going healthy
+	health.AddReason("utoh1")
+	health.AddReason("utoh2")
+
+	var (
+		p1 = newTaggedProcess(init, start, stop, "a")
+		p2 = newTaggedProcess(init, start, stop, "b")
+	)
+
+	processes.RegisterProcess(
+		p1,
+		WithProcessName("a"),
+		WithProcessStartTimeout(time.Second*30),
+	)
+
+	processes.RegisterProcess(
+		p2,
+		WithProcessName("b"),
+		WithProcessStartTimeout(time.Second*45),
+	)
+
+	go func() {
+		defer close(errChan)
+
+		for err := range runner.Run(nil) {
+			errChan <- err
+		}
+	}()
+
+	// Don't block startup
+	Eventually(init).Should(Receive())
+	Eventually(init).Should(Receive())
+	Eventually(start).Should(Receive())
+	Eventually(start).Should(Receive())
+
+	// Ensure timeout is respected
+	Consistently(errChan).ShouldNot(Receive())
+	clock.Advance(time.Second * 30)
+
+	// Watcher should shut down
+	Eventually(stop).Should(Receive())
+	Eventually(stop).Should(Receive())
+
+	var err error
+	Eventually(errChan).Should(Receive(&err))
+	Eventually(errChan).Should(BeClosed())
+
+	// Check error message
+	Expect(err).NotTo(BeNil())
+	Expect(err.Error()).To(ContainSubstring("process did not become healthy within timeout"))
+	Expect(err.Error()).To(ContainSubstring("utoh1"))
+	Expect(err.Error()).To(ContainSubstring("utoh2"))
+}
+
 func (s *RunnerSuite) TestProcessShutdownTimeout(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()

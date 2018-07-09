@@ -10,12 +10,13 @@ type (
 	// fields.
 	ProcessMeta struct {
 		Process
-		name        string
-		priority    int
-		silentExit  bool
-		initTimeout time.Duration
-		once        *sync.Once
+		name            string
+		priority        int
+		silentExit      bool
+		once            *sync.Once
 		stopped         chan struct{}
+		initTimeout     time.Duration
+		startTimeout    time.Duration
 		shutdownTimeout time.Duration
 	}
 )
