@@ -324,16 +324,59 @@ func (r *runner) startProcessesAtPriorityIndex(index int) {
 func (r *runner) startProcess(process *ProcessMeta) {
 	r.logger.Info("Starting %s", process.Name())
 
-	if err := process.Start(); err != nil {
+	// Run the start method in a goroutine. We need to do
+	// this as we assume all processes are long-running
+	// and need to read from other sources for shutdown
+	// and timeout behavior.
+
+	errChan := makeErrChan(func() error {
+		return process.Start()
+	})
+
+	// Create a channel for the shutdown timeout. This
+	// channel will close only after the timeout duration
+	// elapses AFTER the stop method of the process is
+	// called. If the shutdown timeout is set to zero, this
+	// channel will remain nil and will never yield.
+
+	var shutdownTimeout chan (struct{})
+
+	if process.shutdownTimeout > 0 {
+		shutdownTimeout = make(chan struct{})
+
+		go func() {
+			<-process.stopped
+			<-r.clock.After(process.shutdownTimeout)
+			close(shutdownTimeout)
+		}()
+	}
+
+	// Now, wait for the Start method to yield (in which case
+	// the error value is passed to the watcher), or for the
+	// timeout channel to be closed (in which case we abandon
+	// the reading of the return value from the Start method).
+
+	select {
+	case err := <-errChan:
+		if err != nil {
+			wrappedErr := fmt.Errorf(
+				"%s returned a fatal error (%s)",
+				process.Name(),
+				err.Error(),
+			)
+
+			r.errChan <- errMeta{wrappedErr, process, false}
+		} else {
+			r.errChan <- errMeta{nil, process, process.silentExit}
+		}
+
+	case <-shutdownTimeout:
 		wrappedErr := fmt.Errorf(
-			"%s returned a fatal error (%s)",
+			"%s did not shutdown within timeout",
 			process.Name(),
-			err.Error(),
 		)
 
 		r.errChan <- errMeta{wrappedErr, process, false}
-	} else {
-		r.errChan <- errMeta{nil, process, process.silentExit}
 	}
 }
 

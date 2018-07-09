@@ -220,6 +220,59 @@ func (s *RunnerSuite) TestShutdownTimeout(t sweet.T) {
 	Eventually(shutdownChan).Should(Receive(MatchError("process runner did not shutdown within timeout")))
 }
 
+func (s *RunnerSuite) TestProcessShutdownTimeout(t sweet.T) {
+	var (
+		services, _ = service.NewContainer()
+		processes   = NewContainer()
+		health      = NewHealth()
+		clock       = glock.NewMockClock()
+		runner      = NewRunner(processes, services, health, WithClock(clock))
+		init        = make(chan string)
+		start       = make(chan string)
+		stop        = make(chan string)
+	)
+
+	processes.RegisterProcess(
+		newTaggedProcess(init, start, stop, "a"),
+		WithProcessName("a"),
+		WithProcessShutdownTimeout(time.Second*10),
+	)
+
+	var (
+		errChan      = make(chan error)
+		shutdownChan = make(chan error)
+	)
+
+	go func() {
+		defer close(errChan)
+
+		for err := range runner.Run(nil) {
+			errChan <- err
+		}
+	}()
+
+	Eventually(init).Should(Receive())
+
+	go func() {
+		defer close(shutdownChan)
+		shutdownChan <- runner.Shutdown(time.Minute)
+	}()
+
+	Eventually(stop).Should(Receive())
+
+	// Blocked on process start method
+	Consistently(shutdownChan).ShouldNot(Receive())
+	clock.Advance(time.Second * 5)
+	Consistently(shutdownChan).ShouldNot(Receive())
+	clock.Advance(time.Second * 5)
+
+	// Unblock after timeout
+	Eventually(shutdownChan).Should(Receive(BeNil()))
+	Eventually(shutdownChan).Should(BeClosed())
+	Eventually(errChan).Should(Receive(MatchError("a did not shutdown within timeout")))
+	Eventually(errChan).Should(BeClosed())
+}
+
 func (s *RunnerSuite) TestInitializerInjectionError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
@@ -506,7 +559,11 @@ func (s *RunnerSuite) TestProcessInitError(t sweet.T) {
 	// Ensure error is encountered
 	Eventually(init).Should(Receive(Equal("e")))
 	Eventually(init).Should(Receive(Equal("f")))
-	Eventually(errChan).Should(Receive(MatchError("failed to initialize f (utoh)")))
+
+	var err error
+	Eventually(errChan).Should(Receive(&err))
+	Expect(err).To(MatchError("failed to initialize f (utoh)"))
+
 	Consistently(init).ShouldNot(Receive())
 
 	// Shutdown only things that started

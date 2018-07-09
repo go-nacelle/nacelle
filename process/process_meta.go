@@ -15,6 +15,8 @@ type (
 		silentExit  bool
 		initTimeout time.Duration
 		once        *sync.Once
+		stopped         chan struct{}
+		shutdownTimeout time.Duration
 	}
 )
 
@@ -22,6 +24,7 @@ func newProcessMeta(process Process) *ProcessMeta {
 	return &ProcessMeta{
 		Process: process,
 		once:    &sync.Once{},
+		stopped: make(chan struct{}),
 	}
 }
 
@@ -45,6 +48,7 @@ func (m *ProcessMeta) InitTimeout() time.Duration {
 // take effect multiple times.
 func (m *ProcessMeta) Stop() (err error) {
 	m.once.Do(func() {
+		close(m.stopped)
 		err = m.Process.Stop()
 	})
 
