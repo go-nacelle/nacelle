@@ -8,12 +8,14 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/efritz/nacelle"
+	uuid "github.com/satori/go.uuid"
 )
 
 type (
 	Server struct {
 		Logger        nacelle.Logger           `service:"logger"`
 		Services      nacelle.ServiceContainer `service:"container"`
+		Health        nacelle.Health           `service:"health"`
 		configToken   interface{}
 		initializer   ServerInitializer
 		listener      *net.TCPListener
@@ -22,6 +24,7 @@ type (
 		stopped       chan struct{}
 		port          int
 		serverOptions []grpc.ServerOption
+		healthToken   healthToken
 	}
 
 	ServerInitializer interface {
@@ -46,10 +49,15 @@ func NewServer(initializer ServerInitializer, configs ...ConfigFunc) *Server {
 		once:          &sync.Once{},
 		stopped:       make(chan struct{}),
 		serverOptions: options.serverOptions,
+		healthToken:   healthToken(uuid.Must(uuid.NewV4()).String()),
 	}
 }
 
 func (s *Server) Init(config nacelle.Config) (err error) {
+	if err := s.Health.AddReason(s.healthToken); err != nil {
+		return err
+	}
+
 	grpcConfig := &Config{}
 	if err = config.Fetch(s.configToken, grpcConfig); err != nil {
 		return ErrBadConfig
@@ -72,6 +80,10 @@ func (s *Server) Init(config nacelle.Config) (err error) {
 
 func (s *Server) Start() error {
 	defer s.listener.Close()
+
+	if err := s.Health.RemoveReason(s.healthToken); err != nil {
+		return err
+	}
 
 	s.Logger.Info("Serving gRPC on port %d", s.port)
 

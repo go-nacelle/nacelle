@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/efritz/glock"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/efritz/nacelle"
 )
@@ -13,12 +14,14 @@ import (
 type (
 	Worker struct {
 		Services     nacelle.ServiceContainer `service:"container"`
+		Health       nacelle.Health           `service:"health"`
 		configToken  interface{}
 		spec         WorkerSpec
 		clock        glock.Clock
 		halt         chan struct{}
 		once         *sync.Once
 		tickInterval time.Duration
+		healthToken  healthToken
 	}
 
 	WorkerSpec interface {
@@ -42,6 +45,7 @@ func newWorker(spec WorkerSpec, clock glock.Clock, configs ...ConfigFunc) *Worke
 		clock:       clock,
 		halt:        make(chan struct{}),
 		once:        &sync.Once{},
+		healthToken: healthToken(uuid.Must(uuid.NewV4()).String()),
 	}
 }
 
@@ -59,6 +63,10 @@ func (w *Worker) HaltChan() <-chan struct{} {
 }
 
 func (w *Worker) Init(config nacelle.Config) error {
+	if err := w.Health.AddReason(w.healthToken); err != nil {
+		return err
+	}
+
 	workerConfig := &Config{}
 	if err := config.Fetch(w.configToken, workerConfig); err != nil {
 		return ErrBadConfig
@@ -75,6 +83,10 @@ func (w *Worker) Init(config nacelle.Config) error {
 
 func (w *Worker) Start() error {
 	defer w.Stop()
+
+	if err := w.Health.RemoveReason(w.healthToken); err != nil {
+		return err
+	}
 
 loop:
 	for {

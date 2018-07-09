@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/efritz/nacelle"
+	"github.com/efritz/nacelle/process"
 	"github.com/efritz/nacelle/service"
 )
 
@@ -61,12 +62,14 @@ func (s *ServerSuite) TestBadConfig(t sweet.T) {
 	})
 
 	server.Logger = nacelle.NewNilLogger()
+	server.Health = process.NewHealth()
 	Expect(server.Init(makeConfig(ConfigToken, &emptyConfig{}))).To(Equal(ErrBadConfig))
 }
 
 func (s *ServerSuite) TestBadInjection(t sweet.T) {
 	server := NewServer(&badInjectionHTTPInitializer{})
 	server.Services = makeBadContainer()
+	server.Health = process.NewHealth()
 
 	os.Setenv("HTTP_PORT", "0")
 	defer os.Clearenv()
@@ -94,6 +97,7 @@ func makeHTTPServer(initializer func(nacelle.Config, *http.Server) error) *Serve
 	server := NewServer(ServerInitializerFunc(initializer))
 	server.Logger = nacelle.NewNilLogger()
 	server.Services, _ = service.NewContainer()
+	server.Health = process.NewHealth()
 	return server
 }
 

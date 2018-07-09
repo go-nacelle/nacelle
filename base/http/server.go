@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/satori/go.uuid"
+
 	"github.com/efritz/nacelle"
 )
 
@@ -15,6 +17,7 @@ type (
 	Server struct {
 		Logger          nacelle.Logger           `service:"logger"`
 		Services        nacelle.ServiceContainer `service:"container"`
+		Health          nacelle.Health           `service:"health"`
 		configToken     interface{}
 		initializer     ServerInitializer
 		listener        *net.TCPListener
@@ -24,6 +27,7 @@ type (
 		certFile        string
 		keyFile         string
 		shutdownTimeout time.Duration
+		healthToken     healthToken
 	}
 
 	ServerInitializer interface {
@@ -46,10 +50,15 @@ func NewServer(initializer ServerInitializer, configs ...ConfigFunc) *Server {
 		configToken: options.configToken,
 		initializer: initializer,
 		once:        &sync.Once{},
+		healthToken: healthToken(uuid.Must(uuid.NewV4()).String()),
 	}
 }
 
 func (s *Server) Init(config nacelle.Config) (err error) {
+	if err := s.Health.AddReason(s.healthToken); err != nil {
+		return err
+	}
+
 	httpConfig := &Config{}
 	if err = config.Fetch(s.configToken, httpConfig); err != nil {
 		return ErrBadConfig
@@ -76,6 +85,10 @@ func (s *Server) Init(config nacelle.Config) (err error) {
 func (s *Server) Start() error {
 	defer s.listener.Close()
 	defer s.server.Close()
+
+	if err := s.Health.RemoveReason(s.healthToken); err != nil {
+		return err
+	}
 
 	if s.certFile != "" {
 		return s.serveTLS()
