@@ -251,13 +251,15 @@ func (s *RunnerSuite) TestProcessShutdownTimeout(t sweet.T) {
 		}
 	}()
 
-	Eventually(init).Should(Receive())
-
 	go func() {
+		// Stupid flaky goroutine scheduling
+		<-time.After(time.Millisecond * 100)
+
 		defer close(shutdownChan)
 		shutdownChan <- runner.Shutdown(time.Minute)
 	}()
 
+	Eventually(init).Should(Receive())
 	Eventually(stop).Should(Receive())
 
 	// Blocked on process start method
