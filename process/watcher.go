@@ -192,6 +192,7 @@ func (w *processWatcher) watchShutdownTimeout() {
 		// Shutdown has elapsed the shutdown timeout,
 		// begin a forceful abort so the app isn't blocked
 		// on shutdown indefinitely.
+		w.logger.Error("Process did not shutdown within timeout, no longer waiting for graceful exit")
 		w.abort()
 	}
 }
