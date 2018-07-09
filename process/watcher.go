@@ -116,11 +116,18 @@ func (w *processWatcher) watchErrors() {
 					continue
 				}
 			} else {
-				w.logger.Error(
-					"%s returned a fatal error (%s)",
-					err.source.Name(),
-					err.err.Error(),
-				)
+				if err.source == nil {
+					w.logger.Error(
+						"%s",
+						err.err.Error(),
+					)
+				} else {
+					w.logger.Error(
+						"%s returned a fatal error (%s)",
+						err.source.Name(),
+						err.err.Error(),
+					)
+				}
 
 				// Inform the client of the watcher of this fatal error
 				w.outChan <- err.err

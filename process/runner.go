@@ -141,13 +141,13 @@ func (r *runner) runInitializers(config config.Config) bool {
 
 	for _, initializer := range r.processes.GetInitializers() {
 		if err := r.inject(initializer); err != nil {
-			r.errChan <- errMeta{err, initializer, false}
+			r.errChan <- errMeta{err: err, source: initializer}
 			close(r.errChan)
 			return false
 		}
 
 		if err := r.initWithTimeout(initializer, config); err != nil {
-			r.errChan <- errMeta{err, initializer, false}
+			r.errChan <- errMeta{err: err, source: initializer}
 			close(r.errChan)
 			return false
 		}
@@ -204,7 +204,7 @@ func (r *runner) injectProcesses() bool {
 	for i := 0; i < r.processes.NumPriorities(); i++ {
 		for _, process := range r.processes.GetProcessesAtPriorityIndex(i) {
 			if err := r.inject(process); err != nil {
-				r.errChan <- errMeta{err, process, false}
+				r.errChan <- errMeta{err: err, source: process}
 				close(r.errChan)
 				return false
 			}
@@ -236,7 +236,7 @@ func (r *runner) initProcessesAtPriorityIndex(config config.Config, index int) b
 
 	for _, process := range r.processes.GetProcessesAtPriorityIndex(index) {
 		if err := r.initWithTimeout(process, config); err != nil {
-			r.errChan <- errMeta{err, process, false}
+			r.errChan <- errMeta{err: err, source: process}
 			return false
 		}
 	}
@@ -365,9 +365,9 @@ func (r *runner) startProcess(process *ProcessMeta) {
 				err.Error(),
 			)
 
-			r.errChan <- errMeta{wrappedErr, process, false}
+			r.errChan <- errMeta{err: wrappedErr, source: process}
 		} else {
-			r.errChan <- errMeta{nil, process, process.silentExit}
+			r.errChan <- errMeta{err: nil, source: process, silentExit: process.silentExit}
 		}
 
 	case <-shutdownTimeout:
@@ -376,7 +376,7 @@ func (r *runner) startProcess(process *ProcessMeta) {
 			process.Name(),
 		)
 
-		r.errChan <- errMeta{wrappedErr, process, false}
+		r.errChan <- errMeta{err: wrappedErr, source: process}
 	}
 }
 
@@ -398,7 +398,7 @@ func (r *runner) stopProcessesAtPriorityIndex(index int) {
 			defer r.wg.Done()
 
 			if err := r.stop(process); err != nil {
-				r.errChan <- errMeta{err, process, false}
+				r.errChan <- errMeta{err: err, source: process}
 			}
 		}(process)
 	}
