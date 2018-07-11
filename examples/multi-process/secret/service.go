@@ -6,7 +6,7 @@ import (
 	"github.com/efritz/deepjoy"
 	"github.com/efritz/overcurrent"
 	"github.com/garyburd/redigo/redis"
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 type (
@@ -26,15 +26,20 @@ type (
 var ErrNoSecret = fmt.Errorf("secret does not exist")
 
 func (s *secretService) Post(secret string) (string, error) {
+	rawID, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+
 	var (
-		id  = uuid.Must(uuid.NewV4()).String()
+		id  = rawID.String()
 		key = s.key(id)
 	)
 
 	pipeline := s.client.Pipeline()
 	pipeline.Add("set", key, secret)
 	pipeline.Add("expire", key, s.ttl)
-	_, err := pipeline.Run()
+	_, err = pipeline.Run()
 
 	return id, err
 }
