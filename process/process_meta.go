@@ -10,11 +10,14 @@ type (
 	// fields.
 	ProcessMeta struct {
 		Process
-		name        string
-		priority    int
-		silentExit  bool
-		initTimeout time.Duration
-		once        *sync.Once
+		name            string
+		priority        int
+		silentExit      bool
+		once            *sync.Once
+		stopped         chan struct{}
+		initTimeout     time.Duration
+		startTimeout    time.Duration
+		shutdownTimeout time.Duration
 	}
 )
 
@@ -22,6 +25,7 @@ func newProcessMeta(process Process) *ProcessMeta {
 	return &ProcessMeta{
 		Process: process,
 		once:    &sync.Once{},
+		stopped: make(chan struct{}),
 	}
 }
 
@@ -45,6 +49,7 @@ func (m *ProcessMeta) InitTimeout() time.Duration {
 // take effect multiple times.
 func (m *ProcessMeta) Stop() (err error) {
 	m.once.Do(func() {
+		close(m.stopped)
 		err = m.Process.Stop()
 	})
 

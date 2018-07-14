@@ -129,17 +129,24 @@ func (bs *Bootstrapper) Boot() int {
 	)
 
 	processContainer := process.NewContainer()
+	health := process.NewHealth()
 
-	runner := process.NewRunner(
-		processContainer,
-		serviceContainer,
-		bs.runnerConfigFuncs...,
-	)
+	if err := serviceContainer.Set("health", health); err != nil {
+		logger.Error("Failed to register health reporter to service container (%s)", err)
+		return 1
+	}
 
 	if err := bs.initFunc(processContainer, serviceContainer); err != nil {
 		logger.Error("Failed to run initialization function (%s)", err.Error())
 		return 1
 	}
+
+	runner := process.NewRunner(
+		processContainer,
+		serviceContainer,
+		health,
+		bs.runnerConfigFuncs...,
+	)
 
 	statusCode := 0
 	for range runner.Run(config) {

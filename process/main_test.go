@@ -17,5 +17,6 @@ func TestMain(m *testing.M) {
 		s.AddSuite(&ContainerSuite{})
 		s.AddSuite(&RunnerSuite{})
 		s.AddSuite(&WatcherSuite{})
+		s.AddSuite(&HealthSuite{})
 	})
 }

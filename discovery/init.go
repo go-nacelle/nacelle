@@ -23,8 +23,8 @@ func InitAnnouncer(name string, onDisconnect func(error)) nacelle.ServiceInitial
 		}
 
 		service := &reception.Service{
-			ID:      id.String(),
-			Name:    name,
+      ID:      id.String(),
+      Name:    name,
 			Address: "", // TODO
 			Port:    0,  // TODO
 		}

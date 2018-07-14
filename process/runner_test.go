@@ -18,7 +18,8 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -107,7 +108,8 @@ func (s *RunnerSuite) TestEarlyExit(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -152,7 +154,8 @@ func (s *RunnerSuite) TestSilentExit(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -186,8 +189,9 @@ func (s *RunnerSuite) TestShutdownTimeout(t sweet.T) {
 	var (
 		services, _  = service.NewContainer()
 		processes    = NewContainer()
+		health       = NewHealth()
 		clock        = glock.NewMockClock()
-		runner       = NewRunner(processes, services, WithClock(clock))
+		runner       = NewRunner(processes, services, health, WithClock(clock))
 		sync         = make(chan struct{})
 		process      = newBlockingProcess(sync)
 		errChan      = make(chan error)
@@ -216,11 +220,140 @@ func (s *RunnerSuite) TestShutdownTimeout(t sweet.T) {
 	Eventually(shutdownChan).Should(Receive(MatchError("process runner did not shutdown within timeout")))
 }
 
+func (s *RunnerSuite) TestProcessStartTimeout(t sweet.T) {
+	var (
+		services, _ = service.NewContainer()
+		processes   = NewContainer()
+		health      = NewHealth()
+		clock       = glock.NewMockClock()
+		init        = make(chan string)
+		start       = make(chan string)
+		stop        = make(chan string)
+		errChan     = make(chan error)
+		runner      = NewRunner(
+			processes,
+			services,
+			health,
+			WithClock(clock),
+			WithStartTimeout(time.Minute),
+		)
+	)
+
+	// Stop the process from going healthy
+	health.AddReason("utoh1")
+	health.AddReason("utoh2")
+
+	var (
+		p1 = newTaggedProcess(init, start, stop, "a")
+		p2 = newTaggedProcess(init, start, stop, "b")
+	)
+
+	processes.RegisterProcess(
+		p1,
+		WithProcessName("a"),
+		WithProcessStartTimeout(time.Second*30),
+	)
+
+	processes.RegisterProcess(
+		p2,
+		WithProcessName("b"),
+		WithProcessStartTimeout(time.Second*45),
+	)
+
+	go func() {
+		defer close(errChan)
+
+		for err := range runner.Run(nil) {
+			errChan <- err
+		}
+	}()
+
+	// Don't block startup
+	Eventually(init).Should(Receive())
+	Eventually(init).Should(Receive())
+	Eventually(start).Should(Receive())
+	Eventually(start).Should(Receive())
+
+	// Ensure timeout is respected
+	Consistently(errChan).ShouldNot(Receive())
+	clock.Advance(time.Second * 30)
+
+	// Watcher should shut down
+	Eventually(stop).Should(Receive())
+	Eventually(stop).Should(Receive())
+
+	var err error
+	Eventually(errChan).Should(Receive(&err))
+	Eventually(errChan).Should(BeClosed())
+
+	// Check error message
+	Expect(err).NotTo(BeNil())
+	Expect(err.Error()).To(ContainSubstring("process did not become healthy within timeout"))
+	Expect(err.Error()).To(ContainSubstring("utoh1"))
+	Expect(err.Error()).To(ContainSubstring("utoh2"))
+}
+
+func (s *RunnerSuite) TestProcessShutdownTimeout(t sweet.T) {
+	var (
+		services, _ = service.NewContainer()
+		processes   = NewContainer()
+		health      = NewHealth()
+		clock       = glock.NewMockClock()
+		runner      = NewRunner(processes, services, health, WithClock(clock))
+		init        = make(chan string)
+		start       = make(chan string)
+		stop        = make(chan string)
+	)
+
+	processes.RegisterProcess(
+		newTaggedProcess(init, start, stop, "a"),
+		WithProcessName("a"),
+		WithProcessShutdownTimeout(time.Second*10),
+	)
+
+	var (
+		errChan      = make(chan error)
+		shutdownChan = make(chan error)
+	)
+
+	go func() {
+		defer close(errChan)
+
+		for err := range runner.Run(nil) {
+			errChan <- err
+		}
+	}()
+
+	go func() {
+		// Stupid flaky goroutine scheduling
+		<-time.After(time.Millisecond * 100)
+
+		defer close(shutdownChan)
+		shutdownChan <- runner.Shutdown(time.Minute)
+	}()
+
+	Eventually(init).Should(Receive())
+	Eventually(stop).Should(Receive())
+
+	// Blocked on process start method
+	Consistently(shutdownChan).ShouldNot(Receive())
+	clock.Advance(time.Second * 5)
+	Consistently(shutdownChan).ShouldNot(Receive())
+	clock.Advance(time.Second * 5)
+
+	// Unblock after timeout
+	Eventually(shutdownChan).Should(Receive(BeNil()))
+	Eventually(shutdownChan).Should(BeClosed())
+	Eventually(errChan).Should(Receive(MatchError("a did not shutdown within timeout")))
+	Eventually(errChan).Should(BeClosed())
+}
+
 func (s *RunnerSuite) TestInitializerInjectionError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -267,7 +400,8 @@ func (s *RunnerSuite) TestProcessInjectionError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -327,8 +461,9 @@ func (s *RunnerSuite) TestInitializerInitTimeout(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
+		health      = NewHealth()
 		clock       = glock.NewMockClock()
-		runner      = NewRunner(processes, services, WithClock(clock))
+		runner      = NewRunner(processes, services, health, WithClock(clock))
 		init        = make(chan string)
 		errChan     = make(chan error)
 	)
@@ -363,8 +498,9 @@ func (s *RunnerSuite) TestProcessInitTimeout(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
+		health      = NewHealth()
 		clock       = glock.NewMockClock()
-		runner      = NewRunner(processes, services, WithClock(clock))
+		runner      = NewRunner(processes, services, health, WithClock(clock))
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -401,7 +537,8 @@ func (s *RunnerSuite) TestInitializerError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -446,7 +583,8 @@ func (s *RunnerSuite) TestProcessInitError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -496,7 +634,11 @@ func (s *RunnerSuite) TestProcessInitError(t sweet.T) {
 	// Ensure error is encountered
 	Eventually(init).Should(Receive(Equal("e")))
 	Eventually(init).Should(Receive(Equal("f")))
-	Eventually(errChan).Should(Receive(MatchError("failed to initialize f (utoh)")))
+
+	var err error
+	Eventually(errChan).Should(Receive(&err))
+	Expect(err).To(MatchError("failed to initialize f (utoh)"))
+
 	Consistently(init).ShouldNot(Receive())
 
 	// Shutdown only things that started
@@ -513,7 +655,8 @@ func (s *RunnerSuite) TestProcessStartError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
@@ -603,7 +746,8 @@ func (s *RunnerSuite) TestProcessStopError(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
 		processes   = NewContainer()
-		runner      = NewRunner(processes, services)
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)

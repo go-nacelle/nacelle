@@ -1,11 +1,15 @@
 package process
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/efritz/backoff"
 	"github.com/efritz/glock"
+	"github.com/efritz/watchdog"
 
 	"github.com/efritz/nacelle/config"
 	"github.com/efritz/nacelle/logging"
@@ -33,15 +37,18 @@ type (
 	}
 
 	runner struct {
-		processes       Container
-		services        service.Container
-		watcher         *processWatcher
-		errChan         chan errMeta
-		outChan         chan error
-		wg              *sync.WaitGroup
-		shutdownTimeout time.Duration
-		logger          logging.Logger
-		clock           glock.Clock
+		processes          Container
+		services           service.Container
+		health             Health
+		watcher            *processWatcher
+		errChan            chan errMeta
+		outChan            chan error
+		wg                 *sync.WaitGroup
+		logger             logging.Logger
+		clock              glock.Clock
+		startupTimeout     time.Duration
+		shutdownTimeout    time.Duration
+		healthCheckBackoff backoff.Backoff
 	}
 
 	namedInjectable interface {
@@ -67,6 +74,7 @@ type (
 func NewRunner(
 	processes Container,
 	services service.Container,
+	health Health,
 	runnerConfigs ...RunnerConfigFunc,
 ) Runner {
 	// There can be one init error plus one start and one stop error
@@ -78,13 +86,15 @@ func NewRunner(
 	outChan := make(chan error, maxErrs)
 
 	r := &runner{
-		processes: processes,
-		services:  services,
-		errChan:   errChan,
-		outChan:   outChan,
-		wg:        &sync.WaitGroup{},
-		logger:    logging.NewNilLogger(),
-		clock:     glock.NewRealClock(),
+		processes:          processes,
+		services:           services,
+		health:             health,
+		errChan:            errChan,
+		outChan:            outChan,
+		wg:                 &sync.WaitGroup{},
+		logger:             logging.NewNilLogger(),
+		clock:              glock.NewRealClock(),
+		healthCheckBackoff: backoff.NewConstantBackoff(time.Second),
 	}
 
 	for _, f := range runnerConfigs {
@@ -114,13 +124,10 @@ func (r *runner) Run(config config.Config) <-chan error {
 
 	r.watcher.watch()
 
-	// Run the initializers in sequence. IF there were no errors, begin
+	// Run the initializers in sequence. If there were no errors, begin
 	// initializing and running processes in priority/registration order.
 
-	if r.runInitializers(config) {
-		r.runProcesses(config)
-	}
-
+	_ = r.runInitializers(config) && r.runProcesses(config)
 	return r.outChan
 }
 
@@ -143,13 +150,13 @@ func (r *runner) runInitializers(config config.Config) bool {
 
 	for _, initializer := range r.processes.GetInitializers() {
 		if err := r.inject(initializer); err != nil {
-			r.errChan <- errMeta{err, initializer, false}
+			r.errChan <- errMeta{err: err, source: initializer}
 			close(r.errChan)
 			return false
 		}
 
 		if err := r.initWithTimeout(initializer, config); err != nil {
-			r.errChan <- errMeta{err, initializer, false}
+			r.errChan <- errMeta{err: err, source: initializer}
 			close(r.errChan)
 			return false
 		}
@@ -158,11 +165,11 @@ func (r *runner) runInitializers(config config.Config) bool {
 	return true
 }
 
-func (r *runner) runProcesses(config config.Config) {
+func (r *runner) runProcesses(config config.Config) bool {
 	r.logger.Info("Running processes")
 
 	if !r.injectProcesses() {
-		return
+		return false
 	}
 
 	// For each priority index, attempt to initialize the processes
@@ -178,7 +185,10 @@ func (r *runner) runProcesses(config config.Config) {
 			break
 		}
 
-		r.startProcessesAtPriorityIndex(index)
+		if !r.startProcessesAtPriorityIndex(index) {
+			success = false
+			break
+		}
 	}
 
 	// Wait for all booted processes to exit any Start/Stop methods,
@@ -192,10 +202,11 @@ func (r *runner) runProcesses(config config.Config) {
 	}()
 
 	if !success {
-		return
+		return false
 	}
 
 	r.logger.Info("All processes have started")
+	return true
 }
 
 //
@@ -205,7 +216,7 @@ func (r *runner) injectProcesses() bool {
 	for i := 0; i < r.processes.NumPriorities(); i++ {
 		for _, process := range r.processes.GetProcessesAtPriorityIndex(i) {
 			if err := r.inject(process); err != nil {
-				r.errChan <- errMeta{err, process, false}
+				r.errChan <- errMeta{err: err, source: process}
 				close(r.errChan)
 				return false
 			}
@@ -237,7 +248,7 @@ func (r *runner) initProcessesAtPriorityIndex(config config.Config, index int) b
 
 	for _, process := range r.processes.GetProcessesAtPriorityIndex(index) {
 		if err := r.initWithTimeout(process, config); err != nil {
-			r.errChan <- errMeta{err, process, false}
+			r.errChan <- errMeta{err: err, source: process}
 			return false
 		}
 	}
@@ -246,38 +257,34 @@ func (r *runner) initProcessesAtPriorityIndex(config config.Config, index int) b
 }
 
 func (r *runner) initWithTimeout(initializer namedInitializer, config config.Config) error {
-	// Run the initializer in a goroutine. Write its return value
-	// to a buffered channel so that it does not block if we happen
-	// to abandon the read (on timeout or during shutdown).
+	// Run the initializer in a goroutine. We don't want to block
+	// on this in case we want to abandon reading from this channel
+	// (timeout or shutdown). This is only true for initializer
+	// methods (will not be true for process Start methods).
 
-	ch := make(chan error, 1)
+	errChan := makeErrChan(func() error {
+		return r.init(initializer, config)
+	})
 
-	go func() {
-		defer close(ch)
-		ch <- r.init(initializer, config)
-	}()
+	// Construct a timeout chan for the init (if timeout is set to
+	// zero, this chan is nil and will never yield a value).
 
-	// Create a timeout channel for the initialization timeout.
-	// If timeout is zero, then we use a nil channel (which will
-	// never receive).
+	initTimeoutChan := r.makeTimeoutChan(initializer.InitTimeout())
 
-	var timeoutCh <-chan time.Time
-	if timeout := initializer.InitTimeout(); timeout > 0 {
-		timeoutCh = r.clock.After(timeout)
-	}
+	// Now, wait for one of three results:
+	//   - Init completed, return its value
+	//   - Initialization took too long, return an error
+	//   - Watcher is shutting down, ignore the return value
 
 	select {
-	case err := <-ch:
-		// Init completed, return its value
+	case err := <-errChan:
 		return err
 
-	case <-r.watcher.shutdownSignal:
-		// Watcher is shutting down, ignore the return value of this call
-		return fmt.Errorf("aborting initialization of %s", initializer.Name())
-
-	case <-timeoutCh:
-		// Initialization took too long, return an error
+	case <-initTimeoutChan:
 		return fmt.Errorf("%s did not initialize within timeout", initializer.Name())
+
+	case <-r.watcher.shutdownSignal:
+		return fmt.Errorf("aborting initialization of %s", initializer.Name())
 	}
 }
 
@@ -299,7 +306,7 @@ func (r *runner) init(initializer namedInitializer, config config.Config) error 
 //
 // Process Starting
 
-func (r *runner) startProcessesAtPriorityIndex(index int) {
+func (r *runner) startProcessesAtPriorityIndex(index int) bool {
 	r.logger.Info("Starting processes at priority index %d", index)
 
 	// For each process group, we create a goroutine that will shutdown
@@ -316,29 +323,178 @@ func (r *runner) startProcessesAtPriorityIndex(index int) {
 		r.stopProcessesAtPriorityIndex(index)
 	}()
 
+	// Create a context object whose cancellation marks either all processes
+	// of this priority index going healthy or the startup timeout elapsing.
+	// Create an abandon channel that closes at the same time to signal the
+	// routine invoking the Start method of a process to ignore its return
+	// value -- we really should not allow a timed-out start method to block
+	// the entire process.
+	//
+	// The timeout is calculated from the minimum timeout values of the runner
+	// and each process at this priority index. If no such values are set, then
+	// the channel is nil and will never yield a value.
+
+	var (
+		ctx, cancel        = context.WithCancel(context.Background())
+		abandonSignal      = make(chan struct{})
+		minTimeout         = r.startupTimeoutForPriorityIndex(index)
+		startupTimeoutChan = r.makeTimeoutChan(minTimeout)
+	)
+
+	defer cancel()
+
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-startupTimeoutChan:
+			r.logger.Error(
+				"processes at priority index %d did not start within timeout",
+				index,
+			)
+
+			cancel()
+			close(abandonSignal)
+		}
+	}()
+
+	// Actually start each process. Each call to startProcess blocks until
+	// the process exits, so we perform each one in a goroutine guarded by
+	// the runner's wait group.
+
 	for _, process := range r.processes.GetProcessesAtPriorityIndex(index) {
 		r.wg.Add(1)
 
 		go func(p *ProcessMeta) {
 			defer r.wg.Done()
-			r.startProcess(p)
+			r.startProcess(p, abandonSignal)
 		}(process)
 	}
+
+	// The health check function will read the outstanding unhealthy reasons
+	// from the health reporter. We will block until the reason list is empty.
+
+	retry := watchdog.RetryFunc(func() bool {
+		if descriptions := r.getHealthDescriptions(); len(descriptions) > 0 {
+			r.logger.Warning(
+				"Process is not yet healthy - outstanding reasons: %s",
+				strings.Join(descriptions, ", "),
+			)
+
+			return false
+		}
+
+		return true
+	})
+
+	// Perform the health check function with the given backoff. Will return
+	// false if the context has been canceled before the health function has
+	// returned true.
+
+	if !watchdog.BlockUntilSuccess(ctx, retry, r.healthCheckBackoff) {
+		// Do one last check to ensure that there are still unhealthy reasons.
+		// This stops a weird race condition where we stop the runner with a
+		// series of process errors with no outstanding reasons.
+
+		if descriptions := r.getHealthDescriptions(); len(descriptions) > 0 {
+			err := fmt.Errorf(
+				"process did not become healthy within timeout - outstanding reasons: %s",
+				strings.Join(descriptions, ", "),
+			)
+
+			r.errChan <- errMeta{err: err}
+			return false
+		}
+	}
+
+	r.logger.Info(
+		"All processes at priority index %d have reported healthy",
+		index,
+	)
+
+	return true
 }
 
-func (r *runner) startProcess(process *ProcessMeta) {
+func (r *runner) startupTimeoutForPriorityIndex(index int) time.Duration {
+	timeout := r.startupTimeout
+
+	for _, process := range r.processes.GetProcessesAtPriorityIndex(index) {
+		if process.startTimeout != 0 && (timeout == 0 || process.startTimeout < timeout) {
+			timeout = process.startTimeout
+		}
+	}
+
+	return timeout
+}
+
+func (r *runner) getHealthDescriptions() []string {
+	descriptions := []string{}
+	for _, reason := range r.health.Reasons() {
+		descriptions = append(descriptions, fmt.Sprintf("%s", reason.Key))
+	}
+
+	return descriptions
+}
+
+func (r *runner) startProcess(process *ProcessMeta, abandonSignal <-chan struct{}) {
 	r.logger.Info("Starting %s", process.Name())
 
-	if err := process.Start(); err != nil {
+	// Run the start method in a goroutine. We need to do
+	// this as we assume all processes are long-running
+	// and need to read from other sources for shutdown
+	// and timeout behavior.
+
+	errChan := makeErrChan(func() error {
+		return process.Start()
+	})
+
+	// Create a channel for the shutdown timeout. This
+	// channel will close only after the timeout duration
+	// elapses AFTER the stop method of the process is
+	// called. If the shutdown timeout is set to zero, this
+	// channel will remain nil and will never yield.
+
+	var shutdownTimeout chan (struct{})
+
+	if process.shutdownTimeout > 0 {
+		shutdownTimeout = make(chan struct{})
+
+		go func() {
+			<-process.stopped
+			<-r.clock.After(process.shutdownTimeout)
+			close(shutdownTimeout)
+		}()
+	}
+
+	// Now, wait for the Start method to yield, in which case the error value
+	// is passed to the watcher, or for either the abandon channel or timeout
+	// channel to signal, in which case we abandon the reading of the return
+	// value from the Start method.
+
+	select {
+	case <-abandonSignal:
+		r.logger.Error("Abandoning result of %s", process.Name())
+		return
+
+	case err := <-errChan:
+		if err != nil {
+			wrappedErr := fmt.Errorf(
+				"%s returned a fatal error (%s)",
+				process.Name(),
+				err.Error(),
+			)
+
+			r.errChan <- errMeta{err: wrappedErr, source: process}
+		} else {
+			r.errChan <- errMeta{err: nil, source: process, silentExit: process.silentExit}
+		}
+
+	case <-shutdownTimeout:
 		wrappedErr := fmt.Errorf(
-			"%s returned a fatal error (%s)",
+			"%s did not shutdown within timeout",
 			process.Name(),
-			err.Error(),
 		)
 
-		r.errChan <- errMeta{wrappedErr, process, false}
-	} else {
-		r.errChan <- errMeta{nil, process, process.silentExit}
+		r.errChan <- errMeta{err: wrappedErr, source: process}
 	}
 }
 
@@ -360,7 +516,7 @@ func (r *runner) stopProcessesAtPriorityIndex(index int) {
 			defer r.wg.Done()
 
 			if err := r.stop(process); err != nil {
-				r.errChan <- errMeta{err, process, false}
+				r.errChan <- errMeta{err: err, source: process}
 			}
 		}(process)
 	}
@@ -378,4 +534,26 @@ func (r *runner) stop(process *ProcessMeta) error {
 	}
 
 	return nil
+}
+
+//
+// Helpers
+
+func (r *runner) makeTimeoutChan(timeout time.Duration) <-chan time.Time {
+	if timeout == 0 {
+		return nil
+	}
+
+	return r.clock.After(timeout)
+}
+
+func makeErrChan(f func() error) <-chan error {
+	ch := make(chan error, 1)
+
+	go func() {
+		defer close(ch)
+		ch <- f()
+	}()
+
+	return ch
 }

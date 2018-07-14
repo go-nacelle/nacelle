@@ -29,3 +29,14 @@ func WithSilentExit() ProcessConfigFunc {
 func WithProcessInitTimeout(timeout time.Duration) ProcessConfigFunc {
 	return func(meta *ProcessMeta) { meta.initTimeout = timeout }
 }
+
+// WithProcessStartTimeout sets the time limit for the process to become healthy.
+func WithProcessStartTimeout(timeout time.Duration) ProcessConfigFunc {
+	return func(meta *ProcessMeta) { meta.startTimeout = timeout }
+}
+
+// WithProcessShutdownTimeout sets the time limit for the process's Start method
+// to yield after the Stop method has been called.
+func WithProcessShutdownTimeout(timeout time.Duration) ProcessConfigFunc {
+	return func(meta *ProcessMeta) { meta.shutdownTimeout = timeout }
+}

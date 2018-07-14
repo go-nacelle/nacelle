@@ -7,6 +7,7 @@ import (
 	"github.com/aphistic/sweet"
 	"github.com/efritz/glock"
 	"github.com/efritz/nacelle"
+	"github.com/efritz/nacelle/process"
 	"github.com/efritz/nacelle/service"
 	. "github.com/onsi/gomega"
 )
@@ -52,6 +53,8 @@ func (s *WorkerSuite) TestRunAndStop(t sweet.T) {
 
 func (s *WorkerSuite) TestBadConfig(t sweet.T) {
 	worker := NewWorker(newMockWorkerSpec())
+	worker.Health = process.NewHealth()
+
 	err := worker.Init(makeConfig(ConfigToken, &emptyConfig{}))
 	Expect(err).To(Equal(ErrBadConfig))
 }
@@ -59,6 +62,7 @@ func (s *WorkerSuite) TestBadConfig(t sweet.T) {
 func (s *WorkerSuite) TestBadInject(t sweet.T) {
 	worker := NewWorker(&badInjectWorkerSpec{})
 	worker.Services = makeBadContainer()
+	worker.Health = process.NewHealth()
 
 	err := worker.Init(makeConfig(ConfigToken, &Config{RawWorkerTickInterval: 5}))
 	Expect(err).NotTo(BeNil())
@@ -105,6 +109,7 @@ func (s *WorkerSuite) TestTickError(t sweet.T) {
 func makeWorker(spec WorkerSpec, clock glock.Clock) *Worker {
 	worker := newWorker(spec, clock)
 	worker.Services, _ = service.NewContainer()
+	worker.Health = process.NewHealth()
 	return worker
 }
 
