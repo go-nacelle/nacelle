@@ -72,7 +72,7 @@ The default logging behavior can be configured by the following environment vari
 | LOG_COLORIZE                 | true    | Colorize log messages by level when true. Works with `console` encoding only. |
 | LOG_SHORT_TIME               | false   | Omit date from timestamp when true. Works with `console` encoding only. |
 | LOG_DISPLAY_FIELDS           | true    | Omit log fields from output when false. Works with `console` encoding only. |
-| LOG_DISPLAY_MULTILINE_FIELDS | true    | Print fields on one line when true, one field per line when false. Works with `console` encoding only. |
+| LOG_DISPLAY_MULTILINE_FIELDS | false   | Print fields on one line when true, one field per line when false. Works with `console` encoding only. |
 
 ## Adapters
 

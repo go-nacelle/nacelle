@@ -2,7 +2,7 @@ package discovery
 
 import (
 	"github.com/efritz/reception"
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 
 	"github.com/efritz/nacelle"
 )
@@ -17,9 +17,14 @@ func InitAnnouncer(name string, onDisconnect func(error)) nacelle.ServiceInitial
 			return err
 		}
 
+		id, err := uuid.NewRandom()
+		if err != nil {
+			return err
+		}
+
 		service := &reception.Service{
-			ID:      uuid.Must(uuid.NewV4()).String(),
-			Name:    name,
+      ID:      id.String(),
+      Name:    name,
 			Address: "", // TODO
 			Port:    0,  // TODO
 		}
