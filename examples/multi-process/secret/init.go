@@ -9,7 +9,7 @@ import (
 
 func Init(config nacelle.Config, services nacelle.ServiceContainer) error {
 	secretConfig := &Config{}
-	if err := config.Fetch(ConfigToken, secretConfig); err != nil {
+	if err := config.Load(secretConfig); err != nil {
 		return err
 	}
 

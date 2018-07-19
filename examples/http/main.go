@@ -19,12 +19,7 @@ func setupServer(config nacelle.Config, server *http.Server) error {
 //
 //
 
-func setupConfigs(config nacelle.Config) error {
-	config.MustRegister(basehttp.ConfigToken, &basehttp.Config{})
-	return nil
-}
-
-func setupProcesses(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
 	processes.RegisterProcess(basehttp.NewServer(basehttp.ServerInitializerFunc(setupServer)))
 	return nil
 }
@@ -33,5 +28,5 @@ func setupProcesses(processes nacelle.ProcessContainer, services nacelle.Service
 //
 
 func main() {
-	nacelle.NewBootstrapper("http-example", setupConfigs, setupProcesses).BootAndExit()
+	nacelle.NewBootstrapper("http-example", setup).BootAndExit()
 }

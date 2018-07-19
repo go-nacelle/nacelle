@@ -24,12 +24,7 @@ func setupServer(config nacelle.Config, server *grpc.Server) error {
 //
 //
 
-func setupConfigs(config nacelle.Config) error {
-	config.MustRegister(basegrpc.ConfigToken, &basegrpc.Config{})
-	return nil
-}
-
-func setupProcesses(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
 	processes.RegisterProcess(basegrpc.NewServer(basegrpc.ServerInitializerFunc(setupServer)))
 	return nil
 }
@@ -38,5 +33,5 @@ func setupProcesses(processes nacelle.ProcessContainer, services nacelle.Service
 //
 
 func main() {
-	nacelle.NewBootstrapper("grpc-example", setupConfigs, setupProcesses).BootAndExit()
+	nacelle.NewBootstrapper("grpc-example", setup).BootAndExit()
 }
