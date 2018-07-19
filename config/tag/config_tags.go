@@ -1,79 +1,22 @@
-package config
+package tag
 
 import (
 	"fmt"
 	"reflect"
+	"unicode"
 	"unsafe"
 
 	"github.com/fatih/structtag"
 )
 
-type (
-	// TagModifier is an interface that rewrites a set of tags for a struct
-	// field. This interface is used by the ApplyTagModifiers function.
-	TagModifier interface {
-		// AlterFieldTag modifies the tags reference by setting or deleting
-		// values from the given tag wrapper. The given tag wrapper is the
-		// parsed version of the tag for the given field. Returns an error
-		// if there is an internal consistency problem.
-		AlterFieldTag(field reflect.StructField, tags *structtag.Tags) error
-	}
-
-	// EnvTagPrefixer is a tag modifier which adds a prefix to the values of
-	// `env` tags. This can be used to register one config multiple times and
-	// have their initialization be read from different environment variables.
-	EnvTagPrefixer struct {
-		prefix string
-	}
-
-	// DefaultTagSetter is a tag modifier which sets the value of the default
-	// tag for a particular field. This is used to change the default values
-	// provided by third party libraries (for which a source change would be
-	// otherwise required).
-	DefaultTagSetter struct {
-		field        string
-		defaultValue string
-	}
-)
-
-// NewEnvTagPrefixer creates a new EnvTagPrefixer.
-func NewEnvTagPrefixer(prefix string) TagModifier {
-	return &EnvTagPrefixer{
-		prefix: prefix,
-	}
-}
-
-// AlterFieldTag adds the env prefixer's prefix to the `env` tag value, if one is set.
-func (p *EnvTagPrefixer) AlterFieldTag(fieldType reflect.StructField, tags *structtag.Tags) error {
-	tag, err := tags.Get(envTag)
-	if err != nil {
-		return nil
-	}
-
-	return tags.Set(&structtag.Tag{
-		Key:  envTag,
-		Name: fmt.Sprintf("%s_%s", p.prefix, tag.Name),
-	})
-}
-
-// NewDefaultTagSetter creates a new DefaultTagSetter.
-func NewDefaultTagSetter(field string, defaultValue string) TagModifier {
-	return &DefaultTagSetter{
-		field:        field,
-		defaultValue: defaultValue,
-	}
-}
-
-// AlterFieldTag sets the value of the default tag if the field matches the target name.
-func (s *DefaultTagSetter) AlterFieldTag(fieldType reflect.StructField, tags *structtag.Tags) error {
-	if fieldType.Name != s.field {
-		return nil
-	}
-
-	return tags.Set(&structtag.Tag{
-		Key:  defaultTag,
-		Name: s.defaultValue,
-	})
+// TagModifier is an interface that rewrites a set of tags for a struct
+// field. This interface is used by the ApplyTagModifiers function.
+type TagModifier interface {
+	// AlterFieldTag modifies the tags reference by setting or deleting
+	// values from the given tag wrapper. The given tag wrapper is the
+	// parsed version of the tag for the given field. Returns an error
+	// if there is an internal consistency problem.
+	AlterFieldTag(field reflect.StructField, tags *structtag.Tags) error
 }
 
 // ApplyTagModifiers returns a new struct with a dynamic type whose fields
@@ -89,16 +32,6 @@ func ApplyTagModifiers(obj interface{}, modifiers ...TagModifier) (modified inte
 	}
 
 	return
-}
-
-// MustApplyTagModifiers calls ApplyTagModifiers and panics on error.
-func MustApplyTagModifiers(obj interface{}, modifiers ...TagModifier) interface{} {
-	modified, err := ApplyTagModifiers(obj, modifiers...)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return modified
 }
 
 func apply(p interface{}, modifier TagModifier) (interface{}, error) {
@@ -192,6 +125,10 @@ func makeStructType(structType reflect.Type, modifier TagModifier) (reflect.Type
 	}
 
 	return reflect.StructOf(fields), nil
+}
+
+func isExported(name string) bool {
+	return unicode.IsUpper([]rune(name)[0])
 }
 
 func getTags(field reflect.StructField) (*structtag.Tags, bool) {

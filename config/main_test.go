@@ -15,6 +15,6 @@ func TestMain(m *testing.M) {
 		s.RegisterPlugin(junit.NewPlugin())
 
 		s.AddSuite(&EnvConfigSuite{})
-		s.AddSuite(&ConfigTagsSuite{})
+		s.AddSuite(&LoggingConfigSuite{})
 	})
 }

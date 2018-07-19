@@ -1,16 +1,17 @@
 package nacelle
 
-import "github.com/efritz/nacelle/config"
+import (
+	"github.com/efritz/nacelle/config"
+	"github.com/efritz/nacelle/config/tag"
+)
 
 type (
 	Config      = config.Config
-	TagModifier = config.TagModifier
+	TagModifier = tag.TagModifier
 )
 
 var (
-	NewEnvConfig          = config.NewEnvConfig
-	NewEnvTagPrefixer     = config.NewEnvTagPrefixer
-	NewDefaultTagSetter   = config.NewDefaultTagSetter
-	ApplyTagModifiers     = config.ApplyTagModifiers
-	MustApplyTagModifiers = config.MustApplyTagModifiers
+	NewEnvConfig        = config.NewEnvConfig
+	NewEnvTagPrefixer   = tag.NewEnvTagPrefixer
+	NewDefaultTagSetter = tag.NewDefaultTagSetter
 )
