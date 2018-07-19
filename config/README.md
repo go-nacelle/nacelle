@@ -89,17 +89,6 @@ func (p *Process) Init(config nacelle.Config) error {
     // c is hydrated
     // ...
 }
-func setupConfigs(config nacelle.Config) error {
-    modifiedConfig := nacelle.MustApplyTagModifiers(
-        &Config{},
-
-    )
-
-    config.MustRegister(ConfigToken, modifiedConfig)
-
-    // ...
-    return nil
-}
 ```
 
 If other dynamic modifications of a configuration struct is necessary,
