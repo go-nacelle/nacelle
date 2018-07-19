@@ -11,7 +11,7 @@ type (
 	ConfigFunc func(*options)
 )
 
-// WithTagModifiers applies the givne tag modifiers on config load.
+// WithTagModifiers applies the given tag modifiers on config load.
 func WithTagModifiers(modifiers ...tag.Modifier) ConfigFunc {
 	return func(o *options) { o.tagModifiers = append(o.tagModifiers, modifiers...) }
 }
