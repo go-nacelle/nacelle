@@ -8,7 +8,7 @@ import (
 type DefaultTagSetterSuite struct{}
 
 func (s *DefaultTagSetterSuite) TestDefaultTagSetter(t sweet.T) {
-	obj, err := ApplyTagModifiers(
+	obj, err := ApplyModifiers(
 		&TempTest{},
 		NewDefaultTagSetter("X", "r"),
 		NewDefaultTagSetter("Y", "null"),

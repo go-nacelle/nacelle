@@ -8,7 +8,7 @@ import (
 type EnvTagPrefixerSuite struct{}
 
 func (s *EnvTagPrefixerSuite) TestEnvTagPrefixer(t sweet.T) {
-	obj, err := ApplyTagModifiers(&TempTest{}, NewEnvTagPrefixer("foo"))
+	obj, err := ApplyModifiers(&TempTest{}, NewEnvTagPrefixer("foo"))
 	Expect(err).To(BeNil())
 
 	Expect(gatherTags(obj, "X")).To(Equal(map[string]string{

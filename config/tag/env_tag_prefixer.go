@@ -19,7 +19,7 @@ type EnvTagPrefixer struct {
 }
 
 // NewEnvTagPrefixer creates a new EnvTagPrefixer.
-func NewEnvTagPrefixer(prefix string) TagModifier {
+func NewEnvTagPrefixer(prefix string) Modifier {
 	return &EnvTagPrefixer{
 		prefix: prefix,
 	}

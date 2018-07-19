@@ -19,7 +19,7 @@ type (
 		Logger          nacelle.Logger           `service:"logger"`
 		Services        nacelle.ServiceContainer `service:"container"`
 		Health          nacelle.Health           `service:"health"`
-		tagModifiers    []tag.TagModifier
+		tagModifiers    []tag.Modifier
 		initializer     ServerInitializer
 		listener        *net.TCPListener
 		server          *http.Server

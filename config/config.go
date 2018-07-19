@@ -10,10 +10,10 @@ type (
 		// are applied to the configuration object pre-load. If the target
 		// value conforms to the PostLoadConfig interface, the PostLoad
 		// function may be called multiple times.
-		Load(interface{}, ...tag.TagModifier) error
+		Load(interface{}, ...tag.Modifier) error
 
 		// MustInject calls Injects and panics on error.
-		MustLoad(interface{}, ...tag.TagModifier)
+		MustLoad(interface{}, ...tag.Modifier)
 	}
 
 	// PostLoadConfig is a marker interface for configuration objects

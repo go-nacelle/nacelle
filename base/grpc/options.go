@@ -7,7 +7,7 @@ import (
 
 type (
 	options struct {
-		tagModifiers  []tag.TagModifier
+		tagModifiers  []tag.Modifier
 		serverOptions []grpc.ServerOption
 	}
 
@@ -17,7 +17,7 @@ type (
 )
 
 // WithTagModifiers applies the givne tag modifiers on config load.
-func WithTagModifiers(modifiers ...tag.TagModifier) ConfigFunc {
+func WithTagModifiers(modifiers ...tag.Modifier) ConfigFunc {
 	return func(o *options) { o.tagModifiers = append(o.tagModifiers, modifiers...) }
 }
 

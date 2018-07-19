@@ -30,7 +30,7 @@ func NewLoggingConfig(config Config, logger logging.Logger) Config {
 	}
 }
 
-func (c *LoggingConfig) Load(target interface{}, modifiers ...tag.TagModifier) error {
+func (c *LoggingConfig) Load(target interface{}, modifiers ...tag.Modifier) error {
 	if err := c.Config.Load(target); err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (c *LoggingConfig) Load(target interface{}, modifiers ...tag.TagModifier) e
 	return nil
 }
 
-func (c *LoggingConfig) MustLoad(target interface{}, modifiers ...tag.TagModifier) {
+func (c *LoggingConfig) MustLoad(target interface{}, modifiers ...tag.Modifier) {
 	if err := c.Load(target, modifiers...); err != nil {
 		panic(err.Error())
 	}

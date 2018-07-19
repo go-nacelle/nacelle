@@ -20,7 +20,7 @@ func (s *LoggingConfigSuite) TestLoadLogs(t sweet.T) {
 		chunk  = &TestSimpleConfig{}
 	)
 
-	config.LoadFunc = func(target interface{}, modifiers ...tag.TagModifier) error {
+	config.LoadFunc = func(target interface{}, modifiers ...tag.Modifier) error {
 		target.(*TestSimpleConfig).X = "foo"
 		target.(*TestSimpleConfig).Y = 123
 		target.(*TestSimpleConfig).Z = []string{"bar", "baz", "bonk"}
@@ -47,7 +47,7 @@ func (s *EnvConfigSuite) TestMask(t sweet.T) {
 		chunk  = &TestMaskConfig{}
 	)
 
-	config.LoadFunc = func(target interface{}, modifiers ...tag.TagModifier) error {
+	config.LoadFunc = func(target interface{}, modifiers ...tag.Modifier) error {
 		target.(*TestMaskConfig).X = "foo"
 		target.(*TestMaskConfig).Y = 123
 		target.(*TestMaskConfig).Z = []string{"bar", "baz", "bonk"}

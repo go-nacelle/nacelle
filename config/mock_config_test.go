@@ -13,31 +13,31 @@ type MockConfig struct {
 	statsLoadLock          sync.RWMutex
 	statLoadFuncCallCount  int
 	statLoadFuncCallParams []ConfigLoadParamSet
-	LoadFunc               func(interface{}, ...tag.TagModifier) error
+	LoadFunc               func(interface{}, ...tag.Modifier) error
 
 	statsMustLoadLock          sync.RWMutex
 	statMustLoadFuncCallCount  int
 	statMustLoadFuncCallParams []ConfigMustLoadParamSet
-	MustLoadFunc               func(interface{}, ...tag.TagModifier)
+	MustLoadFunc               func(interface{}, ...tag.Modifier)
 }
 type ConfigLoadParamSet struct {
 	Arg0 interface{}
-	Arg1 []tag.TagModifier
+	Arg1 []tag.Modifier
 }
 type ConfigMustLoadParamSet struct {
 	Arg0 interface{}
-	Arg1 []tag.TagModifier
+	Arg1 []tag.Modifier
 }
 
 var _ Config = NewMockConfig()
 
 func NewMockConfig() *MockConfig {
 	m := &MockConfig{}
-	m.MustLoadFunc = m.defaultMustLoadFunc
 	m.LoadFunc = m.defaultLoadFunc
+	m.MustLoadFunc = m.defaultMustLoadFunc
 	return m
 }
-func (m *MockConfig) Load(v0 interface{}, v1 ...tag.TagModifier) error {
+func (m *MockConfig) Load(v0 interface{}, v1 ...tag.Modifier) error {
 	m.statsLoadLock.Lock()
 	m.statLoadFuncCallCount++
 	m.statLoadFuncCallParams = append(m.statLoadFuncCallParams, ConfigLoadParamSet{v0, v1})
@@ -55,7 +55,7 @@ func (m *MockConfig) LoadFuncCallParams() []ConfigLoadParamSet {
 	return m.statLoadFuncCallParams
 }
 
-func (m *MockConfig) MustLoad(v0 interface{}, v1 ...tag.TagModifier) {
+func (m *MockConfig) MustLoad(v0 interface{}, v1 ...tag.Modifier) {
 	m.statsMustLoadLock.Lock()
 	m.statMustLoadFuncCallCount++
 	m.statMustLoadFuncCallParams = append(m.statMustLoadFuncCallParams, ConfigMustLoadParamSet{v0, v1})
@@ -73,9 +73,9 @@ func (m *MockConfig) MustLoadFuncCallParams() []ConfigMustLoadParamSet {
 	return m.statMustLoadFuncCallParams
 }
 
-func (m *MockConfig) defaultLoadFunc(v0 interface{}, v1 ...tag.TagModifier) error {
+func (m *MockConfig) defaultLoadFunc(v0 interface{}, v1 ...tag.Modifier) error {
 	return nil
 }
-func (m *MockConfig) defaultMustLoadFunc(v0 interface{}, v1 ...tag.TagModifier) {
+func (m *MockConfig) defaultMustLoadFunc(v0 interface{}, v1 ...tag.Modifier) {
 	return
 }

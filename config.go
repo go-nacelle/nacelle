@@ -7,7 +7,7 @@ import (
 
 type (
 	Config      = config.Config
-	TagModifier = tag.TagModifier
+	TagModifier = tag.Modifier
 )
 
 var (

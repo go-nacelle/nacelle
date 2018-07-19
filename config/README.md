@@ -76,7 +76,7 @@ false instead of true.
 func (p *Process) Init(config nacelle.Config) error {
     var (
         c    = &Config{}
-        tags = []tag.TagModifier{
+        tags = []tag.Modifier{
             nacelle.NewEnvTagPrefixer("Q"),
             nacelle.NewDefaultTagSetter("B", "false"),
         }

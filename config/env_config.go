@@ -59,8 +59,8 @@ func NewEnvConfig(prefix string) Config {
 	}
 }
 
-func (c *envConfig) Load(target interface{}, modifiers ...tag.TagModifier) error {
-	config, err := tag.ApplyTagModifiers(target, modifiers...)
+func (c *envConfig) Load(target interface{}, modifiers ...tag.Modifier) error {
+	config, err := tag.ApplyModifiers(target, modifiers...)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (c *envConfig) Load(target interface{}, modifiers ...tag.TagModifier) error
 }
 
 // MustLoad calls Load and panics on error.
-func (c *envConfig) MustLoad(target interface{}, modifiers ...tag.TagModifier) {
+func (c *envConfig) MustLoad(target interface{}, modifiers ...tag.Modifier) {
 	if err := c.Load(target, modifiers...); err != nil {
 		panic(err.Error())
 	}

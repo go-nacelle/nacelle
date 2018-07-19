@@ -15,7 +15,7 @@ type (
 	Worker struct {
 		Services     nacelle.ServiceContainer `service:"container"`
 		Health       nacelle.Health           `service:"health"`
-		tagModifiers []tag.TagModifier
+		tagModifiers []tag.Modifier
 		spec         WorkerSpec
 		clock        glock.Clock
 		halt         chan struct{}

@@ -20,7 +20,7 @@ const (
 )
 
 // NewDefaultTagSetter creates a new DefaultTagSetter.
-func NewDefaultTagSetter(field string, defaultValue string) TagModifier {
+func NewDefaultTagSetter(field string, defaultValue string) Modifier {
 	return &DefaultTagSetter{
 		field:        field,
 		defaultValue: defaultValue,
