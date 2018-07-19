@@ -43,16 +43,13 @@ func (f ServerInitializerFunc) Init(config nacelle.Config, server *http.Server) 
 }
 
 func NewServer(initializer ServerInitializer, configs ...ConfigFunc) *Server {
-	var (
-		options     = getOptions(configs)
-		rawToken, _ = uuid.NewRandom()
-	)
+	options := getOptions(configs)
 
 	return &Server{
 		tagModifiers: options.tagModifiers,
 		initializer:  initializer,
 		once:         &sync.Once{},
-		healthToken:  healthToken(rawToken.String()),
+		healthToken:  healthToken(uuid.New().String()),
 	}
 }
 

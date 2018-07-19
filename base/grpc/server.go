@@ -40,10 +40,7 @@ func (f ServerInitializerFunc) Init(config nacelle.Config, server *grpc.Server) 
 }
 
 func NewServer(initializer ServerInitializer, configs ...ConfigFunc) *Server {
-	var (
-		options     = getOptions(configs)
-		rawToken, _ = uuid.NewRandom()
-	)
+	options := getOptions(configs)
 
 	return &Server{
 		tagModifiers:  options.tagModifiers,
@@ -51,7 +48,7 @@ func NewServer(initializer ServerInitializer, configs ...ConfigFunc) *Server {
 		once:          &sync.Once{},
 		stopped:       make(chan struct{}),
 		serverOptions: options.serverOptions,
-		healthToken:   healthToken(rawToken.String()),
+		healthToken:   healthToken(uuid.New().String()),
 	}
 }
 

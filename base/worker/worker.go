@@ -35,10 +35,7 @@ func NewWorker(spec WorkerSpec, configs ...ConfigFunc) *Worker {
 }
 
 func newWorker(spec WorkerSpec, clock glock.Clock, configs ...ConfigFunc) *Worker {
-	var (
-		options     = getOptions(configs)
-		rawToken, _ = uuid.NewRandom()
-	)
+	options := getOptions(configs)
 
 	return &Worker{
 		tagModifiers: options.tagModifiers,
@@ -46,7 +43,7 @@ func newWorker(spec WorkerSpec, clock glock.Clock, configs ...ConfigFunc) *Worke
 		clock:        clock,
 		halt:         make(chan struct{}),
 		once:         &sync.Once{},
-		healthToken:  healthToken(rawToken.String()),
+		healthToken:  healthToken(uuid.New().String()),
 	}
 }
 

@@ -26,20 +26,15 @@ type (
 var ErrNoSecret = fmt.Errorf("secret does not exist")
 
 func (s *secretService) Post(secret string) (string, error) {
-	rawID, err := uuid.NewRandom()
-	if err != nil {
-		return "", err
-	}
-
 	var (
-		id  = rawID.String()
+		id  = uuid.New().String()
 		key = s.key(id)
 	)
 
 	pipeline := s.client.Pipeline()
 	pipeline.Add("set", key, secret)
 	pipeline.Add("expire", key, s.ttl)
-	_, err = pipeline.Run()
+	_, err := pipeline.Run()
 
 	return id, err
 }
