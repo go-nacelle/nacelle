@@ -1,21 +1,21 @@
 package worker
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/efritz/glock"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 
 	"github.com/efritz/nacelle"
+	"github.com/efritz/nacelle/config/tag"
 )
 
 type (
 	Worker struct {
 		Services     nacelle.ServiceContainer `service:"container"`
 		Health       nacelle.Health           `service:"health"`
-		configToken  interface{}
+		tagModifiers []tag.TagModifier
 		spec         WorkerSpec
 		clock        glock.Clock
 		halt         chan struct{}
@@ -30,22 +30,23 @@ type (
 	}
 )
 
-var ErrBadConfig = fmt.Errorf("worker config not registered properly")
-
 func NewWorker(spec WorkerSpec, configs ...ConfigFunc) *Worker {
 	return newWorker(spec, glock.NewRealClock())
 }
 
 func newWorker(spec WorkerSpec, clock glock.Clock, configs ...ConfigFunc) *Worker {
-	options := getOptions(configs)
+	var (
+		options     = getOptions(configs)
+		rawToken, _ = uuid.NewRandom()
+	)
 
 	return &Worker{
-		configToken: options.configToken,
-		spec:        spec,
-		clock:       clock,
-		halt:        make(chan struct{}),
-		once:        &sync.Once{},
-		healthToken: healthToken(uuid.Must(uuid.NewV4()).String()),
+		tagModifiers: options.tagModifiers,
+		spec:         spec,
+		clock:        clock,
+		halt:         make(chan struct{}),
+		once:         &sync.Once{},
+		healthToken:  healthToken(rawToken.String()),
 	}
 }
 
@@ -68,8 +69,8 @@ func (w *Worker) Init(config nacelle.Config) error {
 	}
 
 	workerConfig := &Config{}
-	if err := config.Fetch(w.configToken, workerConfig); err != nil {
-		return ErrBadConfig
+	if err := config.Load(workerConfig, w.tagModifiers...); err != nil {
+		return err
 	}
 
 	w.tickInterval = workerConfig.WorkerTickInterval

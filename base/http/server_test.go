@@ -34,7 +34,7 @@ func (s *ServerSuite) TestServeAndStop(t sweet.T) {
 	os.Setenv("HTTP_PORT", "0")
 	defer os.Clearenv()
 
-	err := server.Init(makeConfig(ConfigToken, &Config{}))
+	err := server.Init(makeConfig(&Config{}))
 	Expect(err).To(BeNil())
 
 	go server.Start()
@@ -61,9 +61,13 @@ func (s *ServerSuite) TestBadConfig(t sweet.T) {
 		return nil
 	})
 
+	config := makeConfig(&Config{
+		HTTPCertFile: "only me!",
+	})
+
 	server.Logger = nacelle.NewNilLogger()
 	server.Health = process.NewHealth()
-	Expect(server.Init(makeConfig(ConfigToken, &emptyConfig{}))).To(Equal(ErrBadConfig))
+	Expect(server.Init(config)).To(MatchError("cert file and key file must both be supplied or both be omitted"))
 }
 
 func (s *ServerSuite) TestBadInjection(t sweet.T) {
@@ -74,7 +78,7 @@ func (s *ServerSuite) TestBadInjection(t sweet.T) {
 	os.Setenv("HTTP_PORT", "0")
 	defer os.Clearenv()
 
-	err := server.Init(makeConfig(ConfigToken, &Config{}))
+	err := server.Init(makeConfig(&Config{}))
 	Expect(err.Error()).To(ContainSubstring("ServiceA"))
 }
 
@@ -86,7 +90,7 @@ func (s *ServerSuite) TestInitError(t sweet.T) {
 	os.Setenv("HTTP_PORT", "0")
 	defer os.Clearenv()
 
-	err := server.Init(makeConfig(ConfigToken, &Config{}))
+	err := server.Init(makeConfig(&Config{}))
 	Expect(err).To(MatchError("utoh"))
 }
 

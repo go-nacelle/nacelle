@@ -1,24 +1,13 @@
 package worker
 
 import (
-	"fmt"
 	"time"
 )
 
-type (
-	Config struct {
-		RawWorkerTickInterval int `env:"worker_tick_interval" default:"0"`
+type Config struct {
+	RawWorkerTickInterval int `env:"worker_tick_interval" default:"0"`
 
-		WorkerTickInterval time.Duration
-	}
-
-	configToken string
-)
-
-var ConfigToken = NewConfigToken("default")
-
-func NewConfigToken(name string) interface{} {
-	return configToken(fmt.Sprintf("nacelle-base-worker-%s", name))
+	WorkerTickInterval time.Duration
 }
 
 func (c *Config) PostLoad() error {

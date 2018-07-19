@@ -1,25 +1,23 @@
 package worker
 
+import "github.com/efritz/nacelle/config/tag"
+
 type (
 	options struct {
-		configToken interface{}
+		tagModifiers []tag.TagModifier
 	}
 
 	// ConfigFunc is a function used to configure an instance of a Worker.
 	ConfigFunc func(*options)
 )
 
-// WithConfigToken sets the config token to use. This is useful if an application
-// has multiple Worker processes running with different configuration tags.
-func WithConfigToken(token interface{}) ConfigFunc {
-	return func(o *options) { o.configToken = token }
+// WithTagModifiers applies the givne tag modifiers on config load.
+func WithTagModifiers(modifiers ...tag.TagModifier) ConfigFunc {
+	return func(o *options) { o.tagModifiers = append(o.tagModifiers, modifiers...) }
 }
 
 func getOptions(configs []ConfigFunc) *options {
-	options := &options{
-		configToken: ConfigToken,
-	}
-
+	options := &options{}
 	for _, f := range configs {
 		f(options)
 	}
