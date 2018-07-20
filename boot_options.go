@@ -32,8 +32,8 @@ func WithRunnerOptions(configs ...RunnerConfigFunc) BootstrapperConfigFunc {
 
 func defaultLogginInitFunc(config Config) (Logger, error) {
 	c := &logging.Config{}
-	if err := config.Fetch(loggingConfigToken, c); err != nil {
-		return nil, fmt.Errorf("logging config not registered properly")
+	if err := config.Load(c); err != nil {
+		return nil, fmt.Errorf("could not load logging config (%s)", err.Error())
 	}
 
 	return logging.InitGomolShim(c)

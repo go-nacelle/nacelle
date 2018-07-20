@@ -38,12 +38,7 @@ func (s *spec) Tick() error {
 //
 //
 
-func setupConfigs(config nacelle.Config) error {
-	config.MustRegister(worker.ConfigToken, &worker.Config{})
-	return nil
-}
-
-func setupProcesses(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
 	processes.RegisterProcess(worker.NewWorker(&spec{}))
 	return nil
 }
@@ -52,5 +47,5 @@ func setupProcesses(processes nacelle.ProcessContainer, services nacelle.Service
 //
 
 func main() {
-	nacelle.NewBootstrapper("worker-example", setupConfigs, setupProcesses).BootAndExit()
+	nacelle.NewBootstrapper("worker-example", setup).BootAndExit()
 }

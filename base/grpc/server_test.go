@@ -28,7 +28,7 @@ func (s *ServerSuite) TestServeAndStop(t sweet.T) {
 	os.Setenv("GRPC_PORT", "0")
 	defer os.Clearenv()
 
-	err := server.Init(makeConfig(ConfigToken, &Config{}))
+	err := server.Init(makeConfig(&Config{}))
 	Expect(err).To(BeNil())
 
 	go server.Start()
@@ -46,15 +46,6 @@ func (s *ServerSuite) TestServeAndStop(t sweet.T) {
 	Expect(resp.GetText()).To(Equal("FOOBAR"))
 }
 
-func (s *ServerSuite) TestBadConfig(t sweet.T) {
-	server := makeGRPCServer(func(config nacelle.Config, server *grpc.Server) error {
-		return nil
-	})
-
-	err := server.Init(makeConfig(ConfigToken, &emptyConfig{}))
-	Expect(err).To(Equal(ErrBadConfig))
-}
-
 func (s *ServerSuite) TestBadInjection(t sweet.T) {
 	server := NewServer(&badInjectionInitializer{})
 	server.Services = makeBadContainer()
@@ -63,7 +54,7 @@ func (s *ServerSuite) TestBadInjection(t sweet.T) {
 	os.Setenv("GRPC_PORT", "0")
 	defer os.Clearenv()
 
-	err := server.Init(makeConfig(ConfigToken, &Config{}))
+	err := server.Init(makeConfig(&Config{}))
 	Expect(err.Error()).To(ContainSubstring("ServiceA"))
 }
 
@@ -75,7 +66,7 @@ func (s *ServerSuite) TestInitError(t sweet.T) {
 	os.Setenv("GRPC_PORT", "0")
 	defer os.Clearenv()
 
-	err := server.Init(makeConfig(ConfigToken, &Config{}))
+	err := server.Init(makeConfig(&Config{}))
 	Expect(err).To(MatchError("utoh"))
 }
 

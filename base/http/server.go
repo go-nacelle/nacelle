@@ -8,9 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 
 	"github.com/efritz/nacelle"
+	"github.com/efritz/nacelle/config/tag"
 )
 
 type (
@@ -18,7 +19,7 @@ type (
 		Logger          nacelle.Logger           `service:"logger"`
 		Services        nacelle.ServiceContainer `service:"container"`
 		Health          nacelle.Health           `service:"health"`
-		configToken     interface{}
+		tagModifiers    []tag.Modifier
 		initializer     ServerInitializer
 		listener        *net.TCPListener
 		server          *http.Server
@@ -37,8 +38,6 @@ type (
 	ServerInitializerFunc func(nacelle.Config, *http.Server) error
 )
 
-var ErrBadConfig = fmt.Errorf("HTTP config not registered properly")
-
 func (f ServerInitializerFunc) Init(config nacelle.Config, server *http.Server) error {
 	return f(config, server)
 }
@@ -47,10 +46,10 @@ func NewServer(initializer ServerInitializer, configs ...ConfigFunc) *Server {
 	options := getOptions(configs)
 
 	return &Server{
-		configToken: options.configToken,
-		initializer: initializer,
-		once:        &sync.Once{},
-		healthToken: healthToken(uuid.Must(uuid.NewV4()).String()),
+		tagModifiers: options.tagModifiers,
+		initializer:  initializer,
+		once:         &sync.Once{},
+		healthToken:  healthToken(uuid.New().String()),
 	}
 }
 
@@ -60,8 +59,8 @@ func (s *Server) Init(config nacelle.Config) (err error) {
 	}
 
 	httpConfig := &Config{}
-	if err = config.Fetch(s.configToken, httpConfig); err != nil {
-		return ErrBadConfig
+	if err = config.Load(httpConfig, s.tagModifiers...); err != nil {
+		return err
 	}
 
 	s.listener, err = makeListener(httpConfig.HTTPPort)

@@ -8,14 +8,15 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
+
+	"github.com/efritz/nacelle/config/tag"
 )
 
 type (
 	// envConfig is a Config object that reads from the OS environment.
 	envConfig struct {
 		prefix string
-		chunks map[interface{}]interface{}
-		loaded bool
 	}
 
 	reflectField struct {
@@ -26,10 +27,8 @@ type (
 
 const (
 	envTag      = "env"
-	maskTag     = "mask"
 	defaultTag  = "default"
 	requiredTag = "required"
-	displayTag  = "display"
 )
 
 var (
@@ -57,172 +56,57 @@ func NewEnvConfig(prefix string) Config {
 
 	return &envConfig{
 		prefix: normalizedPrefix,
-		chunks: map[interface{}]interface{}{},
 	}
 }
 
-// Register associates a zero-valued struct whose exported fields should be tagged
-// as `env:"name"` with a key. It is an error to register the same key twice.
-func (c *envConfig) Register(key interface{}, config interface{}) error {
-	if c.loaded {
-		return ErrAlreadyLoaded
-	}
-
-	if _, ok := c.chunks[key]; ok {
-		return fmt.Errorf("duplicate config key `%s`", serializeKey(key))
-	}
-
-	c.chunks[key] = config
-	return nil
-}
-
-// MustRegister calls Register and panics on error.
-func (c *envConfig) MustRegister(key interface{}, config interface{}) {
-	if err := c.Register(key, config); err != nil {
-		panic(err.Error())
-	}
-}
-
-// Get retrieves the populated struct by its key.
-func (c *envConfig) Get(key interface{}) (interface{}, error) {
-	if !c.loaded {
-		return nil, ErrNotLoaded
-	}
-
-	if config, ok := c.chunks[key]; ok {
-		return config, nil
-	}
-
-	return nil, fmt.Errorf("unregistered config key `%s`", serializeKey(key))
-}
-
-// MustGet calls Get and panics on error.
-func (c *envConfig) MustGet(key interface{}) interface{} {
-	config, err := c.Get(key)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return config
-}
-
-// Fetch populates the target struct with the field values in the config struct
-// registered to the given key.
-func (c *envConfig) Fetch(key interface{}, target interface{}) error {
-	config, err := c.Get(key)
+func (c *envConfig) Load(target interface{}, modifiers ...tag.Modifier) error {
+	config, err := tag.ApplyModifiers(target, modifiers...)
 	if err != nil {
 		return err
 	}
 
-	var (
-		sourceFields = getExportedFields(config)
-		targetFields = getExportedFields(target)
-	)
+	errors := c.load(config)
 
-	if len(sourceFields) != len(targetFields) {
-		return fmt.Errorf("target does not have the same number of fields as the registered config")
-	}
+	if len(errors) == 0 {
+		sourceFields, _ := getExportedFields(config)
+		targetFields, _ := getExportedFields(target)
 
-	for i := 0; i < len(sourceFields); i++ {
-		var (
-			sourceField, sourceFieldType = sourceFields[i].field, sourceFields[i].fieldType
-			targetField, targetFieldType = targetFields[i].field, targetFields[i].fieldType
-		)
-
-		if sourceFieldType.Name != targetFieldType.Name || sourceFieldType.Type != targetFieldType.Type {
-			return fmt.Errorf(
-				"target field mismatch at index %d (%s in registered config)",
-				i,
-				sourceFieldType.Name,
-			)
+		for i := 0; i < len(sourceFields); i++ {
+			targetFields[i].field.Set(sourceFields[i].field)
 		}
 
-		if targetField.IsValid() && targetField.CanSet() {
-			targetField.Set(sourceField)
+		if plc, ok := target.(PostLoadConfig); ok {
+			if err := plc.PostLoad(); err != nil {
+				errors = append(errors, err)
+			}
 		}
 	}
 
-	if plc, ok := target.(PostLoadConfig); ok {
-		return plc.PostLoad()
-	}
-
-	return nil
+	return loadError(errors)
 }
 
-func getExportedFields(obj interface{}) []*reflectField {
-	var (
-		fields            = []*reflectField{}
-		objValue, objType = getIndirect(obj)
-	)
-
-	for i := 0; i < objType.NumField(); i++ {
-		field, fieldType := objValue.Field(i), objType.Field(i)
-		if !isExported(fieldType.Name) {
-			continue
-		}
-
-		fields = append(fields, &reflectField{
-			field:     field,
-			fieldType: fieldType,
-		})
-	}
-
-	return fields
-}
-
-func isExported(name string) bool {
-	return 'A' <= name[0] && name[0] <= 'Z'
-}
-
-// MustFetch calls Fetch and panics on error.
-func (c *envConfig) MustFetch(key interface{}, target interface{}) {
-	if err := c.Fetch(key, target); err != nil {
+// MustLoad calls Load and panics on error.
+func (c *envConfig) MustLoad(target interface{}, modifiers ...tag.Modifier) {
+	if err := c.Load(target, modifiers...); err != nil {
 		panic(err.Error())
 	}
 }
 
-// Load each registered struct with values from the environment. If a struct field
-// is tagged as `required:"true"` and no value (nor default value) is supplied, an
-// error is generated. If a struct field is tagged with a `default:"value"` value and
-// no value is supplied from the environment, that value is used as if it came from
-// the environment. The values that are pulled from the environment are attempted to
-// be treated as JSON and, on failure, are treated as a string before assigning them
-// to registered struct fields. This allows lists and map types to be expressed easily.
-func (c *envConfig) Load() []error {
-	c.loaded = true
+func (c *envConfig) load(target interface{}) []error {
+	objValue, objType, err := getIndirect(target)
+	if err != nil {
+		return []error{err}
+	}
 
 	errors := []error{}
-	for _, chunk := range c.chunks {
-		errors = loadChunk(chunk, errors, c.prefix)
-	}
-
-	return errors
-}
-
-// ToMap will serialize the loaded config structs into a map. If a struct field has a
-// `mask:"true"` tag it will be omitted form the result. If a struct field has the tag
-// `display:"name"`, then the tag's value will be used in place of the field name.
-func (c *envConfig) ToMap() (map[string]interface{}, error) {
-	m := map[string]interface{}{}
-
-	for _, chunk := range c.chunks {
-		if err := dumpChunk(chunk, m); err != nil {
-			return nil, err
-		}
-	}
-
-	return m, nil
-}
-
-func loadChunk(obj interface{}, errors []error, prefix string) []error {
-	objValue, objType := getIndirect(obj)
 
 	for i := 0; i < objType.NumField(); i++ {
 		var (
-			fieldValue, fieldType = objValue.Field(i), objType.Field(i)
-			envTagValue           = fieldType.Tag.Get(envTag)
-			defaultTagValue       = fieldType.Tag.Get(defaultTag)
-			requiredTagValue      = fieldType.Tag.Get(requiredTag)
+			fieldType        = objType.Field(i)
+			fieldValue       = objValue.Field(i)
+			envTagValue      = fieldType.Tag.Get(envTag)
+			defaultTagValue  = fieldType.Tag.Get(defaultTag)
+			requiredTagValue = fieldType.Tag.Get(requiredTag)
 		)
 
 		if envTagValue == "" {
@@ -230,7 +114,7 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 		}
 
 		envTags := []string{
-			strings.ToUpper(fmt.Sprintf("%s_%s", prefix, envTagValue)),
+			strings.ToUpper(fmt.Sprintf("%s_%s", c.prefix, envTagValue)),
 			strings.ToUpper(envTagValue),
 		}
 
@@ -247,18 +131,47 @@ func loadChunk(obj interface{}, errors []error, prefix string) []error {
 		}
 	}
 
-	if plc, ok := obj.(PostLoadConfig); ok {
-		if err := plc.PostLoad(); err != nil {
-			errors = append(errors, err)
-		}
-	}
-
 	return errors
 }
 
-func getIndirect(obj interface{}) (reflect.Value, reflect.Type) {
+func getExportedFields(obj interface{}) ([]*reflectField, error) {
+	objValue, objType, err := getIndirect(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	fields := []*reflectField{}
+	for i := 0; i < objType.NumField(); i++ {
+		field, fieldType := objValue.Field(i), objType.Field(i)
+		if !isExported(fieldType.Name) {
+			continue
+		}
+
+		fields = append(fields, &reflectField{
+			field:     field,
+			fieldType: fieldType,
+		})
+	}
+
+	return fields, nil
+}
+
+func isExported(name string) bool {
+	return unicode.IsUpper([]rune(name)[0])
+}
+
+func getIndirect(obj interface{}) (reflect.Value, reflect.Type, error) {
 	indirect := reflect.Indirect(reflect.ValueOf(obj))
-	return indirect, indirect.Type()
+	if !indirect.IsValid() {
+		return reflect.Value{}, nil, fmt.Errorf("invalid type for configuration struct")
+	}
+
+	indirectType := indirect.Type()
+	if indirectType.Kind() != reflect.Struct {
+		return reflect.Value{}, nil, fmt.Errorf("invalid type for configuration struct")
+	}
+
+	return indirect, indirectType, nil
 }
 
 func loadEnvField(fieldType reflect.StructField, fieldValue reflect.Value, envTags []string, defaultTag, requiredTag string) error {
@@ -331,72 +244,15 @@ func quoteJSON(data []byte) []byte {
 	return []byte(fmt.Sprintf(`"%s"`, replacer.Replace(string(data))))
 }
 
-func dumpChunk(obj interface{}, m map[string]interface{}) error {
-	var (
-		ov = reflect.ValueOf(obj)
-		oi = reflect.Indirect(ov)
-		ot = oi.Type()
-	)
-
-	for i := 0; i < ot.NumField(); i++ {
-		var (
-			fieldType       = ot.Field(i)
-			fieldValue      = oi.Field(i)
-			envTagValue     = fieldType.Tag.Get(envTag)
-			maskTagValue    = fieldType.Tag.Get(maskTag)
-			displayTagValue = fieldType.Tag.Get(displayTag)
-			displayName     = ""
-		)
-
-		if displayTagValue != "" {
-			displayName = displayTagValue
-		} else {
-			if envTagValue == "" {
-				continue
-			}
-
-			displayName = strings.ToLower(envTagValue)
-		}
-
-		if maskTagValue != "" {
-			val, err := strconv.ParseBool(maskTagValue)
-			if err != nil {
-				return fmt.Errorf("field '%s' has an invalid mask tag", fieldType.Name)
-			}
-
-			if val {
-				continue
-			}
-		}
-
-		if fieldValue.Kind() == reflect.String {
-			m[displayName] = fmt.Sprintf("%s", fieldValue)
-		} else {
-			data, err := json.Marshal(fieldValue.Interface())
-			if err != nil {
-				return err
-			}
-
-			m[displayName] = string(data)
-		}
+func loadError(errors []error) error {
+	if len(errors) == 0 {
+		return nil
 	}
 
-	return nil
-}
-
-func serializeKey(v interface{}) string {
-	if str, ok := v.(string); ok {
-		return str
+	messages := []string{}
+	for _, err := range errors {
+		messages = append(messages, err.Error())
 	}
 
-	if stringer, ok := v.(fmt.Stringer); ok {
-		return stringer.String()
-	}
-
-	t := reflect.TypeOf(v)
-	for t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-
-	return t.Name()
+	return fmt.Errorf("failed to load config (%s)", strings.Join(messages, ", "))
 }

@@ -1,42 +1,24 @@
-package config
+package tag
 
 import (
 	"reflect"
+	"testing"
 
 	"github.com/aphistic/sweet"
+	"github.com/aphistic/sweet-junit"
 	"github.com/fatih/structtag"
 	. "github.com/onsi/gomega"
 )
 
-type ConfigTagsSuite struct{}
+func TestMain(m *testing.M) {
+	RegisterFailHandler(sweet.GomegaFail)
 
-func (s *ConfigTagsSuite) TestEnvTagPrefixer(t sweet.T) {
-	obj, err := ApplyTagModifiers(&TempTest{}, NewEnvTagPrefixer("foo"))
-	Expect(err).To(BeNil())
+	sweet.Run(m, func(s *sweet.S) {
+		s.RegisterPlugin(junit.NewPlugin())
 
-	Expect(gatherTags(obj, "X")).To(Equal(map[string]string{
-		"env":     "foo_a",
-		"default": "q",
-	}))
-}
-
-func (s *ConfigTagsSuite) TestDefaultTagSetter(t sweet.T) {
-	obj, err := ApplyTagModifiers(
-		&TempTest{},
-		NewDefaultTagSetter("X", "r"),
-		NewDefaultTagSetter("Y", "null"),
-	)
-
-	Expect(err).To(BeNil())
-
-	Expect(gatherTags(obj, "X")).To(Equal(map[string]string{
-		"env":     "a",
-		"default": "r",
-	}))
-
-	Expect(gatherTags(obj, "Y")).To(Equal(map[string]string{
-		"default": "null",
-	}))
+		s.AddSuite(&EnvTagPrefixerSuite{})
+		s.AddSuite(&DefaultTagSetterSuite{})
+	})
 }
 
 //

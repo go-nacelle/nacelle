@@ -10,8 +10,8 @@ type (
 	Config struct {
 		DiscoveryAddr        string `env:"DISCOVERY_ADDR" required:"true"`
 		DiscoveryBackend     string `env:"DISCOVERY_BACKEND" default:"consul"`
-		RawDiscoveryTTL      int    `env:"DISCOVERY_TTL" default:"120"`
-		RawDiscoveryInterval int    `env:"DISCOVERY_INTERVAL" default:"60"`
+		RawDiscoveryTTL      int    `env:"DISCOVERY_TTL" mask:"true" default:"120"`
+		RawDiscoveryInterval int    `env:"DISCOVERY_INTERVAL" mask:"true" default:"60"`
 		DiscoveryPrefix      string `env:"DISCOVERY_PREFIX"`
 		DiscoveryHost        string `env:"DISCOVERY_HOST"`
 		DiscoveryPort        int    `env:"DISCOVERY_PORT"`
@@ -19,12 +19,9 @@ type (
 		DiscoveryTTL      time.Duration
 		DiscoveryInterval time.Duration
 	}
-
-	configToken string
 )
 
 var (
-	ConfigToken       = configToken("nacelle-discovery")
 	ErrIllegalBackend = fmt.Errorf("illegal discovery backend")
 	ErrIllegalTTL     = fmt.Errorf("TTL must be greater than the refresh interval")
 	ErrIllegalHost    = fmt.Errorf("hostname cannot be determined")

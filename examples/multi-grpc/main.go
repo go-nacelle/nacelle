@@ -34,26 +34,12 @@ func setupServerB(config nacelle.Config, server *grpc.Server) error {
 //
 //
 
-var (
-	tokenA = basegrpc.NewConfigToken("A")
-	tokenB = basegrpc.NewConfigToken("B")
-)
-
-func setupConfigs(config nacelle.Config) error {
-	modifiedConfig := nacelle.MustApplyTagModifiers(
-		&basegrpc.Config{},
+func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+	serverA := basegrpc.NewServer(basegrpc.ServerInitializerFunc(setupServerA))
+	serverB := basegrpc.NewServer(basegrpc.ServerInitializerFunc(setupServerB), basegrpc.WithTagModifiers(
 		nacelle.NewEnvTagPrefixer("b"),
 		nacelle.NewDefaultTagSetter("GRPCPort", "6001"),
-	)
-
-	config.MustRegister(tokenA, &basegrpc.Config{})
-	config.MustRegister(tokenB, modifiedConfig)
-	return nil
-}
-
-func setupProcesses(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
-	serverA := basegrpc.NewServer(basegrpc.ServerInitializerFunc(setupServerA), basegrpc.WithConfigToken(tokenA))
-	serverB := basegrpc.NewServer(basegrpc.ServerInitializerFunc(setupServerB), basegrpc.WithConfigToken(tokenB))
+	))
 
 	processes.RegisterProcess(serverA, nacelle.WithProcessName("grpc-a"))
 	processes.RegisterProcess(serverB, nacelle.WithProcessName("grpc-b"))
@@ -64,5 +50,5 @@ func setupProcesses(processes nacelle.ProcessContainer, services nacelle.Service
 //
 
 func main() {
-	nacelle.NewBootstrapper("multi-grpc-example", setupConfigs, setupProcesses).BootAndExit()
+	nacelle.NewBootstrapper("multi-grpc-example", setup).BootAndExit()
 }

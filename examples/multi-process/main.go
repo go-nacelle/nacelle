@@ -12,14 +12,7 @@ import (
 	"github.com/efritz/nacelle/examples/multi-process/secret"
 )
 
-func setupConfigs(config nacelle.Config) error {
-	config.MustRegister(secret.ConfigToken, &secret.Config{})
-	config.MustRegister(basehttp.ConfigToken, &basehttp.Config{})
-	config.MustRegister(basegrpc.ConfigToken, &basegrpc.Config{})
-	return nil
-}
-
-func setupProcesses(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
 	initSecret := nacelle.WrapServiceInitializerFunc(services, secret.Init)
 
 	processes.RegisterInitializer(initSecret, nacelle.WithInitializerName("secret"))
@@ -31,8 +24,7 @@ func setupProcesses(processes nacelle.ProcessContainer, services nacelle.Service
 func main() {
 	boostrapper := nacelle.NewBootstrapper(
 		"multi-process-example",
-		setupConfigs,
-		setupProcesses,
+		setup,
 		nacelle.WithLoggingFields(nacelle.LogFields{
 			"app_name": "multi-process-example",
 		}),

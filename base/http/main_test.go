@@ -1,5 +1,7 @@
 package http
 
+//go:generate go-mockgen github.com/efritz/nacelle/config -i Config -o mock_config_test.go -f
+
 import (
 	"net"
 	"testing"
@@ -7,6 +9,7 @@ import (
 	"github.com/aphistic/sweet"
 	"github.com/aphistic/sweet-junit"
 	"github.com/efritz/nacelle"
+	"github.com/efritz/nacelle/config/tag"
 	"github.com/efritz/nacelle/service"
 	. "github.com/onsi/gomega"
 )
@@ -27,10 +30,16 @@ func TestMain(m *testing.M) {
 
 type emptyConfig struct{}
 
-func makeConfig(token, base interface{}) nacelle.Config {
-	config := nacelle.NewEnvConfig("")
-	config.Register(token, base)
-	config.Load()
+func makeConfig(base *Config) nacelle.Config {
+	config := NewMockConfig()
+	config.LoadFunc = func(target interface{}, modifiers ...tag.Modifier) error {
+		c := target.(*Config)
+		c.HTTPPort = base.HTTPPort
+		c.HTTPCertFile = base.HTTPCertFile
+		c.HTTPKeyFile = base.HTTPKeyFile
+		c.RawShutdownTimeout = base.RawShutdownTimeout
+		return c.PostLoad()
+	}
 
 	return config
 }

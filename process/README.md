@@ -23,24 +23,19 @@ worker process) implementations are available in the
 
 ## Setup
 
-A nacelle bootstrapper instance is created with two function pointers: a function to
-register configs required by the application and a function to register the initializers
-and processes themselves. The structure of an application will look similar to the
-following.
+A nacelle bootstrapper instance is created with a single function pointer which is called
+with a reference to a process container and a service container and should register the
+application initializers and processes. The structure of an application will look similar
+to the following.
 
 ```go
-func setupConfigs(config nacelle.Config) error {
-    // ...
-    return nil
-}
-
-func setupProcesses(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
     // ...
     return nil
 }
 
 func main() {
-    nacelle.NewBootstrapper("app-name", setupConfigs, setupProcesses).BootAndExit()
+    nacelle.NewBootstrapper("app-name", setup).BootAndExit()
 }
 ```
 
@@ -124,11 +119,7 @@ type (
     RedisConfig struct {
         CacheAddr string `env:"CACHE_ADDR" required:"true"`
     }
-
-    cacheConfigToken string
 )
-
-var RedisCacheConfigToken = cacheConfigToken("redis-cache")
 
 func NewCacheInitializer() nacelle.Initializer {
     return &CacheInitializer{}
@@ -136,7 +127,7 @@ func NewCacheInitializer() nacelle.Initializer {
 
 func (m *CacheInitializer) Init(config nacelle.Config) error {
     redisConfig := &RedisConfig{}
-    if err := config.Fetch(RedisCacheConfigToken, redisConfig); err != nil {
+    if err := config.Load(redisConfig); err != nil {
         return err
     }
 
@@ -144,14 +135,7 @@ func (m *CacheInitializer) Init(config nacelle.Config) error {
 }
 ```
 
-Add the following to the `setupConfigs` method to register the config required by the
-cache initializer.
-
-```go
-config.MustRegister(RedisCacheConfigToken, &RedisConfig{})
-```
-
-And add the following to the `setupProcesses` method to register the initializer itself.
+Add the following to the `setup` method to register the initializer.
 
 ```go
 processes.RegisterInitializer(NewCacheInitializer())
@@ -179,11 +163,7 @@ type (
     ServerConfig struct {
         Port int `env:"PORT" default:"8080"`
     }
-
-    serverConfigToken string
 )
-
-var ServerConfigToken = serverConfigToken("server")
 
 func NewServer() nacelle.Process {
     return &Server{}
@@ -191,7 +171,7 @@ func NewServer() nacelle.Process {
 
 func (s *Server) Init(config nacelle.Config) (err error) {
     serverConfig := &ServerConfig{}
-    if err := config.Fetch(ServerConfigToken, serverConfig); err != nil {
+    if err := config.Load(serverConfig); err != nil {
         return err
     }
 
@@ -239,14 +219,7 @@ func (s *Server) Stop() (err error) {
 }
 ```
 
-Add the following to the `setupConfigs` method to register the config required by the
-server process.
-
-```go
-config.MustRegister(ServerConfigToken, &ServerConfig{})
-```
-
-And add the following to the `setupProcesses` method to register the server process itself.
+Add the following to the `setup` method to register the server process itself.
 
 ```go
 processes.RegisterProcess(NewServer())
