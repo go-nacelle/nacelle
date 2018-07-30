@@ -31,7 +31,7 @@ func NewLoggingConfig(config Config, logger logging.Logger) Config {
 }
 
 func (c *LoggingConfig) Load(target interface{}, modifiers ...tag.Modifier) error {
-	if err := c.Config.Load(target); err != nil {
+	if err := c.Config.Load(target, modifiers...); err != nil {
 		return err
 	}
 
