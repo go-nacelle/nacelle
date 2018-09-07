@@ -62,6 +62,24 @@ type (
 	TestBadMaskTagConfig struct {
 		X string `env:"x" mask:"34"`
 	}
+
+	TestParentConfig struct {
+		ChildConfig
+		X int `env:"x"`
+		Y int `env:"y"`
+	}
+
+	ChildConfig struct {
+		A int `env:"a"`
+		B int `env:"b"`
+		C int `env:"c"`
+	}
+
+	TestBadParentConfig struct {
+		*ChildConfig
+		X int `env:"x"`
+		Y int `env:"y"`
+	}
 )
 
 func (c *TestPostLoadConfig) PostLoad() error {
@@ -74,6 +92,14 @@ func (c *TestPostLoadConfig) PostLoad() error {
 
 func (c *TestPostLoadConversion) PostLoad() error {
 	c.duration = time.Duration(c.RawDuration) * time.Second
+	return nil
+}
+
+func (c *ChildConfig) PostLoad() error {
+	if c.A >= c.B || c.B >= c.C {
+		return fmt.Errorf("fields must be increasing")
+	}
+
 	return nil
 }
 

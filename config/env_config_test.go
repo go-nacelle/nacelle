@@ -9,10 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type (
-	EnvConfigSuite struct{}
-	TestConfigKey  struct{}
-)
+type EnvConfigSuite struct{}
 
 func (s *EnvConfigSuite) SetUpTest(t sweet.T) {
 	os.Clearenv()
@@ -240,14 +237,83 @@ func (s *EnvConfigSuite) TestBadConfigObjectTypes(t sweet.T) {
 	Expect(NewEnvConfig("app").Load(nil)).To(MatchError("" +
 		"failed to load config" +
 		" (" +
-		"invalid type for configuration struct" +
+		"configuration target is not a pointer to struct" +
 		")",
 	))
 
 	Expect(NewEnvConfig("app").Load("foo")).To(MatchError("" +
 		"failed to load config" +
 		" (" +
-		"invalid type for configuration struct" +
+		"configuration target is not a pointer to struct" +
+		")",
+	))
+}
+
+func (s *EnvConfigSuite) TestEmbeddedConfig(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestParentConfig{}
+	)
+
+	os.Setenv("APP_A", "1")
+	os.Setenv("APP_B", "2")
+	os.Setenv("APP_C", "3")
+	os.Setenv("APP_X", "4")
+	os.Setenv("APP_Y", "5")
+
+	Expect(config.Load(chunk)).To(BeNil())
+	Expect(chunk.X).To(Equal(4))
+	Expect(chunk.Y).To(Equal(5))
+	Expect(chunk.A).To(Equal(1))
+	Expect(chunk.B).To(Equal(2))
+	Expect(chunk.C).To(Equal(3))
+}
+
+func (s *EnvConfigSuite) TestEmbeddedConfigWithTags(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestParentConfig{}
+	)
+
+	os.Setenv("APP_FOO_A", "1")
+	os.Setenv("APP_FOO_B", "2")
+	os.Setenv("APP_FOO_C", "3")
+	os.Setenv("APP_FOO_X", "4")
+	os.Setenv("APP_FOO_Y", "5")
+
+	Expect(config.Load(chunk, tag.NewEnvTagPrefixer("foo"))).To(BeNil())
+	Expect(chunk.X).To(Equal(4))
+	Expect(chunk.Y).To(Equal(5))
+	Expect(chunk.A).To(Equal(1))
+	Expect(chunk.B).To(Equal(2))
+	Expect(chunk.C).To(Equal(3))
+}
+
+func (s *EnvConfigSuite) TestEmbeddedConfigPostLoad(t sweet.T) {
+	var (
+		config = NewEnvConfig("app")
+		chunk  = &TestParentConfig{}
+	)
+
+	os.Setenv("APP_A", "1")
+	os.Setenv("APP_B", "3")
+	os.Setenv("APP_C", "2")
+	os.Setenv("APP_X", "4")
+	os.Setenv("APP_Y", "5")
+
+	Expect(config.Load(chunk)).To(MatchError("" +
+		"failed to load config" +
+		" (" +
+		"fields must be increasing" +
+		")",
+	))
+}
+
+func (s *EnvConfigSuite) TestBadEmbeddedObjectType(t sweet.T) {
+	Expect(NewEnvConfig("app").Load(&TestBadParentConfig{})).To(MatchError("" +
+		"failed to load config" +
+		" (" +
+		"invalid embedded type in configuration struct" +
 		")",
 	))
 }

@@ -98,16 +98,30 @@ func (c *envConfig) load(target interface{}) []error {
 		return []error{err}
 	}
 
-	errors := []error{}
+	return c.loadStruct(objValue, objType)
+}
 
+func (c *envConfig) loadStruct(objValue reflect.Value, objType reflect.Type) []error {
+	if objType.Kind() != reflect.Struct {
+		return []error{fmt.Errorf(
+			"invalid embedded type in configuration struct",
+		)}
+	}
+
+	errors := []error{}
 	for i := 0; i < objType.NumField(); i++ {
 		var (
+			field            = objValue.Field(i)
 			fieldType        = objType.Field(i)
-			fieldValue       = objValue.Field(i)
 			envTagValue      = fieldType.Tag.Get(envTag)
 			defaultTagValue  = fieldType.Tag.Get(defaultTag)
 			requiredTagValue = fieldType.Tag.Get(requiredTag)
 		)
+
+		if fieldType.Anonymous {
+			errors = append(errors, c.loadStruct(field, fieldType.Type)...)
+			continue
+		}
 
 		if envTagValue == "" {
 			continue
@@ -119,8 +133,8 @@ func (c *envConfig) load(target interface{}) []error {
 		}
 
 		err := loadEnvField(
+			field,
 			fieldType,
-			fieldValue,
 			envTags,
 			defaultTagValue,
 			requiredTagValue,
@@ -134,15 +148,42 @@ func (c *envConfig) load(target interface{}) []error {
 	return errors
 }
 
+//
+// Helpers
+
 func getExportedFields(obj interface{}) ([]*reflectField, error) {
 	objValue, objType, err := getIndirect(obj)
 	if err != nil {
 		return nil, err
 	}
 
+	return getExportedFieldsStruct(objValue, objType)
+}
+
+func getExportedFieldsStruct(objValue reflect.Value, objType reflect.Type) ([]*reflectField, error) {
+	if objType.Kind() != reflect.Struct {
+		return nil, fmt.Errorf(
+			"invalid type embedded type in configuration struct",
+		)
+	}
+
 	fields := []*reflectField{}
 	for i := 0; i < objType.NumField(); i++ {
-		field, fieldType := objValue.Field(i), objType.Field(i)
+		var (
+			field     = objValue.Field(i)
+			fieldType = objType.Field(i)
+		)
+
+		if fieldType.Anonymous {
+			embeddedFields, err := getExportedFieldsStruct(field, fieldType.Type)
+			if err != nil {
+				return nil, err
+			}
+
+			fields = append(fields, embeddedFields...)
+			continue
+		}
+
 		if !isExported(fieldType.Name) {
 			continue
 		}
@@ -163,18 +204,18 @@ func isExported(name string) bool {
 func getIndirect(obj interface{}) (reflect.Value, reflect.Type, error) {
 	indirect := reflect.Indirect(reflect.ValueOf(obj))
 	if !indirect.IsValid() {
-		return reflect.Value{}, nil, fmt.Errorf("invalid type for configuration struct")
+		return reflect.Value{}, nil, fmt.Errorf("configuration target is not a pointer to struct")
 	}
 
 	indirectType := indirect.Type()
 	if indirectType.Kind() != reflect.Struct {
-		return reflect.Value{}, nil, fmt.Errorf("invalid type for configuration struct")
+		return reflect.Value{}, nil, fmt.Errorf("configuration target is not a pointer to struct")
 	}
 
 	return indirect, indirectType, nil
 }
 
-func loadEnvField(fieldType reflect.StructField, fieldValue reflect.Value, envTags []string, defaultTag, requiredTag string) error {
+func loadEnvField(fieldValue reflect.Value, fieldType reflect.StructField, envTags []string, defaultTag, requiredTag string) error {
 	if !fieldValue.IsValid() {
 		return fmt.Errorf("field '%s' is invalid", fieldType.Name)
 	}

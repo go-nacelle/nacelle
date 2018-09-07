@@ -24,23 +24,29 @@ func TestMain(m *testing.M) {
 //
 //
 
-type TempTest struct {
-	X string `env:"a" default:"q"`
-	Y string
-}
-
-//
-//
-
 func gatherTags(obj interface{}, name string) map[string]string {
 	var (
-		ov = reflect.ValueOf(obj)
-		oi = reflect.Indirect(ov)
-		ot = oi.Type()
+		objValue = reflect.Indirect(reflect.ValueOf(obj))
+		objType  = objValue.Type()
 	)
 
-	for i := 0; i < ot.NumField(); i++ {
-		if fieldType := ot.Field(i); fieldType.Name == name {
+	return gatherTagsStruct(objValue, objType, name)
+}
+
+func gatherTagsStruct(objValue reflect.Value, objType reflect.Type, name string) map[string]string {
+	for i := 0; i < objType.NumField(); i++ {
+		var (
+			field     = objValue.Field(i)
+			fieldType = objType.Field(i)
+		)
+
+		if fieldType.Anonymous {
+			if tags := gatherTagsStruct(field, fieldType.Type, name); tags != nil {
+				return tags
+			}
+		}
+
+		if fieldType.Name == name {
 			if tags, ok := getTags(fieldType); ok {
 				return decomposeTags(tags)
 			}

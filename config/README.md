@@ -53,6 +53,33 @@ func (c *Config) PostLoad() error {
 }
 ```
 
+## Embedded Configs
+
+It is possible to embed anonymous configuration structs in order to get
+configuration reusability. Embedded config structs have the same set of
+struct tags.
+
+```go
+type (
+    BaseConfig struct{
+        X string `env:"X"`
+        Y string `env:"Y"`
+        Z string `env:"Z"`
+    }
+
+    ProducerConfig struct{
+        BaseConfig
+        W string `env:"W"`
+    }
+
+    ConsumerConfig struct{
+        BaseConfig
+        Q string `env:"Q"`
+
+    }
+)
+```
+
 ## Config Tags
 
 In some circumstances, it may be necessary to dynamically alter the tags
@@ -74,15 +101,13 @@ false instead of true.
 
 ```go
 func (p *Process) Init(config nacelle.Config) error {
-    var (
-        c    = &Config{}
-        tags = []tag.Modifier{
-            nacelle.NewEnvTagPrefixer("Q"),
-            nacelle.NewDefaultTagSetter("B", "false"),
-        }
-    )
+    c := &Config{}
 
-    if err := config.Load(c, tags...); err != nil {
+    if err := config.Load(
+        c,
+        nacelle.NewEnvTagPrefixer("Q")
+        nacelle.NewDefaultTagSetter("B", "false"),
+    ); err != nil {
         // ...
     }
 
