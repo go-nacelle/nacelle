@@ -12,15 +12,16 @@ import (
 type (
 	// Bootstrapper wraps the entrypoint to the program.
 	Bootstrapper struct {
-		name              string
 		configs           map[interface{}]interface{}
 		initFunc          AppInitFunc
+		configSourcer     ConfigSourcer
 		loggingInitFunc   LoggingInitFunc
 		loggingFields     LogFields
 		runnerConfigFuncs []RunnerConfigFunc
 	}
 
 	bootstrapperConfig struct {
+		configSourcer     ConfigSourcer
 		loggingInitFunc   LoggingInitFunc
 		loggingFields     LogFields
 		runnerConfigFuncs []RunnerConfigFunc
@@ -40,6 +41,7 @@ func NewBootstrapper(
 	bootstrapperConfigs ...BootstrapperConfigFunc,
 ) *Bootstrapper {
 	config := &bootstrapperConfig{
+		configSourcer:   NewEnvSourcer(name),
 		loggingInitFunc: defaultLogginInitFunc,
 	}
 
@@ -48,8 +50,8 @@ func NewBootstrapper(
 	}
 
 	return &Bootstrapper{
-		name:              name,
 		initFunc:          initFunc,
+		configSourcer:     config.configSourcer,
 		loggingInitFunc:   config.loggingInitFunc,
 		loggingFields:     config.loggingFields,
 		runnerConfigFuncs: config.runnerConfigFuncs,
@@ -60,7 +62,7 @@ func NewBootstrapper(
 // method does not return in any meaningful way (it blocks until
 // the associated process runner has completed).
 func (bs *Bootstrapper) Boot() int {
-	baseConfig := NewEnvConfig(bs.name)
+	baseConfig := NewConfig(bs.configSourcer)
 
 	logger, err := bs.loggingInitFunc(baseConfig)
 	if err != nil {

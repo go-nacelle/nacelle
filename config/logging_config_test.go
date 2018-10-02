@@ -5,9 +5,10 @@ package config
 
 import (
 	"github.com/aphistic/sweet"
-	tag "github.com/efritz/nacelle/config/tag"
-	logging "github.com/efritz/nacelle/logging"
 	. "github.com/onsi/gomega"
+
+	"github.com/efritz/nacelle/config/tag"
+	"github.com/efritz/nacelle/logging"
 )
 
 type LoggingConfigSuite struct{}
@@ -39,7 +40,7 @@ func (s *LoggingConfigSuite) TestLoadLogs(t sweet.T) {
 	}))
 }
 
-func (s *EnvConfigSuite) TestMask(t sweet.T) {
+func (s *LoggingConfigSuite) TestMask(t sweet.T) {
 	var (
 		config = NewMockConfig()
 		logger = NewMockLogger()
@@ -64,7 +65,7 @@ func (s *EnvConfigSuite) TestMask(t sweet.T) {
 	}))
 }
 
-func (s *EnvConfigSuite) TestBadMaskTag(t sweet.T) {
+func (s *LoggingConfigSuite) TestBadMaskTag(t sweet.T) {
 	var (
 		config = NewMockConfig()
 		logger = NewMockLogger()

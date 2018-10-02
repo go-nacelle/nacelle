@@ -1,8 +1,8 @@
 # Nacelle Config
 
-Out of the box, nacelle provides loading application configuration from the
-environment and injecting the values into an (initially zero-valued) struct
-requested by the application.
+Out of the box, nacelle provides loading application configuration from a
+configurable source and injecting the values into an (initially zero-valued)
+struct requested by the application.
 
 We use the following configuration struct as an example.
 
@@ -15,11 +15,11 @@ type Config struct {
 }
 ```
 
-When loading values from the environment, a missing value (or empty string)
+When pulling values from a variable source, a missing value (or empty string)
 will use the default value, if provided. If no value is set for a required
 configuration value, a fatal error will occur. String values will retrieve
-the environment value unaltered. All other field types will attempt to
-deserialize the environment value as JSON.
+the variable value unaltered. All other field types will attempt to unmarshal
+the variable value as JSON.
 
 Then, an initializer or a process that requires these config values can
 retrieve them in its `Init` method.
@@ -61,23 +61,48 @@ struct tags.
 
 ```go
 type (
-    BaseConfig struct{
+    BaseConfig struct {
         X string `env:"X"`
         Y string `env:"Y"`
         Z string `env:"Z"`
     }
 
-    ProducerConfig struct{
+    ProducerConfig struct {
         BaseConfig
         W string `env:"W"`
     }
 
-    ConsumerConfig struct{
+    ConsumerConfig struct {
         BaseConfig
         Q string `env:"Q"`
 
     }
 )
+```
+
+## Sources
+
+By default, the nacelle bootstrapper uses the environment as the source for
+configuration data. You can alternatively supply a Sourcer which pulls from
+values from a different source (file, network, etc).
+
+The following struct loads a variable `X` from the environment or loads the
+path `a.b.c` from a configuration file (this assumes the configuration file
+contains a nested dictionary structure with the path `a.b.c`).
+
+```go
+type Config struct {
+    X string `env:"x" file:"a.b.c"`
+}
+```
+
+This scenario also assumes the following option is given to the bootstrapper.
+
+```go
+WithConfigSourcer(NewMultiSourcer(
+    NewYAMLFileSourcer("config.yaml"),
+    NewEnvSourcer("APP"),
+))
 ```
 
 ## Config Tags

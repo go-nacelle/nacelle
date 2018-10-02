@@ -5,19 +5,20 @@ import (
 	"time"
 
 	"github.com/aphistic/sweet"
-	"github.com/efritz/nacelle/config/tag"
 	. "github.com/onsi/gomega"
+
+	"github.com/efritz/nacelle/config/tag"
 )
 
-type EnvConfigSuite struct{}
+type ConfigSuite struct{}
 
-func (s *EnvConfigSuite) SetUpTest(t sweet.T) {
+func (s *ConfigSuite) SetUpTest(t sweet.T) {
 	os.Clearenv()
 }
 
-func (s *EnvConfigSuite) TestSimpleConfig(t sweet.T) {
+func (s *ConfigSuite) TestSimpleConfig(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestSimpleConfig{}
 	)
 
@@ -31,9 +32,9 @@ func (s *EnvConfigSuite) TestSimpleConfig(t sweet.T) {
 	Expect(chunk.Z).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *EnvConfigSuite) TestNestedJSONDeserialization(t sweet.T) {
+func (s *ConfigSuite) TestNestedJSONDeserialization(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestEmbeddedJSONConfig{}
 	)
 
@@ -45,9 +46,9 @@ func (s *EnvConfigSuite) TestNestedJSONDeserialization(t sweet.T) {
 	Expect(chunk.P2).To(Equal(&TestJSONPayload{V1: 5, V2: 6.28, V3: false}))
 }
 
-func (s *EnvConfigSuite) TestRequired(t sweet.T) {
+func (s *ConfigSuite) TestRequired(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestRequiredConfig{}
 	)
 
@@ -59,9 +60,9 @@ func (s *EnvConfigSuite) TestRequired(t sweet.T) {
 	))
 }
 
-func (s *EnvConfigSuite) TestRequiredBadTag(t sweet.T) {
+func (s *ConfigSuite) TestRequiredBadTag(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestBadRequiredConfig{}
 	)
 
@@ -73,9 +74,9 @@ func (s *EnvConfigSuite) TestRequiredBadTag(t sweet.T) {
 	))
 }
 
-func (s *EnvConfigSuite) TestDefault(t sweet.T) {
+func (s *ConfigSuite) TestDefault(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestDefaultConfig{}
 	)
 
@@ -84,9 +85,9 @@ func (s *EnvConfigSuite) TestDefault(t sweet.T) {
 	Expect(chunk.Y).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *EnvConfigSuite) TestBadType(t sweet.T) {
+func (s *ConfigSuite) TestBadType(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestSimpleConfig{}
 	)
 
@@ -104,9 +105,9 @@ func (s *EnvConfigSuite) TestBadType(t sweet.T) {
 	))
 }
 
-func (s *EnvConfigSuite) TestBadDefaultType(t sweet.T) {
+func (s *ConfigSuite) TestBadDefaultType(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestBadDefaultConfig{}
 	)
 
@@ -118,38 +119,9 @@ func (s *EnvConfigSuite) TestBadDefaultType(t sweet.T) {
 	))
 }
 
-func (s *EnvConfigSuite) TestUnprefixed(t sweet.T) {
+func (s *ConfigSuite) TestPostLoadConfig(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
-		chunk  = &TestSimpleConfig{}
-	)
-
-	os.Setenv("X", "foo")
-	os.Setenv("Y", "123")
-	os.Setenv("APP_Y", "456")
-
-	Expect(config.Load(chunk)).To(BeNil())
-	Expect(chunk.X).To(Equal("foo"))
-	Expect(chunk.Y).To(Equal(456))
-}
-
-func (s *EnvConfigSuite) TestNormalizedPrefix(t sweet.T) {
-	var (
-		config = NewEnvConfig("$foo-^-bar@")
-		chunk  = &TestSimpleConfig{}
-	)
-
-	os.Setenv("FOO_BAR_X", "foo")
-	os.Setenv("FOO_BAR_Y", "123")
-
-	Expect(config.Load(chunk)).To(BeNil())
-	Expect(chunk.X).To(Equal("foo"))
-	Expect(chunk.Y).To(Equal(123))
-}
-
-func (s *EnvConfigSuite) TestPostLoadConfig(t sweet.T) {
-	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestPostLoadConfig{}
 	)
 
@@ -165,9 +137,9 @@ func (s *EnvConfigSuite) TestPostLoadConfig(t sweet.T) {
 	))
 }
 
-func (s *EnvConfigSuite) TestUnsettableFields(t sweet.T) {
+func (s *ConfigSuite) TestUnsettableFields(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestUnsettableConfig{}
 	)
 
@@ -179,9 +151,9 @@ func (s *EnvConfigSuite) TestUnsettableFields(t sweet.T) {
 	))
 }
 
-func (s *EnvConfigSuite) TestLoad(t sweet.T) {
+func (s *ConfigSuite) TestLoad(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestSimpleConfig{}
 	)
 
@@ -195,9 +167,9 @@ func (s *EnvConfigSuite) TestLoad(t sweet.T) {
 	Expect(chunk.Z).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *EnvConfigSuite) TestLoadIsomorphicType(t sweet.T) {
+func (s *ConfigSuite) TestLoadIsomorphicType(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestSimpleConfig{}
 	)
 
@@ -211,9 +183,9 @@ func (s *EnvConfigSuite) TestLoadIsomorphicType(t sweet.T) {
 	Expect(chunk.Z).To(Equal([]string{"bar", "baz", "bonk"}))
 }
 
-func (s *EnvConfigSuite) TestLoadPostLoadWithConversion(t sweet.T) {
+func (s *ConfigSuite) TestLoadPostLoadWithConversion(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestPostLoadConversion{}
 	)
 
@@ -222,9 +194,9 @@ func (s *EnvConfigSuite) TestLoadPostLoadWithConversion(t sweet.T) {
 	Expect(chunk.duration).To(Equal(time.Second * 3))
 }
 
-func (s *EnvConfigSuite) TestLoadPostLoadWithTags(t sweet.T) {
+func (s *ConfigSuite) TestLoadPostLoadWithTags(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestPostLoadConversion{}
 	)
 
@@ -233,15 +205,15 @@ func (s *EnvConfigSuite) TestLoadPostLoadWithTags(t sweet.T) {
 	Expect(chunk.duration).To(Equal(time.Second * 3))
 }
 
-func (s *EnvConfigSuite) TestBadConfigObjectTypes(t sweet.T) {
-	Expect(NewEnvConfig("app").Load(nil)).To(MatchError("" +
+func (s *ConfigSuite) TestBadConfigObjectTypes(t sweet.T) {
+	Expect(NewConfig(NewEnvSourcer("app")).Load(nil)).To(MatchError("" +
 		"failed to load config" +
 		" (" +
 		"configuration target is not a pointer to struct" +
 		")",
 	))
 
-	Expect(NewEnvConfig("app").Load("foo")).To(MatchError("" +
+	Expect(NewConfig(NewEnvSourcer("app")).Load("foo")).To(MatchError("" +
 		"failed to load config" +
 		" (" +
 		"configuration target is not a pointer to struct" +
@@ -249,9 +221,9 @@ func (s *EnvConfigSuite) TestBadConfigObjectTypes(t sweet.T) {
 	))
 }
 
-func (s *EnvConfigSuite) TestEmbeddedConfig(t sweet.T) {
+func (s *ConfigSuite) TestEmbeddedConfig(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestParentConfig{}
 	)
 
@@ -269,9 +241,9 @@ func (s *EnvConfigSuite) TestEmbeddedConfig(t sweet.T) {
 	Expect(chunk.C).To(Equal(3))
 }
 
-func (s *EnvConfigSuite) TestEmbeddedConfigWithTags(t sweet.T) {
+func (s *ConfigSuite) TestEmbeddedConfigWithTags(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestParentConfig{}
 	)
 
@@ -289,9 +261,9 @@ func (s *EnvConfigSuite) TestEmbeddedConfigWithTags(t sweet.T) {
 	Expect(chunk.C).To(Equal(3))
 }
 
-func (s *EnvConfigSuite) TestEmbeddedConfigPostLoad(t sweet.T) {
+func (s *ConfigSuite) TestEmbeddedConfigPostLoad(t sweet.T) {
 	var (
-		config = NewEnvConfig("app")
+		config = NewConfig(NewEnvSourcer("app"))
 		chunk  = &TestParentConfig{}
 	)
 
@@ -309,8 +281,8 @@ func (s *EnvConfigSuite) TestEmbeddedConfigPostLoad(t sweet.T) {
 	))
 }
 
-func (s *EnvConfigSuite) TestBadEmbeddedObjectType(t sweet.T) {
-	Expect(NewEnvConfig("app").Load(&TestBadParentConfig{})).To(MatchError("" +
+func (s *ConfigSuite) TestBadEmbeddedObjectType(t sweet.T) {
+	Expect(NewConfig(NewEnvSourcer("app")).Load(&TestBadParentConfig{})).To(MatchError("" +
 		"failed to load config" +
 		" (" +
 		"invalid embedded type in configuration struct" +

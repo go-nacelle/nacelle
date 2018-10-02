@@ -15,6 +15,11 @@ type (
 	BootstrapperConfigFunc func(*bootstrapperConfig)
 )
 
+// WithConfigSourcer sets the source that should be used for populating config structs.
+func WithConfigSourcer(configSourcer ConfigSourcer) BootstrapperConfigFunc {
+	return func(c *bootstrapperConfig) { c.configSourcer = configSourcer }
+}
+
 // WithLoggingInitFunc sets the function that initializes logging.
 func WithLoggingInitFunc(loggingInitFunc LoggingInitFunc) BootstrapperConfigFunc {
 	return func(c *bootstrapperConfig) { c.loggingInitFunc = loggingInitFunc }

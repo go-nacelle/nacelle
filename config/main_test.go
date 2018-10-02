@@ -14,7 +14,31 @@ func TestMain(m *testing.M) {
 	sweet.Run(m, func(s *sweet.S) {
 		s.RegisterPlugin(junit.NewPlugin())
 
-		s.AddSuite(&EnvConfigSuite{})
+		s.AddSuite(&ConfigSuite{})
+		s.AddSuite(&EnvSourcerSuite{})
+		s.AddSuite(&JSONSuite{})
 		s.AddSuite(&LoggingConfigSuite{})
+		s.AddSuite(&MultiSourcerSuite{})
+		s.AddSuite(&FileSourcerSuite{})
 	})
+}
+
+//
+//
+
+func ensureEquals(sourcer Sourcer, values []string, expected string) {
+	val, _, ok := sourcer.Get(values)
+	Expect(ok).To(BeTrue())
+	Expect(val).To(Equal(expected))
+}
+
+func ensureMatches(sourcer Sourcer, values []string, expected string) {
+	val, _, ok := sourcer.Get(values)
+	Expect(ok).To(BeTrue())
+	Expect(val).To(MatchJSON(expected))
+}
+
+func ensureMissing(sourcer Sourcer, values []string) {
+	_, _, ok := sourcer.Get(values)
+	Expect(ok).To(BeFalse())
 }

@@ -6,12 +6,19 @@ import (
 )
 
 type (
-	Config      = config.Config
-	TagModifier = tag.Modifier
+	Config        = config.Config
+	ConfigSourcer = config.Sourcer
+	TagModifier   = tag.Modifier
 )
 
 var (
-	NewEnvConfig        = config.NewEnvConfig
-	NewEnvTagPrefixer   = tag.NewEnvTagPrefixer
-	NewDefaultTagSetter = tag.NewDefaultTagSetter
+	NewConfig              = config.NewConfig
+	NewEnvSourcer          = config.NewEnvSourcer
+	NewFileSourcer         = config.NewFileSourcer
+	NewOptionalFileSourcer = config.NewOptionalFileSourcer
+	NewYAMLFileSourcer     = config.NewYAMLFileSourcer
+	NewTOMLFileSourcer     = config.NewTOMLFileSourcer
+	NewMultiSourcer        = config.NewMultiSourcer
+	NewEnvTagPrefixer      = tag.NewEnvTagPrefixer
+	NewDefaultTagSetter    = tag.NewDefaultTagSetter
 )
