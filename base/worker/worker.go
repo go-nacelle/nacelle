@@ -5,17 +5,17 @@ import (
 	"time"
 
 	"github.com/efritz/glock"
+	"github.com/efritz/nacelle/config"
 	"github.com/google/uuid"
 
 	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/config/tag"
 )
 
 type (
 	Worker struct {
 		Services     nacelle.ServiceContainer `service:"container"`
 		Health       nacelle.Health           `service:"health"`
-		tagModifiers []tag.Modifier
+		tagModifiers []config.TagModifier
 		spec         WorkerSpec
 		clock        glock.Clock
 		halt         chan struct{}

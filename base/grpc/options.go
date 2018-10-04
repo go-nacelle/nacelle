@@ -1,13 +1,13 @@
 package grpc
 
 import (
-	"github.com/efritz/nacelle/config/tag"
+	"github.com/efritz/nacelle/config"
 	"google.golang.org/grpc"
 )
 
 type (
 	options struct {
-		tagModifiers  []tag.Modifier
+		tagModifiers  []config.TagModifier
 		serverOptions []grpc.ServerOption
 	}
 
@@ -17,7 +17,7 @@ type (
 )
 
 // WithTagModifiers applies the given tag modifiers on config load.
-func WithTagModifiers(modifiers ...tag.Modifier) ConfigFunc {
+func WithTagModifiers(modifiers ...config.TagModifier) ConfigFunc {
 	return func(o *options) { o.tagModifiers = append(o.tagModifiers, modifiers...) }
 }
 

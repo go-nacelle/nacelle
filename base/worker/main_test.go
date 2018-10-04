@@ -9,7 +9,7 @@ import (
 	"github.com/aphistic/sweet"
 	"github.com/aphistic/sweet-junit"
 	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/config/tag"
+	"github.com/efritz/nacelle/config"
 	"github.com/efritz/nacelle/service"
 	. "github.com/onsi/gomega"
 )
@@ -30,14 +30,14 @@ func TestMain(m *testing.M) {
 type emptyConfig struct{}
 
 func makeConfig(base *Config) nacelle.Config {
-	config := NewMockConfig()
-	config.LoadFunc = func(target interface{}, modifiers ...tag.Modifier) error {
+	cfg := NewMockConfig()
+	cfg.LoadFunc = func(target interface{}, modifiers ...config.TagModifier) error {
 		c := target.(*Config)
 		c.RawWorkerTickInterval = base.RawWorkerTickInterval
 		return c.PostLoad()
 	}
 
-	return config
+	return cfg
 }
 
 //

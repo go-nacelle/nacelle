@@ -5,32 +5,25 @@
 package worker
 
 import (
-	config "github.com/efritz/nacelle/config"
-	tag "github.com/efritz/nacelle/config/tag"
-	sync "sync"
+	zubrin "github.com/efritz/zubrin"
+	"sync"
 )
 
 type MockConfig struct {
-	statsLoadLock          sync.RWMutex
-	statLoadFuncCallCount  int
-	statLoadFuncCallParams []ConfigLoadParamSet
-	LoadFunc               func(interface{}, ...tag.Modifier) error
-
-	statsMustLoadLock          sync.RWMutex
-	statMustLoadFuncCallCount  int
-	statMustLoadFuncCallParams []ConfigMustLoadParamSet
-	MustLoadFunc               func(interface{}, ...tag.Modifier)
+	LoadFunc     func(interface{}, ...zubrin.TagModifier) error
+	histLoad     []ConfigLoadParamSet
+	MustLoadFunc func(interface{}, ...zubrin.TagModifier)
+	histMustLoad []ConfigMustLoadParamSet
+	mutex        sync.RWMutex
 }
 type ConfigLoadParamSet struct {
 	Arg0 interface{}
-	Arg1 []tag.Modifier
+	Arg1 []zubrin.TagModifier
 }
 type ConfigMustLoadParamSet struct {
 	Arg0 interface{}
-	Arg1 []tag.Modifier
+	Arg1 []zubrin.TagModifier
 }
-
-var _ config.Config = NewMockConfig()
 
 func NewMockConfig() *MockConfig {
 	m := &MockConfig{}
@@ -38,45 +31,43 @@ func NewMockConfig() *MockConfig {
 	m.MustLoadFunc = m.defaultMustLoadFunc
 	return m
 }
-func (m *MockConfig) Load(v0 interface{}, v1 ...tag.Modifier) error {
-	m.statsLoadLock.Lock()
-	m.statLoadFuncCallCount++
-	m.statLoadFuncCallParams = append(m.statLoadFuncCallParams, ConfigLoadParamSet{v0, v1})
-	m.statsLoadLock.Unlock()
+func (m *MockConfig) Load(v0 interface{}, v1 ...zubrin.TagModifier) error {
+	m.mutex.Lock()
+	m.histLoad = append(m.histLoad, ConfigLoadParamSet{v0, v1})
+	m.mutex.Unlock()
 	return m.LoadFunc(v0, v1...)
 }
 func (m *MockConfig) LoadFuncCallCount() int {
-	m.statsLoadLock.RLock()
-	defer m.statsLoadLock.RUnlock()
-	return m.statLoadFuncCallCount
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+	return len(m.histLoad)
 }
 func (m *MockConfig) LoadFuncCallParams() []ConfigLoadParamSet {
-	m.statsLoadLock.RLock()
-	defer m.statsLoadLock.RUnlock()
-	return m.statLoadFuncCallParams
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+	return m.histLoad
 }
 
-func (m *MockConfig) MustLoad(v0 interface{}, v1 ...tag.Modifier) {
-	m.statsMustLoadLock.Lock()
-	m.statMustLoadFuncCallCount++
-	m.statMustLoadFuncCallParams = append(m.statMustLoadFuncCallParams, ConfigMustLoadParamSet{v0, v1})
-	m.statsMustLoadLock.Unlock()
+func (m *MockConfig) MustLoad(v0 interface{}, v1 ...zubrin.TagModifier) {
+	m.mutex.Lock()
+	m.histMustLoad = append(m.histMustLoad, ConfigMustLoadParamSet{v0, v1})
+	m.mutex.Unlock()
 	m.MustLoadFunc(v0, v1...)
 }
 func (m *MockConfig) MustLoadFuncCallCount() int {
-	m.statsMustLoadLock.RLock()
-	defer m.statsMustLoadLock.RUnlock()
-	return m.statMustLoadFuncCallCount
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+	return len(m.histMustLoad)
 }
 func (m *MockConfig) MustLoadFuncCallParams() []ConfigMustLoadParamSet {
-	m.statsMustLoadLock.RLock()
-	defer m.statsMustLoadLock.RUnlock()
-	return m.statMustLoadFuncCallParams
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+	return m.histMustLoad
 }
 
-func (m *MockConfig) defaultLoadFunc(v0 interface{}, v1 ...tag.Modifier) error {
+func (m *MockConfig) defaultLoadFunc(v0 interface{}, v1 ...zubrin.TagModifier) error {
 	return nil
 }
-func (m *MockConfig) defaultMustLoadFunc(v0 interface{}, v1 ...tag.Modifier) {
+func (m *MockConfig) defaultMustLoadFunc(v0 interface{}, v1 ...zubrin.TagModifier) {
 	return
 }

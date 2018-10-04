@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/config/tag"
+	"github.com/efritz/nacelle/config"
 )
 
 type (
@@ -19,7 +19,7 @@ type (
 		Logger          nacelle.Logger           `service:"logger"`
 		Services        nacelle.ServiceContainer `service:"container"`
 		Health          nacelle.Health           `service:"health"`
-		tagModifiers    []tag.Modifier
+		tagModifiers    []config.TagModifier
 		initializer     ServerInitializer
 		listener        *net.TCPListener
 		server          *http.Server

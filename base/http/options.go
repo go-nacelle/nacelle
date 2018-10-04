@@ -1,10 +1,10 @@
 package http
 
-import "github.com/efritz/nacelle/config/tag"
+import "github.com/efritz/nacelle/config"
 
 type (
 	options struct {
-		tagModifiers []tag.Modifier
+		tagModifiers []config.TagModifier
 	}
 
 	// ConfigFunc is a function used to configure an instance of a Worker.
@@ -12,7 +12,7 @@ type (
 )
 
 // WithTagModifiers applies the given tag modifiers on config load.
-func WithTagModifiers(modifiers ...tag.Modifier) ConfigFunc {
+func WithTagModifiers(modifiers ...config.TagModifier) ConfigFunc {
 	return func(o *options) { o.tagModifiers = append(o.tagModifiers, modifiers...) }
 }
 

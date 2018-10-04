@@ -1,8 +1,6 @@
 package process
 
-import (
-	"github.com/efritz/nacelle/config"
-)
+import "github.com/efritz/nacelle/config"
 
 type (
 	// Initializer is an object that is called once on app

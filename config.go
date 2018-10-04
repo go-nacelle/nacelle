@@ -1,24 +1,23 @@
 package nacelle
 
-import (
-	"github.com/efritz/nacelle/config"
-	"github.com/efritz/nacelle/config/tag"
-)
+import "github.com/efritz/nacelle/config"
 
 type (
 	Config        = config.Config
+	LoggingConfig = config.LoggingConfig
 	ConfigSourcer = config.Sourcer
-	TagModifier   = tag.Modifier
+	TagModifier   = config.TagModifier
 )
 
 var (
 	NewConfig              = config.NewConfig
+	NewLoggingConfig       = config.NewLoggingConfig
 	NewEnvSourcer          = config.NewEnvSourcer
 	NewFileSourcer         = config.NewFileSourcer
 	NewOptionalFileSourcer = config.NewOptionalFileSourcer
 	NewYAMLFileSourcer     = config.NewYAMLFileSourcer
 	NewTOMLFileSourcer     = config.NewTOMLFileSourcer
 	NewMultiSourcer        = config.NewMultiSourcer
-	NewEnvTagPrefixer      = tag.NewEnvTagPrefixer
-	NewDefaultTagSetter    = tag.NewDefaultTagSetter
+	NewEnvTagPrefixer      = config.NewEnvTagPrefixer
+	NewDefaultTagSetter    = config.NewDefaultTagSetter
 )
