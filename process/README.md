@@ -117,7 +117,7 @@ type (
     }
 
     RedisConfig struct {
-        CacheAddr string `env:"CACHE_ADDR" required:"true"`
+        CacheAddr string `env:"cache_addr" required:"true"`
     }
 )
 
@@ -161,7 +161,7 @@ type (
     }
 
     ServerConfig struct {
-        Port int `env:"PORT" default:"8080"`
+        Port int `env:"port" default:"8080"`
     }
 )
 

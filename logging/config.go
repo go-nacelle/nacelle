@@ -6,14 +6,14 @@ import (
 )
 
 type Config struct {
-	LogLevel                  string `env:"LOG_LEVEL" default:"info"`
-	LogEncoding               string `env:"LOG_ENCODING" default:"console"`
-	LogColorize               bool   `env:"LOG_COLORIZE" default:"true"`
-	LogInitialFields          Fields `env:"LOG_FIELDS"`
-	LogShortTime              bool   `env:"LOG_SHORT_TIME" default:"false"`
-	LogDisplayFields          bool   `env:"LOG_DISPLAY_FIELDS" default:"true"`
-	LogDisplayMultilineFields bool   `env:"LOG_DISPLAY_MULTILINE_FIELDS" default:"false"`
-	RawLogFieldBlacklist      string `env:"LOG_FIELD_BLACKLIST" mask:"true"`
+	LogLevel                  string `env:"log_level" file:"log_level" default:"info"`
+	LogEncoding               string `env:"log_encoding" file:"log_encoding" default:"console"`
+	LogColorize               bool   `env:"log_colorize" file:"log_colorize" default:"true"`
+	LogInitialFields          Fields `env:"log_fields" file:"log_fields"`
+	LogShortTime              bool   `env:"log_short_time" file:"log_short_time" default:"false"`
+	LogDisplayFields          bool   `env:"log_display_fields" file:"log_display_fields" default:"true"`
+	LogDisplayMultilineFields bool   `env:"log_display_multiline_fields" file:"log_display_multiline_fields" default:"false"`
+	RawLogFieldBlacklist      string `env:"log_field_blacklist" file:"log_field_blacklist" mask:"true"`
 	LogFieldBlacklist         []string
 }
 
