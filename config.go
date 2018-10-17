@@ -12,6 +12,7 @@ type (
 var (
 	NewConfig              = config.NewConfig
 	NewLoggingConfig       = config.NewLoggingConfig
+	NewDirectorySourcer    = config.NewDirectorySourcer
 	NewEnvSourcer          = config.NewEnvSourcer
 	NewFileSourcer         = config.NewFileSourcer
 	NewOptionalFileSourcer = config.NewOptionalFileSourcer
