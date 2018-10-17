@@ -10,14 +10,15 @@ type (
 )
 
 var (
-	NewConfig              = zubrin.NewConfig
-	NewDirectorySourcer    = zubrin.NewDirectorySourcer
-	NewEnvSourcer          = zubrin.NewEnvSourcer
-	NewFileSourcer         = zubrin.NewFileSourcer
-	NewOptionalFileSourcer = zubrin.NewOptionalFileSourcer
-	NewYAMLFileSourcer     = zubrin.NewYAMLFileSourcer
-	NewTOMLFileSourcer     = zubrin.NewTOMLFileSourcer
-	NewMultiSourcer        = zubrin.NewMultiSourcer
-	NewEnvTagPrefixer      = zubrin.NewEnvTagPrefixer
-	NewDefaultTagSetter    = zubrin.NewDefaultTagSetter
+	NewConfig                   = zubrin.NewConfig
+	NewEnvSourcer               = zubrin.NewEnvSourcer
+	NewFileSourcer              = zubrin.NewFileSourcer
+	NewOptionalFileSourcer      = zubrin.NewOptionalFileSourcer
+	NewDirectorySourcer         = zubrin.NewDirectorySourcer
+	NewOptionalDirectorySourcer = zubrin.NewOptionalDirectorySourcer
+	NewYAMLFileSourcer          = zubrin.NewYAMLFileSourcer
+	NewTOMLFileSourcer          = zubrin.NewTOMLFileSourcer
+	NewMultiSourcer             = zubrin.NewMultiSourcer
+	NewEnvTagPrefixer           = zubrin.NewEnvTagPrefixer
+	NewDefaultTagSetter         = zubrin.NewDefaultTagSetter
 )

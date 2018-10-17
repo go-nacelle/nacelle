@@ -10,15 +10,16 @@ type (
 )
 
 var (
-	NewConfig              = config.NewConfig
-	NewLoggingConfig       = config.NewLoggingConfig
-	NewDirectorySourcer    = config.NewDirectorySourcer
-	NewEnvSourcer          = config.NewEnvSourcer
-	NewFileSourcer         = config.NewFileSourcer
-	NewOptionalFileSourcer = config.NewOptionalFileSourcer
-	NewYAMLFileSourcer     = config.NewYAMLFileSourcer
-	NewTOMLFileSourcer     = config.NewTOMLFileSourcer
-	NewMultiSourcer        = config.NewMultiSourcer
-	NewEnvTagPrefixer      = config.NewEnvTagPrefixer
-	NewDefaultTagSetter    = config.NewDefaultTagSetter
+	NewConfig                   = config.NewConfig
+	NewLoggingConfig            = config.NewLoggingConfig
+	NewEnvSourcer               = config.NewEnvSourcer
+	NewFileSourcer              = config.NewFileSourcer
+	NewOptionalFileSourcer      = config.NewOptionalFileSourcer
+	NewDirectorySourcer         = config.NewDirectorySourcer
+	NewOptionalDirectorySourcer = config.NewOptionalDirectorySourcer
+	NewYAMLFileSourcer          = config.NewYAMLFileSourcer
+	NewTOMLFileSourcer          = config.NewTOMLFileSourcer
+	NewMultiSourcer             = config.NewMultiSourcer
+	NewEnvTagPrefixer           = config.NewEnvTagPrefixer
+	NewDefaultTagSetter         = config.NewDefaultTagSetter
 )
