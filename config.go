@@ -1,6 +1,9 @@
 package nacelle
 
-import "github.com/efritz/nacelle/config"
+import (
+	"github.com/efritz/nacelle/config"
+	"github.com/efritz/zubrin"
+)
 
 type (
 	Config        = config.Config
@@ -14,6 +17,7 @@ var (
 	NewLoggingConfig            = config.NewLoggingConfig
 	NewEnvSourcer               = config.NewEnvSourcer
 	NewFileSourcer              = config.NewFileSourcer
+	NewGlobSourcer              = zubrin.NewGlobSourcer
 	NewOptionalFileSourcer      = config.NewOptionalFileSourcer
 	NewDirectorySourcer         = config.NewDirectorySourcer
 	NewOptionalDirectorySourcer = config.NewOptionalDirectorySourcer

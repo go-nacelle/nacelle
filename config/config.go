@@ -13,6 +13,7 @@ var (
 	NewConfig                   = zubrin.NewConfig
 	NewEnvSourcer               = zubrin.NewEnvSourcer
 	NewFileSourcer              = zubrin.NewFileSourcer
+	NewGlobSourcer              = zubrin.NewGlobSourcer
 	NewOptionalFileSourcer      = zubrin.NewOptionalFileSourcer
 	NewDirectorySourcer         = zubrin.NewDirectorySourcer
 	NewOptionalDirectorySourcer = zubrin.NewOptionalDirectorySourcer
