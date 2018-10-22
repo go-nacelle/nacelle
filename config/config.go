@@ -21,5 +21,6 @@ var (
 	NewTOMLFileSourcer          = zubrin.NewTOMLFileSourcer
 	NewMultiSourcer             = zubrin.NewMultiSourcer
 	NewEnvTagPrefixer           = zubrin.NewEnvTagPrefixer
+	NewFileTagPrefixer          = zubrin.NewFileTagPrefixer
 	NewDefaultTagSetter         = zubrin.NewDefaultTagSetter
 )

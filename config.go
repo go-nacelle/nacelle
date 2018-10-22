@@ -25,5 +25,6 @@ var (
 	NewTOMLFileSourcer          = config.NewTOMLFileSourcer
 	NewMultiSourcer             = config.NewMultiSourcer
 	NewEnvTagPrefixer           = config.NewEnvTagPrefixer
+	NewFileTagPrefixer          = config.NewFileTagPrefixer
 	NewDefaultTagSetter         = config.NewDefaultTagSetter
 )
