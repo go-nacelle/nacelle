@@ -13,6 +13,10 @@ func (s *logShim) Printf(format string, args ...interface{}) {
 	s.logger.Info(format, args...)
 }
 
-func NewLoggingConfig(config Config, logger logging.Logger) Config {
-	return zubrin.NewLoggingConfig(config, &logShim{logger})
+func NewLoggingConfig(config Config, logger logging.Logger, maskedKeys []string) Config {
+	return zubrin.NewLoggingConfig(
+		config,
+		&logShim{logger},
+		maskedKeys,
+	)
 }

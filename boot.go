@@ -15,6 +15,7 @@ type (
 		configs           map[interface{}]interface{}
 		initFunc          AppInitFunc
 		configSourcer     ConfigSourcer
+		configMaskedKeys  []string
 		loggingInitFunc   LoggingInitFunc
 		loggingFields     LogFields
 		runnerConfigFuncs []RunnerConfigFunc
@@ -22,6 +23,7 @@ type (
 
 	bootstrapperConfig struct {
 		configSourcer     ConfigSourcer
+		configMaskedKeys  []string
 		loggingInitFunc   LoggingInitFunc
 		loggingFields     LogFields
 		runnerConfigFuncs []RunnerConfigFunc
@@ -52,6 +54,7 @@ func NewBootstrapper(
 	return &Bootstrapper{
 		initFunc:          initFunc,
 		configSourcer:     config.configSourcer,
+		configMaskedKeys:  config.configMaskedKeys,
 		loggingInitFunc:   config.loggingInitFunc,
 		loggingFields:     config.loggingFields,
 		runnerConfigFuncs: config.runnerConfigFuncs,
@@ -98,7 +101,7 @@ func (bs *Bootstrapper) Boot() int {
 		return 1
 	}
 
-	config := config.NewLoggingConfig(baseConfig, logger)
+	config := config.NewLoggingConfig(baseConfig, logger, bs.configMaskedKeys)
 	processContainer := process.NewContainer()
 
 	if err := bs.initFunc(processContainer, serviceContainer); err != nil {

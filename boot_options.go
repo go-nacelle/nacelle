@@ -20,6 +20,11 @@ func WithConfigSourcer(configSourcer ConfigSourcer) BootstrapperConfigFunc {
 	return func(c *bootstrapperConfig) { c.configSourcer = configSourcer }
 }
 
+// WithConfigMaskedKeys sets the keys that are redacted when printed by the config logger.
+func WithConfigMaskedKeys(configMaskedKeys []string) BootstrapperConfigFunc {
+	return func(c *bootstrapperConfig) { c.configMaskedKeys = configMaskedKeys }
+}
+
 // WithLoggingInitFunc sets the function that initializes logging.
 func WithLoggingInitFunc(loggingInitFunc LoggingInitFunc) BootstrapperConfigFunc {
 	return func(c *bootstrapperConfig) { c.loggingInitFunc = loggingInitFunc }
