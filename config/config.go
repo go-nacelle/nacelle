@@ -3,10 +3,9 @@ package config
 import "github.com/efritz/zubrin"
 
 type (
-	Config        = zubrin.Config
-	LoggingConfig = zubrin.LoggingConfig
-	Sourcer       = zubrin.Sourcer
-	TagModifier   = zubrin.TagModifier
+	Config      = zubrin.Config
+	Sourcer     = zubrin.Sourcer
+	TagModifier = zubrin.TagModifier
 )
 
 var (

@@ -7,7 +7,6 @@ import (
 
 type (
 	Config        = config.Config
-	LoggingConfig = config.LoggingConfig
 	ConfigSourcer = config.Sourcer
 	TagModifier   = config.TagModifier
 )
