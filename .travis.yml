@@ -1,17 +1,22 @@
 env:
   global:
+    - GO111MODULE=on
     - CC_TEST_REPORTER_ID=087c24204652b376919027f7d7d59c8b76ade3cc771f50bfdd5978ca82837f02
+
+dist: xenial
 language: go
 go:
+  - 1.11.x
   - tip
+install: go mod vendor
+script:
+  - go test -mod vendor -coverprofile=c.out -covermode=atomic
+  # Ensure examples build
+  - for app in $(ls examples/ -F | grep /); do go build "github.com/efritz/scarf/examples/$app"; done
+
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
-script:
-  # Test
-  - go test ./... -coverprofile=c.out -covermode=atomic
-  # Ensure examples build
-  - for app in $(ls examples/ -F | grep /); do go build "github.com/efritz/nacelle/examples/$app"; done
 after_script:
   - ./cc-test-reporter after-build --coverage-input-type gocov --exit-code $TRAVIS_TEST_RESULT
