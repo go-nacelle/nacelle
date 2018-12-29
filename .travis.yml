@@ -13,12 +13,8 @@ script:
   - go test -mod vendor -coverprofile=c.out -covermode=atomic
   # Ensure examples build
   - set -ex
-  - for app in $(ls examples/ -F | grep /); do
-  -   echo "building $app"
-  -   cd examples/$app
-  -   go build -mod vendor
-  -   cd ../..
-  - done
+  - examples=$(ls examples/ -F | grep /)
+  - for app in $examples; do echo "building $app"; cd examples/$app; go build -mod vendor; cd -; done
 
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
