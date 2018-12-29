@@ -10,11 +10,13 @@ go:
   - tip
 install: go mod vendor
 script:
-  - go test -mod vendor -coverprofile=c.out -covermode=atomic
-  # Ensure examples build
+  # Build examples
   - set -ex
   - examples=$(ls examples/ -F | grep /)
   - for app in $examples; do echo "building $app"; cd examples/$app; go build -mod vendor; cd -; done
+  # Run unit tests
+  - set +ex
+  - go test -mod vendor -coverprofile=c.out -covermode=atomic
 
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
