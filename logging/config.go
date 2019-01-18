@@ -6,14 +6,15 @@ import (
 )
 
 type Config struct {
-	LogLevel                  string `env:"log_level" file:"log_level" default:"info"`
-	LogEncoding               string `env:"log_encoding" file:"log_encoding" default:"console"`
-	LogColorize               bool   `env:"log_colorize" file:"log_colorize" default:"true"`
-	LogInitialFields          Fields `env:"log_fields" file:"log_fields"`
-	LogShortTime              bool   `env:"log_short_time" file:"log_short_time" default:"false"`
-	LogDisplayFields          bool   `env:"log_display_fields" file:"log_display_fields" default:"true"`
-	LogDisplayMultilineFields bool   `env:"log_display_multiline_fields" file:"log_display_multiline_fields" default:"false"`
-	RawLogFieldBlacklist      string `env:"log_field_blacklist" file:"log_field_blacklist" mask:"true"`
+	LogLevel                  string            `env:"log_level" file:"log_level" default:"info"`
+	LogEncoding               string            `env:"log_encoding" file:"log_encoding" default:"console"`
+	LogColorize               bool              `env:"log_colorize" file:"log_colorize" default:"true"`
+	LogJSONFieldNames         map[string]string `env:"log_json_field_names" file:"log_json_field_names"`
+	LogInitialFields          Fields            `env:"log_fields" file:"log_fields"`
+	LogShortTime              bool              `env:"log_short_time" file:"log_short_time" default:"false"`
+	LogDisplayFields          bool              `env:"log_display_fields" file:"log_display_fields" default:"true"`
+	LogDisplayMultilineFields bool              `env:"log_display_multiline_fields" file:"log_display_multiline_fields" default:"false"`
+	RawLogFieldBlacklist      string            `env:"log_field_blacklist" file:"log_field_blacklist" mask:"true"`
 	LogFieldBlacklist         []string
 }
 
@@ -31,6 +32,12 @@ func (c *Config) PostLoad() error {
 
 	if !isLegalEncoding(c.LogEncoding) {
 		return ErrIllegalEncoding
+	}
+
+	for name := range c.LogJSONFieldNames {
+		if !isLegalJSONFieldName(name) {
+			return fmt.Errorf("unknown JSON field name %s", name)
+		}
 	}
 
 	for _, s := range strings.Split(c.RawLogFieldBlacklist, ",") {
@@ -55,4 +62,8 @@ func isLegalLevel(level string) bool {
 
 func isLegalEncoding(encoding string) bool {
 	return encoding == "console" || encoding == "json"
+}
+
+func isLegalJSONFieldName(name string) bool {
+	return name == "message" || name == "timestamp" || name == "level"
 }

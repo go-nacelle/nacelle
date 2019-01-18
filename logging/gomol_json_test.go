@@ -13,14 +13,14 @@ import (
 type GomolJSONSuite struct{}
 
 func (s *GomolJSONSuite) TestInitLogger(t sweet.T) {
-	logger := newJSONLogger()
+	logger := newJSONLogger(nil)
 	Expect(logger.IsInitialized()).To(BeFalse())
 	logger.InitLogger()
 	Expect(logger.IsInitialized()).To(BeTrue())
 }
 
 func (s *GomolJSONSuite) TestShutdownLogger(t sweet.T) {
-	logger := newJSONLogger()
+	logger := newJSONLogger(nil)
 	logger.InitLogger()
 	Expect(logger.IsInitialized()).To(BeTrue())
 	logger.ShutdownLogger()
@@ -29,7 +29,7 @@ func (s *GomolJSONSuite) TestShutdownLogger(t sweet.T) {
 
 func (s *GomolJSONSuite) TestLogm(t sweet.T) {
 	var (
-		logger    = newJSONLogger()
+		logger    = newJSONLogger(nil)
 		buffer    = bytes.NewBuffer(nil)
 		timestamp = time.Unix(1503939881, 0)
 	)
@@ -53,7 +53,7 @@ func (s *GomolJSONSuite) TestLogm(t sweet.T) {
 
 func (s *GomolJSONSuite) TestBaseAttrs(t sweet.T) {
 	var (
-		logger    = newJSONLogger()
+		logger    = newJSONLogger(nil)
 		buffer    = bytes.NewBuffer(nil)
 		base      = gomol.NewBase()
 		timestamp = time.Unix(1503939881, 0)
@@ -83,4 +83,31 @@ func (s *GomolJSONSuite) TestBaseAttrs(t sweet.T) {
 			"attr2": "val2",
 			"attr3": "val3"
 		}`, timestamp.Format(JSONTimeFormat))))
+}
+
+func (s *GomolJSONSuite) TestCustomFieldNames(t sweet.T) {
+	var (
+		logger = newJSONLogger(map[string]string{
+			"timestamp": "@timestamp",
+			"level":     "log_level",
+		})
+		buffer    = bytes.NewBuffer(nil)
+		timestamp = time.Unix(1503939881, 0)
+	)
+
+	logger.stream = buffer
+
+	logger.Logm(
+		timestamp,
+		gomol.LevelFatal,
+		Fields{"attr1": 4321},
+		"test 1234",
+	)
+
+	Expect(string(buffer.Bytes())).To(MatchJSON(fmt.Sprintf(`{
+		"log_level": "fatal",
+		"message": "test 1234",
+		"@timestamp": "%s",
+		"attr1": 4321
+	}`, timestamp.Format(JSONTimeFormat))))
 }

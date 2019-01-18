@@ -73,7 +73,9 @@ func InitGomolShim(c *Config) (Logger, error) {
 		}
 
 	case "json":
-		setupJSONLogger()
+		if err := setupJSONLogger(c); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := gomol.InitLoggers(); err != nil {
@@ -110,8 +112,9 @@ func setupConsoleLogger(c *Config) error {
 	return nil
 }
 
-func setupJSONLogger() {
-	gomol.AddLogger(newJSONLogger())
+func setupJSONLogger(c *Config) error {
+	gomol.AddLogger(newJSONLogger(c.LogJSONFieldNames))
+	return nil
 }
 
 func newGomolConsoleTemplate(color, shortTime, displayFields, displayMultilineFields bool, blacklist []string) (*gomol.Template, error) {

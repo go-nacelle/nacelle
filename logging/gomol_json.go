@@ -11,14 +11,20 @@ import (
 )
 
 type jsonLogger struct {
-	stream        io.Writer
-	base          *gomol.Base
-	isInitialized bool
+	stream         io.Writer
+	messageField   string
+	timestampField string
+	levelField     string
+	base           *gomol.Base
+	isInitialized  bool
 }
 
-func newJSONLogger() *jsonLogger {
+func newJSONLogger(fieldNames map[string]string) *jsonLogger {
 	return &jsonLogger{
-		stream: os.Stderr,
+		stream:         os.Stderr,
+		messageField:   getField(fieldNames, "message"),
+		timestampField: getField(fieldNames, "timestamp"),
+		levelField:     getField(fieldNames, "level"),
 	}
 }
 
@@ -53,9 +59,10 @@ func (l *jsonLogger) Logm(timestamp time.Time, level gomol.LogLevel, attrs map[s
 		mergedAttrs[key] = val
 	}
 
-	mergedAttrs["message"] = msg
-	mergedAttrs["timestamp"] = timestamp.Format(JSONTimeFormat)
-	mergedAttrs["level"] = level.String()
+	// TOOD - test different attrs
+	mergedAttrs[l.messageField] = msg
+	mergedAttrs[l.timestampField] = timestamp.Format(JSONTimeFormat)
+	mergedAttrs[l.levelField] = level.String()
 
 	out, err := json.Marshal(mergedAttrs)
 	if err != nil {
@@ -64,4 +71,12 @@ func (l *jsonLogger) Logm(timestamp time.Time, level gomol.LogLevel, attrs map[s
 
 	fmt.Fprint(l.stream, string(out)+"\n")
 	return nil
+}
+
+func getField(fieldNames map[string]string, field string) string {
+	if value, ok := fieldNames[field]; ok {
+		return value
+	}
+
+	return field
 }
