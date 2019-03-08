@@ -1,7 +1,7 @@
 package process
 
 type (
-	// Process is an object that continually performs a behavior
+	// Process is an interface that continually performs a behavior
 	// during the life of a program. Generally, one process should
 	// do a single thing. Multiple processes can be registered to
 	// a process container and those processes can coordinate and

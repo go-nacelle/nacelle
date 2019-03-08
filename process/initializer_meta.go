@@ -7,8 +7,9 @@ type (
 	// private fields.
 	InitializerMeta struct {
 		Initializer
-		name        string
-		initTimeout time.Duration
+		name            string
+		initTimeout     time.Duration
+		finalizeTimeout time.Duration
 	}
 )
 
@@ -31,6 +32,12 @@ func (m *InitializerMeta) Name() string {
 // the Init function. A zero value indicates no timeout.
 func (m *InitializerMeta) InitTimeout() time.Duration {
 	return m.initTimeout
+}
+
+// FinalizeTimeout returns the maximum timeout allowed for a call to
+// the Finalize function. A zero value indicates no timeout.
+func (m *InitializerMeta) FinalizeTimeout() time.Duration {
+	return m.finalizeTimeout
 }
 
 // Wrapped returns the underlying initializer.

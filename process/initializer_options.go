@@ -15,3 +15,8 @@ func WithInitializerName(name string) InitializerConfigFunc {
 func WithInitializerTimeout(timeout time.Duration) InitializerConfigFunc {
 	return func(meta *InitializerMeta) { meta.initTimeout = timeout }
 }
+
+// WithFinalizerTimeout sets the time limit for the finalizer.
+func WithFinalizerTimeout(timeout time.Duration) InitializerConfigFunc {
+	return func(meta *InitializerMeta) { meta.finalizeTimeout = timeout }
+}

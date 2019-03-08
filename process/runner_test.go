@@ -21,14 +21,15 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 		health      = NewHealth()
 		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
+		finalize    = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
 	)
 
 	var (
-		i1 = newTaggedInitializer(init, "a")
+		i1 = newTaggedFinalizer(init, finalize, "a")
 		i2 = newTaggedInitializer(init, "b")
-		i3 = newTaggedInitializer(init, "c")
+		i3 = newTaggedFinalizer(init, finalize, "c")
 		p1 = newTaggedProcess(init, start, stop, "d")
 		p2 = newTaggedProcess(init, start, stop, "e")
 		p3 = newTaggedProcess(init, start, stop, "f")
@@ -97,6 +98,11 @@ func (s *RunnerSuite) TestRunOrder(t sweet.T) {
 	Eventually(stop).Should(Receive(&n4))
 	Eventually(stop).Should(Receive(&n5))
 	Expect([]string{n1, n2, n3, n4, n5}).To(ConsistOf("d", "e", "f", "g", "h"))
+
+	// Finalizers
+	Eventually(finalize).Should(Receive(&n1))
+	Eventually(finalize).Should(Receive(&n2))
+	Expect([]string{n1, n2}).To(Equal([]string{"c", "a"}))
 
 	// Ensure unblocked
 	Eventually(shutdownChan).Should(Receive(BeNil()))
@@ -494,6 +500,116 @@ func (s *RunnerSuite) TestInitializerInitTimeout(t sweet.T) {
 	Eventually(errChan).Should(BeClosed())
 }
 
+func (s *RunnerSuite) TestFinalizerFinalizeTimeout(t sweet.T) {
+	var (
+		services, _ = service.NewContainer()
+		processes   = NewContainer()
+		health      = NewHealth()
+		clock       = glock.NewMockClock()
+		runner      = NewRunner(processes, services, health, WithClock(clock))
+		init        = make(chan string)
+		finalize    = make(chan string)
+		start       = make(chan string)
+		stop        = make(chan string)
+		errChan     = make(chan error)
+	)
+
+	var (
+		i1 = newTaggedFinalizer(init, finalize, "a")
+		i2 = newTaggedFinalizer(init, finalize, "b")
+		p1 = newTaggedProcess(init, start, stop, "c")
+	)
+
+	// Register things
+	processes.RegisterInitializer(i1, WithInitializerName("a"), WithFinalizerTimeout(time.Minute))
+	processes.RegisterInitializer(i2, WithInitializerName("b"))
+	processes.RegisterProcess(p1, WithProcessName("c"))
+
+	go func() {
+		defer close(errChan)
+
+		for err := range runner.Run(nil) {
+			errChan <- err
+		}
+	}()
+
+	Eventually(init).Should(Receive(Equal("a")))
+	Eventually(init).Should(Receive(Equal("b")))
+	Eventually(init).Should(Receive(Equal("c")))
+	Eventually(start).Should(Receive(Equal("c")))
+
+	// Shutdown
+	go runner.Shutdown(0)
+	Eventually(stop).Should(Receive())
+
+	// Finalize first initializer
+	Eventually(finalize).Should(Receive(Equal("b")))
+	Consistently(errChan).ShouldNot(Receive())
+
+	// Timeout second finalizer
+	clock.BlockingAdvance(time.Minute)
+	Eventually(errChan).Should(Receive(MatchError("a did not finalize within timeout")))
+	Eventually(errChan).Should(BeClosed())
+}
+
+func (s *RunnerSuite) TestFinalizerError(t sweet.T) {
+	var (
+		services, _ = service.NewContainer()
+		processes   = NewContainer()
+		health      = NewHealth()
+		runner      = NewRunner(processes, services, health)
+		init        = make(chan string)
+		finalize    = make(chan string)
+		errChan     = make(chan error)
+	)
+
+	var (
+		i1 = newTaggedFinalizer(init, finalize, "a")
+		i2 = newTaggedFinalizer(init, finalize, "b")
+		i3 = newTaggedFinalizer(init, finalize, "c")
+	)
+
+	// Register things
+	processes.RegisterInitializer(i1, WithInitializerName("a"))
+	processes.RegisterInitializer(i2, WithInitializerName("b"))
+	processes.RegisterInitializer(i3, WithInitializerName("c"))
+
+	i1.finalizeErr = fmt.Errorf("utoh x")
+	i2.finalizeErr = fmt.Errorf("utoh y")
+	i3.finalizeErr = fmt.Errorf("utoh z")
+
+	go func() {
+		defer close(errChan)
+
+		for err := range runner.Run(nil) {
+			errChan <- err
+		}
+	}()
+
+	for i := 0; i < 3; i++ {
+		Eventually(init).Should(Receive())
+	}
+
+	for i := 0; i < 3; i++ {
+		Eventually(finalize).Should(Receive())
+	}
+
+	// Stop should emit errors but continue running
+	// the remaining finalizers.
+
+	var err1, err2, err3 error
+	Eventually(errChan).Should(Receive(&err1))
+	Eventually(errChan).Should(Receive(&err2))
+	Eventually(errChan).Should(Receive(&err3))
+	Eventually(errChan).Should(BeClosed())
+
+	Expect([]string{err1.Error(), err2.Error(), err3.Error()}).To(ConsistOf(
+		"c returned error from finalize (utoh z)",
+		"b returned error from finalize (utoh y)",
+		"a returned error from finalize (utoh x)",
+	))
+}
+
 func (s *RunnerSuite) TestProcessInitTimeout(t sweet.T) {
 	var (
 		services, _ = service.NewContainer()
@@ -540,14 +656,15 @@ func (s *RunnerSuite) TestInitializerError(t sweet.T) {
 		health      = NewHealth()
 		runner      = NewRunner(processes, services, health)
 		init        = make(chan string)
+		finalize    = make(chan string)
 		start       = make(chan string)
 		stop        = make(chan string)
 		errChan     = make(chan error)
 	)
 
 	var (
-		i1 = newTaggedInitializer(init, "a")
-		i2 = newTaggedInitializer(init, "b")
+		i1 = newTaggedFinalizer(init, finalize, "a")
+		i2 = newTaggedFinalizer(init, finalize, "b")
 		i3 = newTaggedInitializer(init, "c")
 		p1 = newTaggedProcess(init, start, stop, "d")
 	)
@@ -568,14 +685,20 @@ func (s *RunnerSuite) TestInitializerError(t sweet.T) {
 		}
 	}()
 
-	// Ensure error is encountered
+	// Check run order
+	var n1 string
 	Eventually(init).Should(Receive(Equal("a")))
 	Eventually(init).Should(Receive(Equal("b")))
+	Eventually(finalize).Should(Receive(&n1))
+	Expect(n1).To(Equal("a"))
+
+	// Ensure error is encountered
 	Eventually(errChan).Should(Receive(MatchError("failed to initialize b (utoh)")))
 
 	// Nothing else called
 	Consistently(init).ShouldNot(Receive())
 	Consistently(start).ShouldNot(Receive())
+	Consistently(finalize).ShouldNot(Receive())
 	Eventually(errChan).Should(BeClosed())
 }
 
@@ -838,6 +961,30 @@ func newTaggedInitializer(init chan<- string, name string) *taggedInitializer {
 func (i *taggedInitializer) Init(c config.Config) error {
 	i.init <- i.name
 	return i.initErr
+}
+
+//
+//
+
+type taggedFinalizer struct {
+	taggedInitializer
+	finalize    chan<- string
+	finalizeErr error
+}
+
+func newTaggedFinalizer(init chan<- string, finalize chan<- string, name string) *taggedFinalizer {
+	return &taggedFinalizer{
+		taggedInitializer: taggedInitializer{
+			name: name,
+			init: init,
+		},
+		finalize: finalize,
+	}
+}
+
+func (i *taggedFinalizer) Finalize() error {
+	i.finalize <- i.name
+	return i.finalizeErr
 }
 
 //

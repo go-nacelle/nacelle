@@ -62,6 +62,13 @@ type (
 		InitTimeout() time.Duration
 	}
 
+	namedFinalizer interface {
+		Initializer
+		Name() string
+		FinalizeTimeout() time.Duration
+		Wrapped() interface{}
+	}
+
 	errMeta struct {
 		err        error
 		source     namedInitializer
@@ -78,9 +85,10 @@ func NewRunner(
 	runnerConfigs ...RunnerConfigFunc,
 ) Runner {
 	// There can be one init error plus one start and one stop error
-	// per started process. Make the output channel buffer as large
-	// as the maximum number of errors.
-	maxErrs := processes.NumProcesses()*2 + 1
+	// per started process plus one finalizer error per initializer.
+	// Make the output channel buffer as large as the maximum number
+	// of errors.
+	maxErrs := processes.NumInitializers() + processes.NumProcesses()*2 + 1
 
 	errChan := make(chan errMeta)
 	outChan := make(chan error, maxErrs)
@@ -148,14 +156,16 @@ func (r *runner) Shutdown(timeout time.Duration) error {
 func (r *runner) runInitializers(config config.Config) bool {
 	r.logger.Info("Running initializers")
 
-	for _, initializer := range r.processes.GetInitializers() {
+	for i, initializer := range r.processes.GetInitializers() {
 		if err := r.inject(initializer); err != nil {
+			_ = r.unwindInitializers(i)
 			r.errChan <- errMeta{err: err, source: initializer}
 			close(r.errChan)
 			return false
 		}
 
 		if err := r.initWithTimeout(initializer, config); err != nil {
+			_ = r.unwindInitializers(i)
 			r.errChan <- errMeta{err: err, source: initializer}
 			close(r.errChan)
 			return false
@@ -163,6 +173,27 @@ func (r *runner) runInitializers(config config.Config) bool {
 	}
 
 	return true
+}
+
+func (r *runner) runFinalizers() bool {
+	return r.unwindInitializers(r.processes.NumInitializers())
+}
+
+func (r *runner) unwindInitializers(beforeIndex int) bool {
+	r.logger.Info("Running finalizers")
+
+	success := true
+	initializers := r.processes.GetInitializers()
+
+	for i := beforeIndex - 1; i >= 0; i-- {
+		if err := r.finalizeWithTimeout(initializers[i]); err != nil {
+			r.errChan <- errMeta{err: err, source: initializers[i]}
+			success = false
+
+		}
+	}
+
+	return success
 }
 
 func (r *runner) runProcesses(config config.Config) bool {
@@ -192,12 +223,14 @@ func (r *runner) runProcesses(config config.Config) bool {
 	}
 
 	// Wait for all booted processes to exit any Start/Stop methods,
-	// then close the channel that receives their errors. This will
-	// signal to the watcher to do its own cleanup (and close the
-	// output channel).
+	// then run all the initializers with finalize methods in their
+	// reverse startup order. After all possible writes to the error
+	// channel have occurred, close it to signal to the watcher to
+	// do its own cleanup (and close the output channel).
 
 	go func() {
 		r.wg.Wait()
+		_ = r.runFinalizers()
 		close(r.errChan)
 	}()
 
@@ -300,6 +333,53 @@ func (r *runner) init(initializer namedInitializer, config config.Config) error 
 	}
 
 	r.logger.Info("Initialized %s", initializer.Name())
+	return nil
+}
+
+//
+// Finalization
+
+func (r *runner) finalizeWithTimeout(initializer namedFinalizer) error {
+	// Similar to initWithTimeout, run the finalizer in a goroutine
+	// and either return the error result or return an error value
+	// if the finalizer took too long.
+
+	errChan := makeErrChan(func() error {
+		return r.finalize(initializer)
+	})
+
+	finalizeTimeoutChan := r.makeTimeoutChan(initializer.FinalizeTimeout())
+
+	select {
+	case err := <-errChan:
+		return err
+
+	case <-finalizeTimeoutChan:
+		return fmt.Errorf("%s did not finalize within timeout", initializer.Name())
+	}
+}
+
+func (r *runner) finalize(initializer namedFinalizer) error {
+	// Finalizer is an optional interface on Initializer. Skip
+	// this method if this initializer doesn't have the proper
+	// method.
+
+	finalizer, ok := initializer.Wrapped().(Finalizer)
+	if !ok {
+		return nil
+	}
+
+	r.logger.Info("Finalizing %s", initializer.Name())
+
+	if err := finalizer.Finalize(); err != nil {
+		return fmt.Errorf(
+			"%s returned error from finalize (%s)",
+			initializer.Name(),
+			err.Error(),
+		)
+	}
+
+	r.logger.Info("Finalized %s", initializer.Name())
 	return nil
 }
 

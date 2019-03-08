@@ -13,6 +13,9 @@ type (
 		// given configuration.
 		RegisterProcess(Process, ...ProcessConfigFunc)
 
+		// NumInitializers returns the number of registered initializers.
+		NumInitializers() int
+
 		// NumProcesses returns the number of registered processes.
 		NumProcesses() int
 
@@ -73,6 +76,10 @@ func (c *container) RegisterProcess(
 
 	c.processes[meta.priority] = append(c.processes[meta.priority], meta)
 	c.priorities = c.getPriorities()
+}
+
+func (c *container) NumInitializers() int {
+	return len(c.initializers)
 }
 
 func (c *container) NumProcesses() int {
