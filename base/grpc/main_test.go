@@ -31,11 +31,11 @@ type emptyConfig struct{}
 
 func makeConfig(base *Config) nacelle.Config {
 	cfg := NewMockConfig()
-	cfg.LoadFunc = func(target interface{}, modifiers ...config.TagModifier) error {
+	cfg.LoadFunc.SetDefaultHook(func(target interface{}, modifiers ...config.TagModifier) error {
 		c := target.(*Config)
 		c.GRPCPort = base.GRPCPort
 		return nil
-	}
+	})
 
 	return cfg
 }
