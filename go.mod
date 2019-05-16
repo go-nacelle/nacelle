@@ -11,21 +11,20 @@ require (
 	github.com/efritz/backoff v0.0.0-20181228195520-96f666d52d44
 	github.com/efritz/bussard v0.0.0-20180707183034-e04808fc7219
 	github.com/efritz/deepjoy v0.0.0-20181023212652-8880b892e3f0
-	github.com/efritz/glock v0.0.0-20180604185841-7e95e8b27a61
+	github.com/efritz/glock v0.0.0-20181228234553-f184d69dff2c
+	github.com/efritz/ij v0.0.0-20190515224320-53b512fde8ce
 	github.com/efritz/overcurrent v0.0.0-20180604185922-c4abdcffd8c0
 	github.com/efritz/response v0.0.0-20180829153605-6e034bf5a1db
 	github.com/efritz/watchdog v0.0.0-20180619210146-de3f33584f48
 	github.com/efritz/zubrin v0.0.0-20181120180506-3e11d035b476
 	github.com/fatih/structtag v1.0.0 // indirect
 	github.com/garyburd/redigo v1.6.0
-	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/golang/mock v1.2.0 // indirect
 	github.com/golang/protobuf v1.2.0
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/uuid v1.1.0
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
-	github.com/mattn/go-zglob v0.0.0-20180803001819-2ea3427bfa53 // indirect
 	github.com/onsi/gomega v1.4.3
 	github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72 // indirect
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
