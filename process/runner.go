@@ -68,12 +68,6 @@ type (
 		FinalizeTimeout() time.Duration
 		Wrapped() interface{}
 	}
-
-	errMeta struct {
-		err        error
-		source     namedInitializer
-		silentExit bool
-	}
 )
 
 // NewRunner creates a process runner from the given process and service
@@ -84,14 +78,8 @@ func NewRunner(
 	health Health,
 	runnerConfigs ...RunnerConfigFunc,
 ) Runner {
-	// There can be one init error plus one start and one stop error
-	// per started process plus one finalizer error per initializer.
-	// Make the output channel buffer as large as the maximum number
-	// of errors.
-	maxErrs := processes.NumInitializers() + processes.NumProcesses()*2 + 1
-
 	errChan := make(chan errMeta)
-	outChan := make(chan error, maxErrs)
+	outChan := make(chan error, 1)
 
 	r := &runner{
 		processes:          processes,
@@ -166,7 +154,13 @@ func (r *runner) runInitializers(config config.Config) bool {
 
 		if err := r.initWithTimeout(initializer, config); err != nil {
 			_ = r.unwindInitializers(i)
-			r.errChan <- errMeta{err: err, source: initializer}
+			// Parallel initialziers may return multiple errors, so
+			// we return all of them here. This check if asymmetric
+			// as there is no equivalent for processes.
+			for _, err := range coerceToSet(err, initializer) {
+				r.errChan <- err
+			}
+
 			close(r.errChan)
 			return false
 		}
@@ -187,9 +181,14 @@ func (r *runner) unwindInitializers(beforeIndex int) bool {
 
 	for i := beforeIndex - 1; i >= 0; i-- {
 		if err := r.finalizeWithTimeout(initializers[i]); err != nil {
-			r.errChan <- errMeta{err: err, source: initializers[i]}
-			success = false
+			// Parallel initialziers may return multiple errors, so
+			// we return all of them here. This check if asymmetric
+			// as there is no equivalent for processes.
+			for _, err := range coerceToSet(err, initializers[i]) {
+				r.errChan <- err
+			}
 
+			success = false
 		}
 	}
 
@@ -616,24 +615,6 @@ func (r *runner) stop(process *ProcessMeta) error {
 	return nil
 }
 
-//
-// Helpers
-
 func (r *runner) makeTimeoutChan(timeout time.Duration) <-chan time.Time {
-	if timeout == 0 {
-		return nil
-	}
-
-	return r.clock.After(timeout)
-}
-
-func makeErrChan(f func() error) <-chan error {
-	ch := make(chan error, 1)
-
-	go func() {
-		defer close(ch)
-		ch <- f()
-	}()
-
-	return ch
+	return makeTimeoutChan(r.clock, timeout)
 }

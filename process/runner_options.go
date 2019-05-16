@@ -14,28 +14,28 @@ type RunnerConfigFunc func(*runner)
 
 // WithLogger sets the logger used by the runner.
 func WithLogger(logger logging.Logger) RunnerConfigFunc {
-	return func(c *runner) { c.logger = logger }
+	return func(r *runner) { r.logger = logger }
 }
 
-//WithClock sets the clock used by the runner.
+// WithClock sets the clock used by the runner.
 func WithClock(clock glock.Clock) RunnerConfigFunc {
-	return func(c *runner) { c.clock = clock }
+	return func(r *runner) { r.clock = clock }
 }
 
 // WithStartTimeout sets the time it will wait for a process to become
 // healthy after startup.
 func WithStartTimeout(timeout time.Duration) RunnerConfigFunc {
-	return func(c *runner) { c.startupTimeout = timeout }
+	return func(r *runner) { r.startupTimeout = timeout }
 }
 
 // WithHealthCheckBackoff sets the backoff to use when waiting for processes
 // to become healthy after startup.
 func WithHealthCheckBackoff(backoff backoff.Backoff) RunnerConfigFunc {
-	return func(c *runner) { c.healthCheckBackoff = backoff }
+	return func(r *runner) { r.healthCheckBackoff = backoff }
 }
 
 // WithShutdownTimeout sets the maximum time it will wait for a process to
 // exit during a graceful shutdown.
 func WithShutdownTimeout(timeout time.Duration) RunnerConfigFunc {
-	return func(c *runner) { c.shutdownTimeout = timeout }
+	return func(r *runner) { r.shutdownTimeout = timeout }
 }

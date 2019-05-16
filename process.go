@@ -6,6 +6,7 @@ type (
 	Process               = process.Process
 	Initializer           = process.Initializer
 	InitializerFunc       = process.InitializerFunc
+	ParallelInitializer   = process.ParallelInitializer
 	ProcessContainer      = process.Container
 	Health                = process.Health
 	ProcessConfigFunc     = process.ProcessConfigFunc
@@ -17,6 +18,7 @@ type (
 )
 
 var (
+	NewParallelInitializer     = process.NewParallelInitializer
 	WithStartTimeout           = process.WithStartTimeout
 	WithHealthCheckBackoff     = process.WithHealthCheckBackoff
 	WithShutdownTimeout        = process.WithShutdownTimeout
