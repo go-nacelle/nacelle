@@ -324,6 +324,11 @@ func (r *runner) init(initializer namedInitializer, config config.Config) error 
 	r.logger.Info("Initializing %s", initializer.Name())
 
 	if err := initializer.Init(config); err != nil {
+		if _, ok := err.(errMetaSet); ok {
+			// Pass error sets up unchanged
+			return err
+		}
+
 		return fmt.Errorf(
 			"failed to initialize %s (%s)",
 			initializer.Name(),
@@ -371,6 +376,11 @@ func (r *runner) finalize(initializer namedFinalizer) error {
 	r.logger.Info("Finalizing %s", initializer.Name())
 
 	if err := finalizer.Finalize(); err != nil {
+		if _, ok := err.(errMetaSet); ok {
+			// Pass error sets up unchanged
+			return err
+		}
+
 		return fmt.Errorf(
 			"%s returned error from finalize (%s)",
 			initializer.Name(),
