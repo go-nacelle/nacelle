@@ -23,6 +23,7 @@ The default process behavior can be configured by the following environment vari
 
 | Environment Variable  | Default | Description |
 | --------------------- | ------- | ----------- |
+| HTTP_HOST             | 0.0.0.0 | The host on which the server accepts clients. |
 | HTTP_PORT             | 5000    | The port on which the server accepts clients. |
 | HTTP_CERT_FILE        |         | An absolute path to a cert file. |
 | HTTP_KEY_FILE         |         | An absolute path to a key file. |

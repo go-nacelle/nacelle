@@ -23,6 +23,7 @@ type (
 		server        *grpc.Server
 		once          *sync.Once
 		stopped       chan struct{}
+		host          string
 		port          int
 		serverOptions []grpc.ServerOption
 		healthToken   healthToken
@@ -62,7 +63,7 @@ func (s *Server) Init(config nacelle.Config) (err error) {
 		return err
 	}
 
-	s.listener, err = makeListener(grpcConfig.GRPCPort)
+	s.listener, err = makeListener(grpcConfig.GRPCHost, grpcConfig.GRPCPort)
 	if err != nil {
 		return
 	}
@@ -71,6 +72,7 @@ func (s *Server) Init(config nacelle.Config) (err error) {
 		return err
 	}
 
+	s.host = grpcConfig.GRPCHost
 	s.port = grpcConfig.GRPCPort
 	s.server = grpc.NewServer(s.serverOptions...)
 	err = s.initializer.Init(config, s.server)
@@ -84,7 +86,7 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	s.Logger.Info("Serving gRPC on port %d", s.port)
+	s.Logger.Info("Serving gRPC on %s:%d", s.host, s.port)
 
 	if err := s.server.Serve(s.listener); err != nil {
 		select {
@@ -94,7 +96,7 @@ func (s *Server) Start() error {
 		}
 	}
 
-	s.Logger.Info("No longer serving gRPC on port %d", s.port)
+	s.Logger.Info("No longer serving gRPC on %s:%d", s.host, s.port)
 	return nil
 }
 
@@ -108,8 +110,8 @@ func (s *Server) Stop() error {
 	return nil
 }
 
-func makeListener(port int) (*net.TCPListener, error) {
-	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("0.0.0.0:%d", port))
+func makeListener(host string, port int) (*net.TCPListener, error) {
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		return nil, err
 	}

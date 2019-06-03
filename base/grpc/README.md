@@ -23,6 +23,7 @@ The default process behavior can be configured by the following environment vari
 
 | Environment Variable | Default | Description |
 | -------------------- | ------- | ----------- |
+| GRPC_HOST            | 0.0.0.0 | The host on which the server accepts clients. |
 | GRPC_PORT            | 6000    | The port on which the server accepts clients. |
 
 ## Using Multiple Servers

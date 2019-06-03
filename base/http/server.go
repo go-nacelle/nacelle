@@ -24,6 +24,7 @@ type (
 		listener        *net.TCPListener
 		server          *http.Server
 		once            *sync.Once
+		host            string
 		port            int
 		certFile        string
 		keyFile         string
@@ -63,12 +64,13 @@ func (s *Server) Init(config nacelle.Config) (err error) {
 		return err
 	}
 
-	s.listener, err = makeListener(httpConfig.HTTPPort)
+	s.listener, err = makeListener(httpConfig.HTTPHost, httpConfig.HTTPPort)
 	if err != nil {
 		return err
 	}
 
 	s.server = &http.Server{}
+	s.host = httpConfig.HTTPHost
 	s.port = httpConfig.HTTPPort
 	s.certFile = httpConfig.HTTPCertFile
 	s.keyFile = httpConfig.HTTPKeyFile
@@ -97,22 +99,22 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) serve() error {
-	s.Logger.Info("Serving HTTP on port %d", s.port)
+	s.Logger.Info("Serving HTTP on %s:%d", s.host, s.port)
 	if err := s.server.Serve(s.listener); err != http.ErrServerClosed {
 		return err
 	}
 
-	s.Logger.Info("No longer serving HTTP on port %d", s.port)
+	s.Logger.Info("No longer serving HTTP on %s:%d", s.host, s.port)
 	return nil
 }
 
 func (s *Server) serveTLS() error {
-	s.Logger.Info("Serving HTTP/TLS on port %d", s.port)
+	s.Logger.Info("Serving HTTP/TLS on %s:%d", s.host, s.port)
 	if err := s.server.ServeTLS(s.listener, s.certFile, s.keyFile); err != http.ErrServerClosed {
 		return err
 	}
 
-	s.Logger.Info("No longer serving HTTP/TLS on port %d", s.port)
+	s.Logger.Info("No longer serving HTTP/TLS on %s:%d", s.host, s.port)
 	return nil
 }
 
@@ -128,8 +130,8 @@ func (s *Server) Stop() (err error) {
 	return
 }
 
-func makeListener(port int) (*net.TCPListener, error) {
-	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("0.0.0.0:%d", port))
+func makeListener(host string, port int) (*net.TCPListener, error) {
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		return nil, err
 	}
