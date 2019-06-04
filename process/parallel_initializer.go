@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/efritz/glock"
-	"github.com/efritz/nacelle/config"
-	"github.com/efritz/nacelle/logging"
-	"github.com/efritz/nacelle/service"
+	"github.com/go-nacelle/nacelle/config"
+	"github.com/go-nacelle/nacelle/logging"
+	"github.com/go-nacelle/nacelle/service"
 )
 
 // ParallelInitializer is a container for initializers that are initialized

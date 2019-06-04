@@ -9,9 +9,9 @@ import (
 	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
 
-	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/process"
-	"github.com/efritz/nacelle/service"
+	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/nacelle/process"
+	"github.com/go-nacelle/nacelle/service"
 )
 
 type ServerSuite struct{}

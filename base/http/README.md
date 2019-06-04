@@ -1,7 +1,7 @@
 # Nacelle Base HTTP Process
 
 This package contains a base process implementation for an HTTP server. For a more
-full-featured HTTP framework, see [chevron](https://github.com/efritz/chevron).
+full-featured HTTP framework, see [chevron](https://github.com/go-nacelle/chevron).
 
 ## Usage
 
@@ -15,7 +15,7 @@ The server initializer will have services injected and will receive the nacelle 
 object on initialization as if it were a process.
 
 To get a better understanding of the full usage, see the
-[example](https://github.com/efritz/nacelle/tree/master/examples/http).
+[example](https://github.com/go-nacelle/nacelle/tree/master/examples/http).
 
 ## Configuration
 
@@ -36,4 +36,4 @@ error to provide a path to a cert file or a path to a key file but not both.
 
 In order to run multiple HTTP servers, tag modifiers can be applied during config
 registration. For more details on how to do this, see the
-[example](https://github.com/efritz/nacelle/tree/master/examples/multi-http).
+[example](https://github.com/go-nacelle/nacelle/tree/master/examples/multi-http).

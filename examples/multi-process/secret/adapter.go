@@ -1,6 +1,6 @@
 package secret
 
-import "github.com/efritz/nacelle"
+import "github.com/go-nacelle/nacelle"
 
 type logAdapter struct {
 	nacelle.Logger

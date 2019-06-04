@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	"github.com/efritz/nacelle/config"
+	"github.com/go-nacelle/nacelle/config"
 	"google.golang.org/grpc"
 )
 

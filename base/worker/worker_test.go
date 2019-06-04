@@ -6,9 +6,9 @@ import (
 
 	"github.com/aphistic/sweet"
 	"github.com/efritz/glock"
-	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/process"
-	"github.com/efritz/nacelle/service"
+	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/nacelle/process"
+	"github.com/go-nacelle/nacelle/service"
 	. "github.com/onsi/gomega"
 )
 

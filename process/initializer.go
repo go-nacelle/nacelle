@@ -1,6 +1,6 @@
 package process
 
-import "github.com/efritz/nacelle/config"
+import "github.com/go-nacelle/nacelle/config"
 
 type (
 	// Initializer is an interface that is called once on app

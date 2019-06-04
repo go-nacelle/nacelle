@@ -1,6 +1,6 @@
 package nacelle
 
-import "github.com/efritz/nacelle/process"
+import "github.com/go-nacelle/nacelle/process"
 
 type (
 	Process               = process.Process

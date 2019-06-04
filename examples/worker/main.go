@@ -3,8 +3,8 @@ package main
 import (
 	"time"
 
-	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/base/worker"
+	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/nacelle/base/worker"
 )
 
 type spec struct {

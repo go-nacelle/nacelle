@@ -1,7 +1,7 @@
 package nacelle
 
 import (
-	"github.com/efritz/nacelle/logging"
+	"github.com/go-nacelle/nacelle/logging"
 )
 
 type (

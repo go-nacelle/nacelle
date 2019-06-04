@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/efritz/glock"
-	"github.com/efritz/nacelle/logging"
+	"github.com/go-nacelle/nacelle/logging"
 )
 
 // watcherConfigFunc is a function used to configure an instance

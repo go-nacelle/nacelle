@@ -1,14 +1,14 @@
 <p align="center">
-    <img width="200" src="https://github.com/efritz/nacelle/blob/master/images/nacelle.png" alt="Nacelle logo">
+    <img width="200" src="https://github.com/go-nacelle/nacelle/blob/master/images/nacelle.png" alt="Nacelle logo">
 </p>
 
 <h2 align="center">Nacelle</h2>
 
 <p align="center">
-    <a href="https://godoc.org/github.com/efritz/nacelle"><img src="https://godoc.org/github.com/efritz/nacelle?status.svg" alt="GoDoc"></a>
-    <a href="http://travis-ci.org/efritz/nacelle"><img src="https://secure.travis-ci.org/efritz/nacelle.png" alt="Build Status"></a>
-    <a href="https://codeclimate.com/github/efritz/nacelle/maintainability"><img src="https://api.codeclimate.com/v1/badges/8118b324f3b7ac9b442a/maintainability" alt="Maintainability"></a>
-    <a href="https://codeclimate.com/github/efritz/nacelle/test_coverage"><img src="https://api.codeclimate.com/v1/badges/8118b324f3b7ac9b442a/test_coverage" alt="Test Coverage"></a>
+    <a href="https://godoc.org/github.com/go-nacelle/nacelle"><img src="https://godoc.org/github.com/go-nacelle/nacelle?status.svg" alt="GoDoc"></a>
+    <a href="http://travis-ci.org/go-nacelle/nacelle"><img src="https://secure.travis-ci.org/go-nacelle/nacelle.png" alt="Build Status"></a>
+    <a href="https://codeclimate.com/github/go-nacelle/nacelle/maintainability"><img src="https://api.codeclimate.com/v1/badges/8118b324f3b7ac9b442a/maintainability" alt="Maintainability"></a>
+    <a href="https://codeclimate.com/github/go-nacelle/nacelle/test_coverage"><img src="https://api.codeclimate.com/v1/badges/8118b324f3b7ac9b442a/test_coverage" alt="Test Coverage"></a>
 </p>
 
 Nacelle is a microservice framework written in Go.
@@ -17,7 +17,7 @@ Nacelle is a microservice framework written in Go.
 
 ## Examples
 
-For example usage, see [the examples](https://github.com/efritz/nacelle/tree/master/examples)
+For example usage, see [the examples](https://github.com/go-nacelle/nacelle/tree/master/examples)
 provided along with in this project.
 
 ## Frameworks
@@ -25,16 +25,16 @@ provided along with in this project.
 The following frameworks are built on top of nacelle to provide rich features
 to a single *primary* process.
 
-- [chevron](https://github.com/efritz/chevron), an HTTP framework
-- [scarf](https://github.com/efritz/scarf), a gRPC framework
+- [chevron](https://github.com/go-nacelle/chevron), an HTTP framework
+- [scarf](https://github.com/go-nacelle/scarf), a gRPC framework
 
 
 ## Documentation
 
-- [Logging](https://github.com/efritz/nacelle/tree/master/logging)
-- [Configuration](https://github.com/efritz/nacelle/tree/master/config)
-- [Dependency Injection](https://github.com/efritz/nacelle/tree/master/service)
-- [Common Process Implementations](https://github.com/efritz/nacelle/tree/master/base)
+- [Logging](https://github.com/go-nacelle/nacelle/tree/master/logging)
+- [Configuration](https://github.com/go-nacelle/nacelle/tree/master/config)
+- [Dependency Injection](https://github.com/go-nacelle/nacelle/tree/master/service)
+- [Common Process Implementations](https://github.com/go-nacelle/nacelle/tree/master/base)
 
 ## License
 

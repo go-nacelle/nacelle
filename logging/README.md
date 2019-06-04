@@ -9,7 +9,7 @@ Nacelle provides rather opinionated structured logging following a few short pri
     redirected. This keeps the application simple and allows redirection of logs to
     **any** source without requiring an application update. For an example of redirection
     when run in a Docker container, see nacelle's
-    [fluentd wrapper](https://github.com/efritz/nacelle-fluentd).
+    [fluentd wrapper](https://github.com/go-nacelle/nacelle-fluentd).
 
 The interfaces provided here are backed by [gomol](https://github.com/aphistic/gomol).
 
@@ -56,7 +56,7 @@ requestLogger.Info("A debug message (%#v)", args...)
 ```
 
 A logger should **not** be constructed, but should be injected via a service container.
-See the [service package documentation](https://github.com/efritz/nacelle/tree/master/service)
+See the [service package documentation](https://github.com/go-nacelle/nacelle/tree/master/service)
 for additional formation.
 
 ## Configuration

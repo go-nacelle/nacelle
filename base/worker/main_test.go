@@ -1,6 +1,6 @@
 package worker
 
-//go:generate go-mockgen github.com/efritz/nacelle/config -i Config -o mock_config_test.go -f
+//go:generate go-mockgen github.com/go-nacelle/nacelle/config -i Config -o mock_config_test.go -f
 
 import (
 	"net"
@@ -8,9 +8,9 @@ import (
 
 	"github.com/aphistic/sweet"
 	"github.com/aphistic/sweet-junit"
-	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/config"
-	"github.com/efritz/nacelle/service"
+	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/nacelle/config"
+	"github.com/go-nacelle/nacelle/service"
 	. "github.com/onsi/gomega"
 )
 

@@ -4,7 +4,7 @@ import (
 	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
 
-	"github.com/efritz/nacelle/logging"
+	"github.com/go-nacelle/nacelle/logging"
 )
 
 type ServiceSuite struct{}

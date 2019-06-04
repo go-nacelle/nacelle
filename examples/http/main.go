@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/efritz/nacelle"
-	basehttp "github.com/efritz/nacelle/base/http"
+	"github.com/go-nacelle/nacelle"
+	basehttp "github.com/go-nacelle/nacelle/base/http"
 )
 
 func setupServer(config nacelle.Config, server *http.Server) error {

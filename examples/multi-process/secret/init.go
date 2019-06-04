@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/efritz/deepjoy"
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 )
 
 func Init(config nacelle.Config, services nacelle.ServiceContainer) error {

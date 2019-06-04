@@ -1,25 +1,25 @@
 package config
 
-import "github.com/efritz/zubrin"
+import "github.com/go-nacelle/config"
 
 type (
-	Config      = zubrin.Config
-	Sourcer     = zubrin.Sourcer
-	TagModifier = zubrin.TagModifier
+	Config      = config.Config
+	Sourcer     = config.Sourcer
+	TagModifier = config.TagModifier
 )
 
 var (
-	NewConfig                   = zubrin.NewConfig
-	NewEnvSourcer               = zubrin.NewEnvSourcer
-	NewFileSourcer              = zubrin.NewFileSourcer
-	NewGlobSourcer              = zubrin.NewGlobSourcer
-	NewOptionalFileSourcer      = zubrin.NewOptionalFileSourcer
-	NewDirectorySourcer         = zubrin.NewDirectorySourcer
-	NewOptionalDirectorySourcer = zubrin.NewOptionalDirectorySourcer
-	NewYAMLFileSourcer          = zubrin.NewYAMLFileSourcer
-	NewTOMLFileSourcer          = zubrin.NewTOMLFileSourcer
-	NewMultiSourcer             = zubrin.NewMultiSourcer
-	NewEnvTagPrefixer           = zubrin.NewEnvTagPrefixer
-	NewFileTagPrefixer          = zubrin.NewFileTagPrefixer
-	NewDefaultTagSetter         = zubrin.NewDefaultTagSetter
+	NewConfig                   = config.NewConfig
+	NewEnvSourcer               = config.NewEnvSourcer
+	NewFileSourcer              = config.NewFileSourcer
+	NewGlobSourcer              = config.NewGlobSourcer
+	NewOptionalFileSourcer      = config.NewOptionalFileSourcer
+	NewDirectorySourcer         = config.NewDirectorySourcer
+	NewOptionalDirectorySourcer = config.NewOptionalDirectorySourcer
+	NewYAMLFileSourcer          = config.NewYAMLFileSourcer
+	NewTOMLFileSourcer          = config.NewTOMLFileSourcer
+	NewMultiSourcer             = config.NewMultiSourcer
+	NewEnvTagPrefixer           = config.NewEnvTagPrefixer
+	NewFileTagPrefixer          = config.NewFileTagPrefixer
+	NewDefaultTagSetter         = config.NewDefaultTagSetter
 )

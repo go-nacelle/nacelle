@@ -14,7 +14,7 @@ The worker spec will have services injected and will receive the nacelle config 
 initialization as if it were a process.
 
 To get a better understanding of the full usage, see the
-[example](https://github.com/efritz/nacelle/tree/master/examples/worker).
+[example](https://github.com/go-nacelle/nacelle/tree/master/examples/worker).
 
 ## Configuration
 

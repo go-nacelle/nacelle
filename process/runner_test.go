@@ -8,8 +8,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/efritz/glock"
-	"github.com/efritz/nacelle/config"
-	"github.com/efritz/nacelle/service"
+	"github.com/go-nacelle/nacelle/config"
+	"github.com/go-nacelle/nacelle/service"
 )
 
 type RunnerSuite struct{}

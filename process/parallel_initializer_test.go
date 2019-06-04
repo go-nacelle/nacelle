@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/aphistic/sweet"
-	"github.com/efritz/nacelle/logging"
-	"github.com/efritz/nacelle/service"
+	"github.com/go-nacelle/nacelle/logging"
+	"github.com/go-nacelle/nacelle/service"
 	. "github.com/onsi/gomega"
 )
 

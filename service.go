@@ -1,7 +1,7 @@
 package nacelle
 
 import (
-	"github.com/efritz/nacelle/service"
+	"github.com/go-nacelle/nacelle/service"
 )
 
 type ServiceContainer = service.Container

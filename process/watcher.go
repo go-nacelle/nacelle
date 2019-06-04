@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/efritz/glock"
-	"github.com/efritz/nacelle/logging"
+	"github.com/go-nacelle/nacelle/logging"
 )
 
 // processWatcher coordinates goroutines to detect when an application should

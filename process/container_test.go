@@ -7,7 +7,7 @@ import (
 	"github.com/aphistic/sweet"
 	. "github.com/onsi/gomega"
 
-	"github.com/efritz/nacelle/config"
+	"github.com/go-nacelle/nacelle/config"
 )
 
 type ContainerSuite struct{}

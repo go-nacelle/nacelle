@@ -3,8 +3,8 @@ package main
 //go:generate protoc ping.proto --go_out=plugins=grpc:. -I.
 
 import (
-	"github.com/efritz/nacelle"
-	basegrpc "github.com/efritz/nacelle/base/grpc"
+	"github.com/go-nacelle/nacelle"
+	basegrpc "github.com/go-nacelle/nacelle/base/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

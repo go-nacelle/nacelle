@@ -3,10 +3,10 @@ package grpc
 import (
 	"context"
 
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 	"google.golang.org/grpc"
 
-	"github.com/efritz/nacelle/examples/multi-process/secret"
+	"github.com/go-nacelle/nacelle/examples/multi-process/secret"
 )
 
 type EndpointSet struct {

@@ -19,7 +19,7 @@ service.
 
 Several common low-level processes (an HTTP server, a gRPC server, and a generic
 worker process) implementations are available in the
-[base package](https://github.com/efritz/nacelle/tree/master/base).
+[base package](https://github.com/go-nacelle/nacelle/tree/master/base).
 
 ## Setup
 
@@ -43,7 +43,7 @@ In the following examples, we assume this layout and will simply denote in which
 additional code must be added.
 
 For usage of the configuration object, see the
-[config](https://github.com/efritz/nacelle/tree/master/config) package.
+[config](https://github.com/go-nacelle/nacelle/tree/master/config) package.
 
 An initializer can be registered to a process container with the `RegisterInitializer` function.
 Additional options can be provided along with the initializer instance (e.g. provide a name for
@@ -58,7 +58,7 @@ registration order. The default process priority is zero.
 ## Example
 
 We give a small inline example here. For additional, fully working examples, see the
-[examples](https://github.com/efritz/nacelle/tree/master/examples) directory.
+[examples](https://github.com/go-nacelle/nacelle/tree/master/examples) directory.
 
 ### Service Example
 
@@ -72,7 +72,7 @@ import (
 	"net/http"
 
 	"github.com/efritz/deepjoy"
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -146,7 +146,7 @@ processes.RegisterInitializer(NewCacheInitializer())
 Next, we create an HTTP process. This process is implemented in a very simple way to highlight
 the process structure itself and isn't the recommended way to lay out a server process. For a
 more correct way, see the base HTTP server
-[implementation](https://github.com/efritz/nacelle/tree/master/base/http).
+[implementation](https://github.com/go-nacelle/nacelle/tree/master/base/http).
 
 This server defines its own config and requests an instance of the registered cache service from
 the nacelle on init. By the time the server's `Init` method is called, the config will have been

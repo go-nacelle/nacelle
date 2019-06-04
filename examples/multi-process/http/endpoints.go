@@ -5,11 +5,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/efritz/nacelle"
 	"github.com/efritz/response"
+	"github.com/go-nacelle/nacelle"
 	"github.com/gorilla/mux"
 
-	"github.com/efritz/nacelle/examples/multi-process/secret"
+	"github.com/go-nacelle/nacelle/examples/multi-process/secret"
 )
 
 type EndpointSet struct {

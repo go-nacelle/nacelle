@@ -1,6 +1,6 @@
 package http
 
-import "github.com/efritz/nacelle/config"
+import "github.com/go-nacelle/nacelle/config"
 
 type (
 	options struct {

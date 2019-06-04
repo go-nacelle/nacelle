@@ -3,9 +3,9 @@ package service
 import (
 	"fmt"
 
-	"github.com/efritz/bussard"
+	"github.com/go-nacelle/service"
 
-	"github.com/efritz/nacelle/logging"
+	"github.com/go-nacelle/nacelle/logging"
 )
 
 type (
@@ -13,13 +13,14 @@ type (
 	// name. Services can be retrieved by name, or injected into a struct
 	// by reading tagged fields.
 	Container interface {
-		bussard.ServiceContainer
+		// TODO - call it container
+		service.ServiceContainer
 
 		GetLogger() logging.Logger
 	}
 
 	serviceContainer struct {
-		bussard.ServiceContainer
+		service.ServiceContainer
 	}
 )
 
@@ -27,7 +28,7 @@ type (
 // to the key `container`.
 func NewContainer() (Container, error) {
 	container := &serviceContainer{
-		ServiceContainer: bussard.NewServiceContainer(),
+		ServiceContainer: service.NewServiceContainer(),
 	}
 
 	err := container.Set("container", container)

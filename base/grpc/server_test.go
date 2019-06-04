@@ -10,10 +10,10 @@ import (
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc"
 
-	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/base/grpc/internal"
-	"github.com/efritz/nacelle/process"
-	"github.com/efritz/nacelle/service"
+	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/nacelle/base/grpc/internal"
+	"github.com/go-nacelle/nacelle/process"
+	"github.com/go-nacelle/nacelle/service"
 )
 
 type ServerSuite struct{}

@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/efritz/nacelle/logging"
-	"github.com/efritz/zubrin"
+	configlogging "github.com/go-nacelle/config/logging"
+	"github.com/go-nacelle/nacelle/logging"
 )
 
 type logShim struct {
@@ -14,7 +14,7 @@ func (s *logShim) Printf(format string, args ...interface{}) {
 }
 
 func NewLoggingConfig(config Config, logger logging.Logger, maskedKeys []string) Config {
-	return zubrin.NewLoggingConfig(
+	return configlogging.NewLoggingConfig(
 		config,
 		&logShim{logger},
 		maskedKeys,

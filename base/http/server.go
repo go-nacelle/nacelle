@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/efritz/nacelle"
-	"github.com/efritz/nacelle/config"
+	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/nacelle/config"
 )
 
 type (

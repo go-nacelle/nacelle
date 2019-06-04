@@ -9,7 +9,7 @@ import (
 	"github.com/efritz/glock"
 	. "github.com/onsi/gomega"
 
-	"github.com/efritz/nacelle/config"
+	"github.com/go-nacelle/nacelle/config"
 )
 
 type WatcherSuite struct{}
