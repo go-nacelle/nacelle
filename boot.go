@@ -2,11 +2,8 @@ package nacelle
 
 import (
 	"os"
-
-	"github.com/go-nacelle/nacelle/config"
-	"github.com/go-nacelle/nacelle/logging"
-	"github.com/go-nacelle/nacelle/process"
-	"github.com/go-nacelle/nacelle/service"
+	// TODO - get rid of all imports soutside of imports.go
+	"github.com/go-nacelle/process"
 )
 
 type (
@@ -34,7 +31,17 @@ type (
 	// function should register initializers and processes and inject values
 	// into the service container where necessary.
 	AppInitFunc func(ProcessContainer, ServiceContainer) error
+
+	// ServiceInitializerFunc is an InitializerFunc with a service container argument.
+	ServiceInitializerFunc func(config Config, container ServiceContainer) error
 )
+
+// WrapServiceInitializerFunc creates an InitializerFunc from a ServiceInitializerFunc and a container.
+func WrapServiceInitializerFunc(container ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
+	return InitializerFunc(func(config Config) error {
+		return f(config, container)
+	})
+}
 
 // NewBootstrapper creates an entrypoint to the program with the given configs.
 func NewBootstrapper(
@@ -69,7 +76,7 @@ func (bs *Bootstrapper) Boot() int {
 
 	logger, err := bs.loggingInitFunc(baseConfig)
 	if err != nil {
-		logging.LogEmergencyError("failed to initialize logging (%s)", err)
+		LogEmergencyError("failed to initialize logging (%s)", err)
 		return 1
 	}
 
@@ -77,32 +84,28 @@ func (bs *Bootstrapper) Boot() int {
 
 	defer func() {
 		if err := logger.Sync(); err != nil {
-			logging.LogEmergencyError("failed to sync logs on shutdown (%s)", err)
+			LogEmergencyError("failed to sync logs on shutdown (%s)", err)
 		}
 	}()
 
 	logger.Info("Logging initialized")
 
-	serviceContainer, err := service.NewContainer()
-	if err != nil {
-		logging.LogEmergencyError("failed to create service container (%s)", err)
-		return 1
-	}
+	serviceContainer := NewServiceContainer()
 
 	if err := serviceContainer.Set("logger", logger); err != nil {
 		logger.Error("Failed to register logger to service container (%s)", err)
 		return 1
 	}
 
-	health := process.NewHealth()
+	health := NewHealth()
 
 	if err := serviceContainer.Set("health", health); err != nil {
 		logger.Error("Failed to register health reporter to service container (%s)", err)
 		return 1
 	}
 
-	config := config.NewLoggingConfig(baseConfig, logger, bs.configMaskedKeys)
-	processContainer := process.NewContainer()
+	config := NewLoggingConfig(baseConfig, logger, bs.configMaskedKeys)
+	processContainer := NewProcessContainer()
 
 	if err := bs.initFunc(processContainer, serviceContainer); err != nil {
 		logger.Error("Failed to run initialization function (%s)", err.Error())

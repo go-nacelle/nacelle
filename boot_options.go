@@ -2,8 +2,7 @@ package nacelle
 
 import (
 	"fmt"
-
-	"github.com/go-nacelle/nacelle/logging"
+	"github.com/go-nacelle/log"
 )
 
 type (
@@ -41,10 +40,10 @@ func WithRunnerOptions(configs ...RunnerConfigFunc) BootstrapperConfigFunc {
 }
 
 func defaultLogginInitFunc(config Config) (Logger, error) {
-	c := &logging.Config{}
+	c := &log.Config{}
 	if err := config.Load(c); err != nil {
 		return nil, fmt.Errorf("could not load logging config (%s)", err.Error())
 	}
 
-	return logging.InitGomolShim(c)
+	return log.InitGomolShim(c)
 }
