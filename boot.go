@@ -90,19 +90,12 @@ func (bs *Bootstrapper) Boot() int {
 
 	logger.Info("Logging initialized")
 
-	serviceContainer := NewServiceContainer()
-
-	if err := serviceContainer.Set("logger", logger); err != nil {
-		logger.Error("Failed to register logger to service container (%s)", err)
-		return 1
-	}
-
 	health := NewHealth()
 
-	if err := serviceContainer.Set("health", health); err != nil {
-		logger.Error("Failed to register health reporter to service container (%s)", err)
-		return 1
-	}
+	serviceContainer := NewServiceContainer()
+	_ = serviceContainer.Set("health", health)
+	_ = serviceContainer.Set("logger", logger)
+	_ = serviceContainer.Set("services", serviceContainer)
 
 	config := NewLoggingConfig(baseConfig, logger, bs.configMaskedKeys)
 	processContainer := NewProcessContainer()
