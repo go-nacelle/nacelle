@@ -47,6 +47,7 @@ var (
 	NewEnvTagPrefixer           = config.NewEnvTagPrefixer
 	NewFileSourcer              = config.NewFileSourcer
 	NewFileTagPrefixer          = config.NewFileTagPrefixer
+	NewFileTagSetter            = config.NewFileTagSetter
 	NewGlobSourcer              = config.NewGlobSourcer
 	NewHealth                   = process.NewHealth
 	NewMultiSourcer             = config.NewMultiSourcer
