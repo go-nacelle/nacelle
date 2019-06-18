@@ -2,6 +2,7 @@ package nacelle
 
 import (
 	"fmt"
+
 	"github.com/go-nacelle/log"
 )
 
@@ -39,7 +40,7 @@ func WithRunnerOptions(configs ...RunnerConfigFunc) BootstrapperConfigFunc {
 	return func(c *bootstrapperConfig) { c.runnerConfigFuncs = configs }
 }
 
-func defaultLogginInitFunc(config Config) (Logger, error) {
+func defaultLoggingInitFunc(config Config) (Logger, error) {
 	c := &log.Config{}
 	if err := config.Load(c); err != nil {
 		return nil, fmt.Errorf("could not load logging config (%s)", err.Error())

@@ -51,7 +51,7 @@ func NewBootstrapper(
 ) *Bootstrapper {
 	config := &bootstrapperConfig{
 		configSourcer:   NewEnvSourcer(name),
-		loggingInitFunc: defaultLogginInitFunc,
+		loggingInitFunc: defaultLoggingInitFunc,
 	}
 
 	for _, f := range bootstrapperConfigs {
