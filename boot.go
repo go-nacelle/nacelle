@@ -2,7 +2,7 @@ package nacelle
 
 import (
 	"os"
-	// TODO - get rid of all imports soutside of imports.go
+
 	"github.com/go-nacelle/process"
 )
 
