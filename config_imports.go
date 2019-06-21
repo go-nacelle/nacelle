@@ -24,6 +24,7 @@ var (
 	NewMultiSourcer             = config.NewMultiSourcer
 	NewOptionalDirectorySourcer = config.NewOptionalDirectorySourcer
 	NewOptionalFileSourcer      = config.NewOptionalFileSourcer
+	NewTestEnvSourcer           = config.NewTestEnvSourcer
 	NewTOMLFileSourcer          = config.NewTOMLFileSourcer
 	NewYAMLFileSourcer          = config.NewYAMLFileSourcer
 	ParseTOML                   = config.ParseTOML
