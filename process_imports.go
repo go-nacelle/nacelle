@@ -7,6 +7,7 @@ import (
 type (
 	Health                = process.Health
 	Initializer           = process.Initializer
+	Finalizer             = process.Finalizer
 	InitializerConfigFunc = process.InitializerConfigFunc
 	InitializerFunc       = process.InitializerFunc
 	ParallelInitializer   = process.ParallelInitializer
