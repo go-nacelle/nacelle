@@ -44,4 +44,4 @@ to a single *primary* process.
 - [chevron](https://github.com/go-nacelle/chevron) - an HTTP server framework
 - [scarf](https://github.com/go-nacelle/scarf) - a gRPC server framework
 
-This project also provides a set of abstract base processes for common process types: an [AWS Lambda event listener](https://github.com/go-nacelle/lambdabase), a [gRPC server](https://github.com/go-nacelle/grpcbase), an [HTTP server](https://github.com/go-nacelle/httpbase), and a [generic worker process](https://github.com/go-nacelle/workerbase)
+This project also provides a set of abstract base processes for common process types: an [AWS Lambda event listener](https://github.com/go-nacelle/lambdabase), a [gRPC server](https://github.com/go-nacelle/grpcbase), an [HTTP server](https://github.com/go-nacelle/httpbase), and a [generic worker process](https://github.com/go-nacelle/workerbase).
