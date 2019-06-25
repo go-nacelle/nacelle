@@ -1,13 +1,13 @@
 package mocks
 
 import (
-        log "github.com/go-nacelle/log/mocks"
+	log "github.com/go-nacelle/log/mocks"
 )
 
 type (
-        MockLogger = log.MockLogger
+	MockLogger = log.MockLogger
 )
 
 var (
-NewMockLogger = log.NewMockLogger
+	NewMockLogger = log.NewMockLogger
 )
