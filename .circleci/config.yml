@@ -1,8 +1,17 @@
-version: 2
-jobs:
-  build:
+version: 2.1
+
+orbs:
+  docs: nacelle/docs@0.1.3
+
+executors:
+  go:
     docker:
       - image: circleci/golang:1.12
+    working_directory: ~/nacelle
+
+jobs:
+  test:
+    executor: go
     steps:
       - checkout
       - run: go get github.com/mattn/goveralls
@@ -11,3 +20,18 @@ jobs:
           command: |
             go get ./...
             goveralls -covermode=atomic -package=./... -race -service=circle-ci -v
+  update_docs:
+    executor: go
+    steps:
+      - docs/update_docs:
+          repo: nacelle
+
+workflows:
+  version: 2
+  test_and_udpate_docs:
+    jobs:
+      - test
+      - update_docs:
+          filters:
+            branches:
+              only: master
