@@ -46,5 +46,5 @@ func defaultLoggingInitFunc(config Config) (Logger, error) {
 		return nil, fmt.Errorf("could not load logging config (%s)", err.Error())
 	}
 
-	return log.InitGomolShim(c)
+	return log.InitLogger(c)
 }
