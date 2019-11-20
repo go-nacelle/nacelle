@@ -28,7 +28,7 @@ jobs:
 
 workflows:
   version: 2
-  test_and_udpate_docs:
+  test_and_update_docs:
     jobs:
       - test
       - update_docs:
