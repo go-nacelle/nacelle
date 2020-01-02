@@ -9,6 +9,7 @@ type (
 	ConfigSourcer = config.Sourcer
 	FileParser    = config.FileParser
 	TagModifier   = config.TagModifier
+	FileSystem    = config.FileSystem
 )
 
 var (
@@ -29,4 +30,7 @@ var (
 	NewYAMLFileSourcer          = config.NewYAMLFileSourcer
 	ParseTOML                   = config.ParseTOML
 	ParseYAML                   = config.ParseYAML
+	WithDirectorySourcerFS      = config.WithDirectorySourcerFS
+	WithFileSourcerFS           = config.WithFileSourcerFS
+	WithGlobSourcerFS           = config.WithGlobSourcerFS
 )
