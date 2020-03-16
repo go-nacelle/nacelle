@@ -6,54 +6,24 @@ Microservice framework written in Go.
 
 ---
 
-This repository is the meta-package that combine the core framework behaviors: the population of [configuration](https://nacelle.dev/docs/core/config) structs, the injection of [dependencies](https://nacelle.dev/docs/core/service), the initialization and supervision of [processes](https://nacelle.dev/docs/core/process), and the initialization of [logging](https://nacelle.dev/docs/core/log). Types, variables, constants, and functions defined by these packages are aliased here, and should be imported from `github.com/go-nacelle/nacelle`.
+For more details, see [the website](https://nacelle.dev), the [getting started gide](https://nacelle.dev/getting-started), and [the motivating blog post](https://eric-fritz.com/articles/nacelle/).
 
-### Bootstrapping
+## Goals
 
-This package provides a common [bootstrapper](https://godoc.org/github.com/go-nacelle/nacelle#Bootstrapper) object that initializes and supervises the core framework behaviors.
+Core goals:
 
-Applications written with nacelle should have a common entrypoint, as follows. The application-specific functionality is passed to a boostrapper on construction as a reference to a function that populates a [process container](https://nacelle.dev/docs/core/process). The `BootAndExit` function initializes and supervises the application, blocks until the application shut down, then calls `os.Exit` with the appropriate status code. A symmetric function called `Boot` will perform the same behavior, but will return the integer status code instead of calling `os.Exit`.
+- Provide a common convention for application organization so that developers can quickly dive into the meaningful logic of an application.
+- Support a common convention for declaring, reading, and validating configuration values from the runtime environment.
+- Support a common convention for registering, declaring, and injecting struct and interface dependencies.
+- Support a common convention for structured logging.
 
-```go
-func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
-    // register initializer and process instances
-}
+Additional goals:
 
-func main() {
-    nacelle.NewBootstrapper("app-name", setup).BootAndExit()
-}
-```
+- Provide additional non-core functionality via separate opt-in libraries. Keep the dependencies for the core-functionality minimal.
+- Operate within existing infrastructures and do not require tools or technologies outside of what this project provides.
 
-You can see additional examples of the bootstrapper in the [example repository](https://github.com/go-nacelle/example). Specifically, the main function of the [HTTP API](https://github.com/go-nacelle/example/blob/843979aaa86786784a1ca3646e8d0d1f69e29c65/cmd/http-api/main.go#L17), the [gRPC API](https://github.com/go-nacelle/example/blob/843979aaa86786784a1ca3646e8d0d1f69e29c65/cmd/grpc-api/main.go#L16), and the [worker](https://github.com/go-nacelle/example/blob/843979aaa86786784a1ca3646e8d0d1f69e29c65/cmd/worker/main.go#L17).
+## Non-goals
 
-The following options can be supplied to the bootstrapper to tune its behavior.
-
-<dl>
-  <dt>WithConfigSourcer</dt>
-  <dd><a href="https://godoc.org/github.com/go-nacelle/nacelle#WithConfigSourcer">WithConfigSourcer</a> changes the default source for configuration variables. The default sourcer is the application environment using the name given to the bootstrapper as a prefix.</dd>
-
-  <dt>WithConfigMaskedKeys</dt>
-  <dd><a href="https://godoc.org/github.com/go-nacelle/nacelle#WithConfigMaskedKeys">WithConfigMaskedKeys</a> sets the keys to mask from log messages when loading configuration data. This is used to hide sensitive configuration values.</dd>
-
-  <dt>WithLoggingInitFunc</dt>
-  <dd><a href="https://godoc.org/github.com/go-nacelle/nacelle#WithLoggingInitFunc">WithLoggingInitFunc</a> sets the factory used to create the base logger. This can be set to supply a different log backend.</dd>
-
-  <dt>WithLoggingFields</dt>
-  <dd><a href="https://godoc.org/github.com/go-nacelle/nacelle#WithLoggingFields">WithLoggingFields</a> adds additional fields to every log message. This can be useful to present build information (time, hash, branch), process name, or operating environment.</dd>
-
-  <dt>WithRunnerOptions</dt>
-  <dd>
-    <a href="https://godoc.org/github.com/go-nacelle/nacelle#WithRunnerOptions">WithRunnerOptions</a> accepts additional options specific to the process runner. The following options can be supplied to tune its behavior.
-    <!---->
-    <dl>
-      <dt>WithHealthCheckBackoff</dt>
-      <dd><a href="https://godoc.org/github.com/go-nacelle/process#WithHealthCheckBackoff">WithHealthCheckBackoff</a> sets the <a href="https://github.com/efritz/backoff">backoff</a> instance used to check the health of processes during startup. </dd>
-      <!---->
-      <dt>WithShutdownTimeout</dt>
-      <dd><a href="https://godoc.org/github.com/go-nacelle/process#WithShutdownTimeout">WithShutdownTimeout</a> sets the maximum time that the application can spend shutting down.</dd>
-      <!---->
-      <dt>WithStartTimeout</dt>
-      <dd><a href="https://godoc.org/github.com/go-nacelle/process#WithStartTimeout">WithStartTimeout</a> sets the maximum time that the application can spend in startup.</dd>
-    </dl>
-  </dd>
-</dl>
+- Impose opinions on service discovery.
+- Impose opinions on inter-process or inter-service communication.
+- Impose opinions on runtime environment, deployment, orchestration.services.
