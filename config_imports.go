@@ -18,6 +18,9 @@ var (
 	NewDirectorySourcer         = config.NewDirectorySourcer
 	NewEnvSourcer               = config.NewEnvSourcer
 	NewEnvTagPrefixer           = config.NewEnvTagPrefixer
+	NewFlagSourcer              = config.NewFlagSourcer
+	NewFlagTagPrefixer          = config.NewFlagTagPrefixer
+	NewFlagTagSetter            = config.NewFlagTagSetter
 	NewFileSourcer              = config.NewFileSourcer
 	NewFileTagPrefixer          = config.NewFileTagPrefixer
 	NewFileTagSetter            = config.NewFileTagSetter

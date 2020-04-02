@@ -73,6 +73,10 @@ func NewBootstrapper(
 // the associated process runner has completed).
 func (bs *Bootstrapper) Boot() int {
 	baseConfig := NewConfig(bs.configSourcer)
+	if err := baseConfig.Init(); err != nil {
+		LogEmergencyError("failed to initialize config (%s)", err)
+		return 1
+	}
 
 	logger, err := bs.loggingInitFunc(baseConfig)
 	if err != nil {

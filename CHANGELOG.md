@@ -2,6 +2,10 @@
 
 This changelog tracks updates to this repository as well as [go-nacelle/config](https://github.com/go-nacelle/config), [go-nacelle/log](https://github.com/go-nacelle/log), [go-nacelle/process](https://github.com/go-nacelle/process), and [go-nacelle/service](https://github.com/go-nacelle/service).
 
+## v1.1.3
+
+- Add `NewFlagSourcer`, `NewFlagTagPrefixer`, and `NewFlagTagSetter` constructors (from [go-nacelle/config](https://github.com/go-nacelle/config)).
+
 ## v1.1.2
 
 #### Definition updates
