@@ -2,7 +2,7 @@
 
 # Nacelle [![GoDoc](https://godoc.org/github.com/go-nacelle/nacelle?status.svg)](https://godoc.org/github.com/go-nacelle/nacelle) [![CircleCI](https://circleci.com/gh/go-nacelle/nacelle.svg?style=svg)](https://circleci.com/gh/go-nacelle/nacelle) [![Coverage Status](https://coveralls.io/repos/github/go-nacelle/nacelle/badge.svg?branch=master)](https://coveralls.io/github/go-nacelle/nacelle?branch=master)
 
-Microservice framework written in Go.
+Service framework written in Go.
 
 ---
 
