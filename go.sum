@@ -51,8 +51,6 @@ github.com/go-nacelle/config v1.2.0/go.mod h1:dMu+mFkZhuyvQszbhNfhBlu1DSU+thCsCy
 github.com/go-nacelle/log v1.0.0/go.mod h1:2bN7vfOSvHTzHWxiTYz+F8/MvustIt/HmARQt67gXz4=
 github.com/go-nacelle/log v1.1.1 h1:2a3Kfnfdwg9RiyZKJIvz9HsHn92PDGEjhSiW5Z1e5wQ=
 github.com/go-nacelle/log v1.1.1/go.mod h1:QgxuTSxqEPzHqL66tpY2j8t/s4dDOwszQJL2hMKyzdI=
-github.com/go-nacelle/process v1.0.0 h1:2582kC2Exy7M+x8Xgp9EXx6CZ9Ugw1lESFgVp+YI3n8=
-github.com/go-nacelle/process v1.0.0/go.mod h1:rdCy03/mUU2X8EBAbSVRH13QvNpto5ir372I9YTRu1M=
 github.com/go-nacelle/process v1.0.1 h1:sDNCgk3q0EqTNfsAgBkH4A9glj5sLhPNo3Xvg0SDZpI=
 github.com/go-nacelle/process v1.0.1/go.mod h1:rdCy03/mUU2X8EBAbSVRH13QvNpto5ir372I9YTRu1M=
 github.com/go-nacelle/service v1.0.0 h1:isr7QDxRxGxaAoAmXupOEGf6D7v9wX6odmPRnPyh1f8=
@@ -146,8 +144,6 @@ golang.org/x/sys v0.0.0-20190726091711-fc99dfbffb4e h1:D5TXcfTk7xF7hvieo4QErS3qq
 golang.org/x/sys v0.0.0-20190726091711-fc99dfbffb4e/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20200331124033-c3d80250170d h1:nc5K6ox/4lTFbMVSL9WRR81ixkcwXThoiF6yf+R9scA=
-golang.org/x/sys v0.0.0-20200331124033-c3d80250170d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 h1:OjiUf46hAmXblsZdnoSXsEUSKU8r1UEzcL5RVZ4gO9Y=
 golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
@@ -167,7 +163,5 @@ gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWD
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
-gopkg.in/yaml.v2 v2.2.8 h1:obN1ZagJSUGI0Ek/LBmuj4SNLPfIny3KsKFopxRdj10=
-gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.3.0 h1:clyUAQHOM3G0M3f5vQj7LuJrETvjVot3Z5el9nffUtU=
 gopkg.in/yaml.v2 v2.3.0/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=

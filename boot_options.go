@@ -6,14 +6,12 @@ import (
 	"github.com/go-nacelle/log"
 )
 
-type (
-	// LoggingInitFunc creates a factory from a config object.
-	LoggingInitFunc func(Config) (Logger, error)
+// LoggingInitFunc creates a factory from a config object.
+type LoggingInitFunc func(Config) (Logger, error)
 
-	// BootstrapperConfigFunc is a function used to configure an instance of
-	// a Bootstrapper.
-	BootstrapperConfigFunc func(*bootstrapperConfig)
-)
+// BootstrapperConfigFunc is a function used to configure an instance of
+// a Bootstrapper.
+type BootstrapperConfigFunc func(*bootstrapperConfig)
 
 // WithConfigSourcer sets the source that should be used for populating config structs.
 func WithConfigSourcer(configSourcer ConfigSourcer) BootstrapperConfigFunc {

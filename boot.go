@@ -6,35 +6,33 @@ import (
 	"github.com/go-nacelle/process"
 )
 
-type (
-	// Bootstrapper wraps the entrypoint to the program.
-	Bootstrapper struct {
-		configs           map[interface{}]interface{}
-		initFunc          AppInitFunc
-		configSourcer     ConfigSourcer
-		configMaskedKeys  []string
-		loggingInitFunc   LoggingInitFunc
-		loggingFields     LogFields
-		runnerConfigFuncs []RunnerConfigFunc
-	}
+// Bootstrapper wraps the entrypoint to the program.
+type Bootstrapper struct {
+	configs           map[interface{}]interface{}
+	initFunc          AppInitFunc
+	configSourcer     ConfigSourcer
+	configMaskedKeys  []string
+	loggingInitFunc   LoggingInitFunc
+	loggingFields     LogFields
+	runnerConfigFuncs []RunnerConfigFunc
+}
 
-	bootstrapperConfig struct {
-		configSourcer     ConfigSourcer
-		configMaskedKeys  []string
-		loggingInitFunc   LoggingInitFunc
-		loggingFields     LogFields
-		runnerConfigFuncs []RunnerConfigFunc
-	}
+type bootstrapperConfig struct {
+	configSourcer     ConfigSourcer
+	configMaskedKeys  []string
+	loggingInitFunc   LoggingInitFunc
+	loggingFields     LogFields
+	runnerConfigFuncs []RunnerConfigFunc
+}
 
-	// AppInitFunc is an program entrypoint called after performing initial
-	// configuration loading, sanity checks, and setting up loggers. This
-	// function should register initializers and processes and inject values
-	// into the service container where necessary.
-	AppInitFunc func(ProcessContainer, ServiceContainer) error
+// AppInitFunc is an program entrypoint called after performing initial
+// configuration loading, sanity checks, and setting up loggers. This
+// function should register initializers and processes and inject values
+// into the service container where necessary.
+type AppInitFunc func(ProcessContainer, ServiceContainer) error
 
-	// ServiceInitializerFunc is an InitializerFunc with a service container argument.
-	ServiceInitializerFunc func(config Config, container ServiceContainer) error
-)
+// ServiceInitializerFunc is an InitializerFunc with a service container argument.
+type ServiceInitializerFunc func(config Config, container ServiceContainer) error
 
 // WrapServiceInitializerFunc creates an InitializerFunc from a ServiceInitializerFunc and a container.
 func WrapServiceInitializerFunc(container ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
