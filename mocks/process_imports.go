@@ -1,8 +1,6 @@
 package mocks
 
-import (
-	process "github.com/go-nacelle/process/mocks"
-)
+import process "github.com/go-nacelle/process/mocks"
 
 type (
 	MockFinalizer        = process.MockFinalizer

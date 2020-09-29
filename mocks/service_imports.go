@@ -1,8 +1,6 @@
 package mocks
 
-import (
-	service "github.com/go-nacelle/service/mocks"
-)
+import service "github.com/go-nacelle/service/mocks"
 
 type (
 	MockServiceContainer = service.MockServiceContainer

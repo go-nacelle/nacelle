@@ -1,8 +1,6 @@
 package nacelle
 
-import (
-	"github.com/go-nacelle/config"
-)
+import "github.com/go-nacelle/config"
 
 type (
 	Config        = config.Config
