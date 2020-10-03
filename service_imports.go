@@ -4,10 +4,9 @@ import (
 	"github.com/go-nacelle/service"
 )
 
-type (
-	ServiceContainer = service.ServiceContainer
-)
+type ServiceContainer = service.ServiceContainer
 
 var (
 	NewServiceContainer = service.NewServiceContainer
+	Overlay             = service.Overlay
 )
