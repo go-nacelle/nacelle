@@ -26,4 +26,4 @@ Additional goals:
 
 - Impose opinions on service discovery.
 - Impose opinions on inter-process or inter-service communication.
-- Impose opinions on runtime environment, deployment, orchestration.services.
+- Impose opinions on runtime environment, deployment, or orchestration of services.
