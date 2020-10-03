@@ -38,8 +38,8 @@ The following options can be supplied to the bootstrapper to tune its behavior.
     <a href="https://godoc.org/github.com/go-nacelle/nacelle#WithRunnerOptions">WithRunnerOptions</a> accepts additional options specific to the process runner. The following options can be supplied to tune its behavior.
     <!---->
     <dl>
-      <dt>WithHealthCheckBackoff</dt>
-      <dd><a href="https://godoc.org/github.com/go-nacelle/process#WithHealthCheckBackoff">WithHealthCheckBackoff</a> sets the <a href="https://github.com/efritz/backoff">backoff</a> instance used to check the health of processes during startup. </dd>
+      <dt>WithHealthCheckInterval</dt>
+      <dd><a href="https://godoc.org/github.com/go-nacelle/process#WithHealthCheckInterval">WithHealthCheckInterval</a> sets the frequency between checks of process health during startup.</dd>
       <!---->
       <dt>WithShutdownTimeout</dt>
       <dd><a href="https://godoc.org/github.com/go-nacelle/process#WithShutdownTimeout">WithShutdownTimeout</a> sets the maximum time that the application can spend shutting down.</dd>

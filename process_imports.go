@@ -21,7 +21,7 @@ var (
 	NewHealth                  = process.NewHealth
 	NewParallelInitializer     = process.NewParallelInitializer
 	NewProcessContainer        = process.NewProcessContainer
-	WithHealthCheckBackoff     = process.WithHealthCheckBackoff
+	WithHealthCheckInterval    = process.WithHealthCheckInterval
 	WithInitializerName        = process.WithInitializerName
 	WithInitializerTimeout     = process.WithInitializerTimeout
 	WithPriority               = process.WithPriority
