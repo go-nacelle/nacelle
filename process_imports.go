@@ -19,12 +19,14 @@ var (
 	NewHealth                  = process.NewHealth
 	NewParallelInitializer     = process.NewParallelInitializer
 	NewProcessContainer        = process.NewProcessContainer
-	WithHealthCheckBackoff     = process.WithHealthCheckBackoff
+	WithHealthCheckInterval    = process.WithHealthCheckInterval
 	WithInitializerName        = process.WithInitializerName
+	WithInitializerLogFields   = process.WithInitializerLogFields
 	WithInitializerTimeout     = process.WithInitializerTimeout
 	WithPriority               = process.WithPriority
 	WithProcessInitTimeout     = process.WithProcessInitTimeout
 	WithProcessName            = process.WithProcessName
+	WithProcessLogFields       = process.WithProcessLogFields
 	WithProcessShutdownTimeout = process.WithProcessShutdownTimeout
 	WithProcessStartTimeout    = process.WithProcessStartTimeout
 	WithShutdownTimeout        = process.WithShutdownTimeout

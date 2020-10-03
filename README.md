@@ -6,7 +6,7 @@ Service framework written in Go.
 
 ---
 
-For more details, see [the website](https://nacelle.dev), the [getting started gide](https://nacelle.dev/getting-started), and [the motivating blog post](https://eric-fritz.com/articles/nacelle/).
+For more details, see [the website](https://nacelle.dev) and the [getting started gide](https://nacelle.dev/getting-started).
 
 ## Goals
 
@@ -26,4 +26,4 @@ Additional goals:
 
 - Impose opinions on service discovery.
 - Impose opinions on inter-process or inter-service communication.
-- Impose opinions on runtime environment, deployment, orchestration.services.
+- Impose opinions on runtime environment, deployment, or orchestration of services.
