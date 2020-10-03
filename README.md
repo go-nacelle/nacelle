@@ -6,7 +6,7 @@ Service framework written in Go.
 
 ---
 
-For more details, see [the website](https://nacelle.dev), the [getting started gide](https://nacelle.dev/getting-started), and [the motivating blog post](https://eric-fritz.com/articles/nacelle/).
+For more details, see [the website](https://nacelle.dev) and the [getting started gide](https://nacelle.dev/getting-started).
 
 ## Goals
 
