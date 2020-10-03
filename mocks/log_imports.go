@@ -1,13 +1,7 @@
 package mocks
 
-import (
-	log "github.com/go-nacelle/log/mocks"
-)
+import log "github.com/go-nacelle/log/mocks"
 
-type (
-	MockLogger = log.MockLogger
-)
+type MockLogger = log.MockLogger
 
-var (
-	NewMockLogger = log.NewMockLogger
-)
+var NewMockLogger = log.NewMockLogger

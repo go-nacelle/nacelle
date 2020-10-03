@@ -2,14 +2,12 @@ package nacelle
 
 import (
 	"fmt"
+	"testing"
 
-	"github.com/aphistic/sweet"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 )
 
-type BootSuite struct{}
-
-func (s *BootSuite) TestBoot(t sweet.T) {
+func TestBoot(t *testing.T) {
 	ran := false
 	bootstrapper := NewBootstrapper(
 		"APP",
@@ -23,11 +21,11 @@ func (s *BootSuite) TestBoot(t sweet.T) {
 		},
 	)
 
-	Expect(bootstrapper.Boot()).To(Equal(0))
-	Expect(ran).To(BeTrue())
+	assert.Equal(t, 0, bootstrapper.Boot())
+	assert.True(t, ran)
 }
 
-func (s *BootSuite) TestDefaultServices(t sweet.T) {
+func TestDefaultServices(t *testing.T) {
 	serviceChecker := &struct {
 		Health   Health           `service:"health"`
 		Logger   Logger           `service:"logger"`
@@ -41,13 +39,13 @@ func (s *BootSuite) TestDefaultServices(t sweet.T) {
 		},
 	)
 
-	Expect(bootstrapper.Boot()).To(Equal(0))
-	Expect(serviceChecker.Health).NotTo(BeNil())
-	Expect(serviceChecker.Logger).NotTo(BeNil())
-	Expect(serviceChecker.Services).NotTo(BeNil())
+	assert.Equal(t, 0, bootstrapper.Boot())
+	assert.NotNil(t, serviceChecker.Health)
+	assert.NotNil(t, serviceChecker.Logger)
+	assert.NotNil(t, serviceChecker.Services)
 }
 
-func (s *BootSuite) TestInitFuncError(t sweet.T) {
+func TestInitFuncError(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
 		func(processes ProcessContainer, services ServiceContainer) error {
@@ -55,10 +53,10 @@ func (s *BootSuite) TestInitFuncError(t sweet.T) {
 		},
 	)
 
-	Expect(bootstrapper.Boot()).To(Equal(1))
+	assert.Equal(t, 1, bootstrapper.Boot())
 }
 
-func (s *BootSuite) TestLoggingInitError(t sweet.T) {
+func TestLoggingInitError(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
 		func(processes ProcessContainer, services ServiceContainer) error {
@@ -69,10 +67,10 @@ func (s *BootSuite) TestLoggingInitError(t sweet.T) {
 		}),
 	)
 
-	Expect(bootstrapper.Boot()).To(Equal(1))
+	assert.Equal(t, 1, bootstrapper.Boot())
 }
 
-func (s *BootSuite) TestRunnerError(t sweet.T) {
+func TestRunnerError(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
 		func(processes ProcessContainer, services ServiceContainer) error {
@@ -84,5 +82,5 @@ func (s *BootSuite) TestRunnerError(t sweet.T) {
 		},
 	)
 
-	Expect(bootstrapper.Boot()).To(Equal(1))
+	assert.Equal(t, 1, bootstrapper.Boot())
 }

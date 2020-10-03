@@ -1,8 +1,6 @@
 package mocks
 
-import (
-	config "github.com/go-nacelle/config/mocks"
-)
+import config "github.com/go-nacelle/config/mocks"
 
 type (
 	MockConfig      = config.MockConfig
