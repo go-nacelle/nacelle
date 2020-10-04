@@ -2,9 +2,12 @@
 
 This changelog tracks updates to this repository as well as [go-nacelle/config](https://github.com/go-nacelle/config), [go-nacelle/log](https://github.com/go-nacelle/log), [go-nacelle/process](https://github.com/go-nacelle/process), and [go-nacelle/service](https://github.com/go-nacelle/service).
 
-## Unreleased
+## v1.2.0
 
 - Replaced option function `WithHealthCheckBackoff` with `WithHealthCheckInterval`.
+- Added `Overlay` method to modify an existing service container (from [go-nacelle/service@v1.0.2](https://github.com/go-nacelle/service/releases/tag/v1.0.2)).
+- Added `WithInitializerLogFields` and `WithProcessLogFields` (from [go-nacelle/process@v1.1.0](https://github.com/go-nacelle/process/releases/tag/v1.1.0)).
+- Updated tests to use [testify](https://github.com/stretchr/testify).
 
 ## v1.1.4
 
