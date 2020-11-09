@@ -102,6 +102,10 @@
 
 ## [v1.0.0] - 2019-06-17
 
+### Changed
+
+- Migrated from [efritz/nacelle](https://github.com/efritz/nacelle).
+
 [Unreleased]: https://github.com/go-nacelle/nacelle/compare/v1.2.0...HEAD
 [go-nacelle/config@v1.0.0]: https://github.com/go-nacelle/config/releases/tag/v1.0.0
 [go-nacelle/config@v1.1.0]: https://github.com/go-nacelle/config/releases/tag/v1.1.0
