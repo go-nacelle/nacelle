@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added config object to service container with the key `config`. This will cause a registration error in applications that previous used this key for a custom service. [TODO](TODO)
+
 ## [v1.2.0] - 2020-10-04
 
 ### Added
