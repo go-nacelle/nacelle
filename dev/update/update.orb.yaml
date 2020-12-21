@@ -1,0 +1,61 @@
+version: 2.1
+
+commands:
+  update_docs:
+    description: TODO
+    parameters:
+      source_repo:
+        type: string
+      target_repo:
+        type: string
+    steps:
+      - run:
+          name: Clone target repository
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/go-nacelle/<< parameters.target_repo >>.git
+      - run:
+          name: Update dependencies
+          command: |
+            cd "<< parameters.target_repo >>"
+            go run ./dev/scripts/update.sh
+            # TODO - somehow run that go binary
+
+            # If nothing changed, early out the rest of the job
+            # if [[ -z $(git diff) ]]; then circleci step halt; fi
+      - run:
+          name: Download GitHub CLI
+          command: |
+            version="1.0.0"
+            dir="gh_${version}_linux_amd64"
+
+            # Download GitHub CLI and put it in PATH
+            curl -L -o gh_cli.tar.gz https://github.com/cli/cli/releases/download/v${version}/${dir}.tar.gz
+            tar -xvzf gh_cli.tar.gz "${dir}/bin/gh"
+            sudo mv "${dir}/bin/hub" /usr/local/bin/gh
+            rm -rf gh_cli.tar.gz "${dir}"
+      - run:
+          name: Submit pull request
+          command: |
+            git config --global user.name "Eric Fritz"
+            git config --global user.email "eric@eric-fritz.com"
+
+            branch="sync-<< parameters.target_repo >>-${CIRCLE_SHA1:0:6}"
+            message="Sync documentation from go-nacelle/<< parameters.target_repo >>."
+
+            cd << parameters.target_repo >>
+
+            # Don't make a PR unless it would create a new branch and commit
+            if [[ -z $(git ls-remote --heads https://github.com/go-nacelle/<< parameters.target_repo >> "${branch}") ]]; then
+              git checkout -b "${branch}"
+              git commit -am "${message}"
+              git push origin "${branch}"
+              hub pull-request -m "${message}"
+            fi
+
+
+# -H, --head branch      The branch that contains commits for your pull request (default: current branch)
+# -t, --title string     Title for the pull request
+# -b, --body string      Body for the pull request
+# -l, --label name       Add labels by name
+
+
