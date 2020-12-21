@@ -93,14 +93,14 @@ func (bs *Bootstrapper) Boot() int {
 	logger.Info("Logging initialized")
 
 	health := NewHealth()
+	config := NewLoggingConfig(baseConfig, logger, bs.configMaskedKeys)
+	processContainer := NewProcessContainer()
 
 	serviceContainer := NewServiceContainer()
 	_ = serviceContainer.Set("health", health)
 	_ = serviceContainer.Set("logger", logger)
 	_ = serviceContainer.Set("services", serviceContainer)
-
-	config := NewLoggingConfig(baseConfig, logger, bs.configMaskedKeys)
-	processContainer := NewProcessContainer()
+	_ = serviceContainer.Set("config", config)
 
 	if err := bs.initFunc(processContainer, serviceContainer); err != nil {
 		logger.Error("Failed to run initialization function (%s)", err.Error())
