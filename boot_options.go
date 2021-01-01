@@ -1,6 +1,7 @@
 package nacelle
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-nacelle/log"
@@ -12,6 +13,11 @@ type LoggingInitFunc func(Config) (Logger, error)
 // BootstrapperConfigFunc is a function used to configure an instance of
 // a Bootstrapper.
 type BootstrapperConfigFunc func(*bootstrapperConfig)
+
+// WithContextFilter sets the context filter for the bootstrapper.
+func WithContextFilter(f func(ctx context.Context) context.Context) BootstrapperConfigFunc {
+	return func(c *bootstrapperConfig) { c.contextFilter = f }
+}
 
 // WithConfigSourcer sets the source that should be used for populating config structs.
 func WithConfigSourcer(configSourcer ConfigSourcer) BootstrapperConfigFunc {

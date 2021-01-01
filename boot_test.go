@@ -1,6 +1,7 @@
 package nacelle
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -12,7 +13,7 @@ func TestBoot(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
 		func(processes ProcessContainer, services ServiceContainer) error {
-			processes.RegisterInitializer(InitializerFunc(func(config Config) error {
+			processes.RegisterInitializer(InitializerFunc(func(ctx context.Context, config Config) error {
 				ran = true
 				return nil
 			}))
@@ -74,7 +75,7 @@ func TestRunnerError(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
 		func(processes ProcessContainer, services ServiceContainer) error {
-			processes.RegisterInitializer(InitializerFunc(func(config Config) error {
+			processes.RegisterInitializer(InitializerFunc(func(ctx context.Context, config Config) error {
 				return fmt.Errorf("oops")
 			}))
 
