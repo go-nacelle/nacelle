@@ -6,7 +6,7 @@
 
 - Added config object to service container with the key `config`. This will cause a registration error in applications that previous used this key for a custom service. [#7](https://github.com/go-nacelle/nacelle/pull/7)
 - Added `WithContextFilter`. [#10](https://github.com/go-nacelle/nacelle/pull/10)
-- Imported `Configurable`, `ConfigurationRegistry`, `WithInitializerContextFilter`, and `WithProcessContextFilter` from [go-nacelle/process](https://github.com/go-nacelle/process). [TODO]()(https://github.com/go-nacelle/nacelle/commit/TODO)
+- Imported `Configurable`, `ConfigurationRegistry`, `WithInitializerContextFilter`, and `WithProcessContextFilter` from [go-nacelle/process](https://github.com/go-nacelle/process). [#11](https://github.com/go-nacelle/nacelle/pull/11)
 
 ## [v1.2.0] - 2020-10-04
 
