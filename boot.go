@@ -1,6 +1,7 @@
 package nacelle
 
 import (
+	"context"
 	"os"
 
 	"github.com/go-nacelle/process"
@@ -10,6 +11,7 @@ import (
 type Bootstrapper struct {
 	configs           map[interface{}]interface{}
 	initFunc          AppInitFunc
+	contextFilter     func(ctx context.Context) context.Context
 	configSourcer     ConfigSourcer
 	configMaskedKeys  []string
 	loggingInitFunc   LoggingInitFunc
@@ -18,6 +20,7 @@ type Bootstrapper struct {
 }
 
 type bootstrapperConfig struct {
+	contextFilter     func(ctx context.Context) context.Context
 	configSourcer     ConfigSourcer
 	configMaskedKeys  []string
 	loggingInitFunc   LoggingInitFunc
@@ -36,7 +39,7 @@ type ServiceInitializerFunc func(config Config, container ServiceContainer) erro
 
 // WrapServiceInitializerFunc creates an InitializerFunc from a ServiceInitializerFunc and a container.
 func WrapServiceInitializerFunc(container ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
-	return InitializerFunc(func(config Config) error {
+	return InitializerFunc(func(ctx context.Context, config Config) error {
 		return f(config, container)
 	})
 }
@@ -58,6 +61,7 @@ func NewBootstrapper(
 
 	return &Bootstrapper{
 		initFunc:          initFunc,
+		contextFilter:     config.contextFilter,
 		configSourcer:     config.configSourcer,
 		configMaskedKeys:  config.configMaskedKeys,
 		loggingInitFunc:   config.loggingInitFunc,
@@ -117,8 +121,13 @@ func (bs *Bootstrapper) Boot() int {
 		)...,
 	)
 
+	ctx := context.Background()
+	if bs.contextFilter != nil {
+		ctx = bs.contextFilter(ctx)
+	}
+
 	statusCode := 0
-	for range runner.Run(config) {
+	for range runner.Run(ctx, config) {
 		statusCode = 1
 	}
 
