@@ -8,6 +8,10 @@
 - Added `WithContextFilter`. [#10](https://github.com/go-nacelle/nacelle/pull/10)
 - Imported `Configurable`, `ConfigurationRegistry`, `WithInitializerContextFilter`, and `WithProcessContextFilter` from [go-nacelle/process](https://github.com/go-nacelle/process). [#11](https://github.com/go-nacelle/nacelle/pull/11)
 
+### Changed
+
+- Changed signature of `ServiceInitializerFunc`. [#11](https://github.com/go-nacelle/nacelle/pull/11)
+
 ## [v1.2.0] - 2020-10-04
 
 ### Added
