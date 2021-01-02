@@ -13,7 +13,7 @@ func TestBoot(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
 		func(processes ProcessContainer, services ServiceContainer) error {
-			processes.RegisterInitializer(InitializerFunc(func(ctx context.Context, config Config) error {
+			processes.RegisterInitializer(InitializerFunc(func(ctx context.Context) error {
 				ran = true
 				return nil
 			}))
@@ -75,7 +75,7 @@ func TestRunnerError(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
 		func(processes ProcessContainer, services ServiceContainer) error {
-			processes.RegisterInitializer(InitializerFunc(func(ctx context.Context, config Config) error {
+			processes.RegisterInitializer(InitializerFunc(func(ctx context.Context) error {
 				return fmt.Errorf("oops")
 			}))
 
