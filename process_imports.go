@@ -13,23 +13,27 @@ type (
 	ProcessConfigFunc     = process.ProcessConfigFunc
 	ProcessContainer      = process.ProcessContainer
 	RunnerConfigFunc      = process.RunnerConfigFunc
+	Configurable          = process.Configurable
+	ConfigurationRegistry = process.ConfigurationRegistry
 )
 
 var (
-	NewHealth                  = process.NewHealth
-	NewParallelInitializer     = process.NewParallelInitializer
-	NewProcessContainer        = process.NewProcessContainer
-	WithHealthCheckInterval    = process.WithHealthCheckInterval
-	WithInitializerName        = process.WithInitializerName
-	WithInitializerLogFields   = process.WithInitializerLogFields
-	WithInitializerTimeout     = process.WithInitializerTimeout
-	WithPriority               = process.WithPriority
-	WithProcessInitTimeout     = process.WithProcessInitTimeout
-	WithProcessName            = process.WithProcessName
-	WithProcessLogFields       = process.WithProcessLogFields
-	WithProcessShutdownTimeout = process.WithProcessShutdownTimeout
-	WithProcessStartTimeout    = process.WithProcessStartTimeout
-	WithShutdownTimeout        = process.WithShutdownTimeout
-	WithSilentExit             = process.WithSilentExit
-	WithStartTimeout           = process.WithStartTimeout
+	NewHealth                    = process.NewHealth
+	NewParallelInitializer       = process.NewParallelInitializer
+	NewProcessContainer          = process.NewProcessContainer
+	WithHealthCheckInterval      = process.WithHealthCheckInterval
+	WithInitializerContextFilter = process.WithInitializerContextFilter
+	WithInitializerName          = process.WithInitializerName
+	WithInitializerLogFields     = process.WithInitializerLogFields
+	WithInitializerTimeout       = process.WithInitializerTimeout
+	WithPriority                 = process.WithPriority
+	WithProcessInitTimeout       = process.WithProcessInitTimeout
+	WithProcessContextFilter     = process.WithProcessContextFilter
+	WithProcessName              = process.WithProcessName
+	WithProcessLogFields         = process.WithProcessLogFields
+	WithProcessShutdownTimeout   = process.WithProcessShutdownTimeout
+	WithProcessStartTimeout      = process.WithProcessStartTimeout
+	WithShutdownTimeout          = process.WithShutdownTimeout
+	WithSilentExit               = process.WithSilentExit
+	WithStartTimeout             = process.WithStartTimeout
 )
