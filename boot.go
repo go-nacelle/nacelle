@@ -11,7 +11,6 @@ import (
 
 // Bootstrapper wraps the entrypoint to the program.
 type Bootstrapper struct {
-	configs           map[interface{}]interface{}
 	initFunc          AppInitFunc
 	contextFilter     func(ctx context.Context) context.Context
 	configSourcer     ConfigSourcer
@@ -127,10 +126,10 @@ func (bs *Bootstrapper) Boot() int {
 		ctx = bs.contextFilter(ctx)
 	}
 
-	runner.LoadConfig(config)
+	configs := loadConfig(processContainer, config, logger)
 
 	if showHelp {
-		description, err := runner.DescribeConfiguration(config, &log.Config{})
+		description, err := describeConfiguration(config, configs, logger, &log.Config{})
 		if err != nil {
 			LogEmergencyError("failed to describe configuration (%s)", err)
 			return 1
@@ -140,7 +139,7 @@ func (bs *Bootstrapper) Boot() int {
 		return 0
 	}
 
-	if runner.ValidateConfig(config) != nil {
+	if validateConfig(config, configs, logger) != nil {
 		return 1
 	}
 

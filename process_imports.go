@@ -12,8 +12,6 @@ type (
 	ProcessConfigFunc     = process.ProcessConfigFunc
 	ProcessContainer      = process.ProcessContainer
 	RunnerConfigFunc      = process.RunnerConfigFunc
-	Configurable          = process.Configurable
-	ConfigurationRegistry = process.ConfigurationRegistry
 )
 
 var (
