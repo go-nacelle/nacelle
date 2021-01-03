@@ -14,6 +14,10 @@
 
 - Changed signature of `ServiceInitializerFunc`. [#11](https://github.com/go-nacelle/nacelle/pull/11)
 
+### Removed
+
+- Removed mocks package. [#14](https://github.com/go-nacelle/nacelle/pull/14)
+
 ## [v1.2.0] - 2020-10-04
 
 ### Added
