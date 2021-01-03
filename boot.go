@@ -35,12 +35,12 @@ type bootstrapperConfig struct {
 type AppInitFunc func(ProcessContainer, ServiceContainer) error
 
 // ServiceInitializerFunc is an InitializerFunc with a service container argument.
-type ServiceInitializerFunc func(config Config, container ServiceContainer) error
+type ServiceInitializerFunc func(ctx context.Context, container ServiceContainer) error
 
 // WrapServiceInitializerFunc creates an InitializerFunc from a ServiceInitializerFunc and a container.
 func WrapServiceInitializerFunc(container ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
-	return InitializerFunc(func(ctx context.Context, config Config) error {
-		return f(config, container)
+	return InitializerFunc(func(ctx context.Context) error {
+		return f(ctx, container)
 	})
 }
 
@@ -126,8 +126,14 @@ func (bs *Bootstrapper) Boot() int {
 		ctx = bs.contextFilter(ctx)
 	}
 
+	runner.LoadConfig(config)
+
+	if runner.ValidateConfig(config) != nil {
+		return 1
+	}
+
 	statusCode := 0
-	for range runner.Run(ctx, config) {
+	for range runner.Run(ctx) {
 		statusCode = 1
 	}
 
