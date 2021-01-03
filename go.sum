@@ -30,6 +30,8 @@ github.com/go-nacelle/process v1.1.1-0.20210101190441-e29bf1051f83 h1:cBfJfhJDWg
 github.com/go-nacelle/process v1.1.1-0.20210101190441-e29bf1051f83/go.mod h1:xudENDgY5ip04N64rAP+yX6yJzBlecA17DQNCtTgK6E=
 github.com/go-nacelle/process v1.1.1-0.20210102214954-3d4163e6bdc2 h1:asyNFk8V/UA64LgUYl4fFXZgCufV4EJcO0yNDJXOYWw=
 github.com/go-nacelle/process v1.1.1-0.20210102214954-3d4163e6bdc2/go.mod h1:SZzu0vUgsevvN110v/kk4Lt7bg//SqUHn+rGKZNF+5s=
+github.com/go-nacelle/process v1.1.1-0.20210103075008-f833656249e1 h1:nnhUxnDwduGfRBDkXYERKGH+JW9BajRTG2Is1W40wvM=
+github.com/go-nacelle/process v1.1.1-0.20210103075008-f833656249e1/go.mod h1:SZzu0vUgsevvN110v/kk4Lt7bg//SqUHn+rGKZNF+5s=
 github.com/go-nacelle/service v1.0.2 h1:r9nb1v5GiCpCpIzRBYUYEC9Mn/Mq5Ehn/v3DlXztbtc=
 github.com/go-nacelle/service v1.0.2/go.mod h1:cxs4P9YAi9x5DezOOMajdEHcw2pvblyb44i4rU54rYU=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=

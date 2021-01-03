@@ -8,7 +8,6 @@ type (
 	Finalizer             = process.Finalizer
 	InitializerConfigFunc = process.InitializerConfigFunc
 	InitializerFunc       = process.InitializerFunc
-	ParallelInitializer   = process.ParallelInitializer
 	Process               = process.Process
 	ProcessConfigFunc     = process.ProcessConfigFunc
 	ProcessContainer      = process.ProcessContainer
@@ -19,14 +18,14 @@ type (
 
 var (
 	NewHealth                    = process.NewHealth
-	NewParallelInitializer       = process.NewParallelInitializer
 	NewProcessContainer          = process.NewProcessContainer
 	WithHealthCheckInterval      = process.WithHealthCheckInterval
+	WithInitializerPriority      = process.WithInitializerPriority
 	WithInitializerContextFilter = process.WithInitializerContextFilter
 	WithInitializerName          = process.WithInitializerName
 	WithInitializerLogFields     = process.WithInitializerLogFields
 	WithInitializerTimeout       = process.WithInitializerTimeout
-	WithPriority                 = process.WithPriority
+	WithProcessPriority          = process.WithProcessPriority
 	WithProcessInitTimeout       = process.WithProcessInitTimeout
 	WithProcessContextFilter     = process.WithProcessContextFilter
 	WithProcessName              = process.WithProcessName
