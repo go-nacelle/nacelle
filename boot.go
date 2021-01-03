@@ -165,7 +165,7 @@ func (bs *Bootstrapper) BootAndExit() {
 	os.Exit(bs.Boot())
 }
 
-func (bs *Bootstrapper) makeLogger(baseConfig Config, enable bool) (Logger, error) {
+func (bs *Bootstrapper) makeLogger(baseConfig *Config, enable bool) (Logger, error) {
 	if !enable {
 		return NewNilLogger(), nil
 	}

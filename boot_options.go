@@ -8,7 +8,7 @@ import (
 )
 
 // LoggingInitFunc creates a factory from a config object.
-type LoggingInitFunc func(Config) (Logger, error)
+type LoggingInitFunc func(*Config) (Logger, error)
 
 // BootstrapperConfigFunc is a function used to configure an instance of
 // a Bootstrapper.
@@ -44,7 +44,7 @@ func WithRunnerOptions(configs ...RunnerConfigFunc) BootstrapperConfigFunc {
 	return func(c *bootstrapperConfig) { c.runnerConfigFuncs = configs }
 }
 
-func defaultLoggingInitFunc(config Config) (Logger, error) {
+func defaultLoggingInitFunc(config *Config) (Logger, error) {
 	c := &log.Config{}
 	if err := config.Load(c); err != nil {
 		return nil, fmt.Errorf("could not load logging config (%s)", err.Error())

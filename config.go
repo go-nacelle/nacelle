@@ -13,7 +13,7 @@ import (
 type ConfigurationRegistry interface {
 	// Register populates the given configuration object. References to the
 	// object and tag modifiers may be held for later reporting.
-	Register(target interface{}, modifiers ...config.TagModifier)
+	Register(target interface{}, modifiers ...TagModifier)
 }
 
 type Configurable interface {
@@ -35,11 +35,11 @@ type registeredConfig struct {
 	meta      namedInitializer
 	target    interface{}
 	loadErr   error
-	modifiers []config.TagModifier
+	modifiers []TagModifier
 }
 
-func newConfigurationRegistry(c config.Config, meta namedInitializer, f func(registeredConfig)) ConfigurationRegistry {
-	return configurationRegisterFunc(func(target interface{}, modifiers ...config.TagModifier) {
+func newConfigurationRegistry(c *Config, meta namedInitializer, f func(registeredConfig)) ConfigurationRegistry {
+	return configurationRegisterFunc(func(target interface{}, modifiers ...TagModifier) {
 		f(registeredConfig{
 			meta:      meta,
 			target:    target,
@@ -49,13 +49,13 @@ func newConfigurationRegistry(c config.Config, meta namedInitializer, f func(reg
 	})
 }
 
-type configurationRegisterFunc func(target interface{}, modifiers ...config.TagModifier)
+type configurationRegisterFunc func(target interface{}, modifiers ...TagModifier)
 
-func (f configurationRegisterFunc) Register(target interface{}, modifiers ...config.TagModifier) {
+func (f configurationRegisterFunc) Register(target interface{}, modifiers ...TagModifier) {
 	f(target, modifiers...)
 }
 
-func loadConfig(processes ProcessContainer, config config.Config, logger Logger) []registeredConfig {
+func loadConfig(processes ProcessContainer, config *Config, logger Logger) []registeredConfig {
 	logger.Info("Loading configuration")
 
 	var configs []registeredConfig
@@ -86,7 +86,7 @@ func loadConfig(processes ProcessContainer, config config.Config, logger Logger)
 	return configs
 }
 
-func validateConfig(config config.Config, configs []registeredConfig, logger Logger) error {
+func validateConfig(config *Config, configs []registeredConfig, logger Logger) error {
 	logger.Info("Validating configuration")
 
 	var errors []error
@@ -122,7 +122,7 @@ func validateConfig(config config.Config, configs []registeredConfig, logger Log
 	return nil
 }
 
-func describeConfiguration(config config.Config, configs []registeredConfig, logger Logger, additionalConfigurationTargets ...interface{}) (string, error) {
+func describeConfiguration(config *Config, configs []registeredConfig, logger Logger, additionalConfigurationTargets ...interface{}) (string, error) {
 	var descriptions []string
 	for _, c := range additionalConfigurationTargets {
 		description, err := config.Describe(c)
