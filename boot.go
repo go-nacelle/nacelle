@@ -2,8 +2,10 @@ package nacelle
 
 import (
 	"context"
+	"fmt"
 	"os"
 
+	"github.com/go-nacelle/log"
 	"github.com/go-nacelle/process"
 )
 
@@ -74,20 +76,19 @@ func NewBootstrapper(
 // method does not return in any meaningful way (it blocks until
 // the associated process runner has completed).
 func (bs *Bootstrapper) Boot() int {
+	showHelp := showHelp()
+
 	baseConfig := NewConfig(bs.configSourcer)
 	if err := baseConfig.Init(); err != nil {
 		LogEmergencyError("failed to initialize config (%s)", err)
 		return 1
 	}
 
-	logger, err := bs.loggingInitFunc(baseConfig)
+	logger, err := bs.makeLogger(baseConfig, !showHelp)
 	if err != nil {
 		LogEmergencyError("failed to initialize logging (%s)", err)
 		return 1
 	}
-
-	logger = logger.WithFields(bs.loggingFields)
-
 	defer func() {
 		if err := logger.Sync(); err != nil {
 			LogEmergencyError("failed to sync logs on shutdown (%s)", err)
@@ -128,6 +129,17 @@ func (bs *Bootstrapper) Boot() int {
 
 	runner.LoadConfig(config)
 
+	if showHelp {
+		description, err := runner.DescribeConfiguration(config, &log.Config{})
+		if err != nil {
+			LogEmergencyError("failed to describe configuration (%s)", err)
+			return 1
+		}
+
+		fmt.Println(description)
+		return 0
+	}
+
 	if runner.ValidateConfig(config) != nil {
 		return 1
 	}
@@ -145,4 +157,27 @@ func (bs *Bootstrapper) Boot() int {
 // method does not return.
 func (bs *Bootstrapper) BootAndExit() {
 	os.Exit(bs.Boot())
+}
+
+func (bs *Bootstrapper) makeLogger(baseConfig Config, enable bool) (Logger, error) {
+	if !enable {
+		return NewNilLogger(), nil
+	}
+
+	logger, err := bs.loggingInitFunc(baseConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return logger.WithFields(bs.loggingFields), nil
+}
+
+func showHelp() bool {
+	for _, arg := range os.Args[1:] {
+		if arg == "--help" {
+			return true
+		}
+	}
+
+	return false
 }
