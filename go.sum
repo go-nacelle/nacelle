@@ -24,6 +24,8 @@ github.com/go-nacelle/config v1.2.2-0.20210102195033-4bb6981959bc h1:kQswhHanQpd
 github.com/go-nacelle/config v1.2.2-0.20210102195033-4bb6981959bc/go.mod h1:DB9k/8/HLJoHHnt8k4X8UzaEUTc9o1q4QD0RZaJje7I=
 github.com/go-nacelle/log v1.1.2 h1:S4gPyQ9iGbolRya5EDcxk9SO3k1bA0UCZ71jCjVI/o0=
 github.com/go-nacelle/log v1.1.2/go.mod h1:LlcSgE+K/L7JWqVXGytuUcO1vwRC4eJAtoBND3DimjI=
+github.com/go-nacelle/log v1.1.3-0.20201221212124-3bec0a4c9b6d h1:d7uRmKDFcoe5kpHwz5EhzUkegc2WWbGajZEAZsXK9X8=
+github.com/go-nacelle/log v1.1.3-0.20201221212124-3bec0a4c9b6d/go.mod h1:LlcSgE+K/L7JWqVXGytuUcO1vwRC4eJAtoBND3DimjI=
 github.com/go-nacelle/process v1.1.0 h1:u9wjNYlWtXQ3tgsoflgnX5L2GU2L1kEo3J4QkFTLiiY=
 github.com/go-nacelle/process v1.1.0/go.mod h1:xudENDgY5ip04N64rAP+yX6yJzBlecA17DQNCtTgK6E=
 github.com/go-nacelle/process v1.1.1-0.20210101190441-e29bf1051f83 h1:cBfJfhJDWgJjzKsYkoW8vZ9gXAfAu7f+ZaKHk+yDdwc=
