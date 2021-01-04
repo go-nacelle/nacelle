@@ -123,7 +123,7 @@ func (bs *Bootstrapper) Boot() int {
 		processContainer,
 		append(
 			[]process.RunnerConfigFunc{
-				process.WithLogger(logger),
+				process.WithLogger(&logAdapter{logger}),
 				process.WithHealth(health),
 				process.WithInjectHook(newInjectHook(serviceContainer, logger)),
 			},
@@ -183,7 +183,7 @@ func (bs *Bootstrapper) makeLogger(baseConfig *Config, enable bool) (Logger, err
 
 func newInjectHook(serviceContainer *ServiceContainer, logger Logger) process.InjectHook {
 	return func(injectable process.NamedInjectable) error {
-		serviceContainer, err := replaceLoggerService(serviceContainer, logger.WithFields(injectable.LogFields()))
+		serviceContainer, err := replaceLoggerService(serviceContainer, logger.WithFields(LogFields(injectable.LogFields())))
 		if err != nil {
 			return err
 		}
@@ -220,4 +220,12 @@ func showHelp() bool {
 	}
 
 	return false
+}
+
+type logAdapter struct {
+	log.Logger
+}
+
+func (adapter *logAdapter) WithFields(fields process.LogFields) process.Logger {
+	return &logAdapter{adapter.Logger.WithFields(LogFields(fields))}
 }
