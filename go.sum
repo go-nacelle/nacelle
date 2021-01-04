@@ -26,8 +26,12 @@ github.com/go-nacelle/log v1.1.3-0.20201221212124-3bec0a4c9b6d h1:d7uRmKDFcoe5kp
 github.com/go-nacelle/log v1.1.3-0.20201221212124-3bec0a4c9b6d/go.mod h1:LlcSgE+K/L7JWqVXGytuUcO1vwRC4eJAtoBND3DimjI=
 github.com/go-nacelle/process v1.1.1-0.20210103180020-462c248d4222 h1:f5YUooqKR11o9SvH+gYLjLN7c7DW7ZKoOSWycAAYTNc=
 github.com/go-nacelle/process v1.1.1-0.20210103180020-462c248d4222/go.mod h1:0K6TE8AWgEYVq1be+tBfiHYUlFLURoSnZJtP1Oc3fYU=
+github.com/go-nacelle/process v1.1.1-0.20210104035326-3c17636064e0 h1:xTfWKs5kVgfAjrcpW7fHVdNprmwED5poomEkvI6CSF4=
+github.com/go-nacelle/process v1.1.1-0.20210104035326-3c17636064e0/go.mod h1:bp9NZgDmxkpt8m3eKo3Btlu38Ge6OiPKyuGnEMV2dDA=
 github.com/go-nacelle/service v1.0.2 h1:r9nb1v5GiCpCpIzRBYUYEC9Mn/Mq5Ehn/v3DlXztbtc=
 github.com/go-nacelle/service v1.0.2/go.mod h1:cxs4P9YAi9x5DezOOMajdEHcw2pvblyb44i4rU54rYU=
+github.com/go-nacelle/service v1.0.3-0.20210104035047-f3772ef7d912 h1:CwhHF3zYXchqO1l1sNqDWa9fxsdAsxRPFavzKRlDf0E=
+github.com/go-nacelle/service v1.0.3-0.20210104035047-f3772ef7d912/go.mod h1:cxs4P9YAi9x5DezOOMajdEHcw2pvblyb44i4rU54rYU=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.4.0-rc.1/go.mod h1:ceaxUfeHdC40wWswd/P6IGgMaK3YpKi5j83Wpe3EHw8=
 github.com/golang/protobuf v1.4.0-rc.1.0.20200221234624-67d41d38c208/go.mod h1:xKAWHe0F5eneWXFV3EuXVDTCmh+JuBKY0li0aMyXATA=
