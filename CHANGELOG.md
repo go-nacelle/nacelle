@@ -13,6 +13,8 @@
 ### Changed
 
 - Changed signature of `ServiceInitializerFunc`. [#11](https://github.com/go-nacelle/nacelle/pull/11)
+- Changed signature of `AppInitFunc`, `ServiceInitializerFunc`, and `WrapServiceInitializerFunc`. [#17](https://github.com/go-nacelle/nacelle/pull/17)
+- Replaced `Overlay` with `NewServiceContainerOverlay`. [#17](https://github.com/go-nacelle/nacelle/pull/17)
 
 ### Removed
 
