@@ -183,23 +183,8 @@ func (bs *Bootstrapper) makeLogger(baseConfig *Config, enable bool) (Logger, err
 
 func newInjectHook(serviceContainer *ServiceContainer, logger Logger) process.InjectHook {
 	return func(injectable process.NamedInjectable) error {
-		services := serviceContainer
-
-		overlay := func(key, service interface{}) (err error) {
-			services, err = serviceContainer.WithValues(map[interface{}]interface{}{key: service})
-			return err
-		}
-
-		// Tag the logger with any log fields registered to this
-		// initializer or process and update the service container
-		// so that all downstream injections have the tagged logger.
-		if err := overlay("logger", logger.WithFields(injectable.LogFields())); err != nil {
-			return err
-		}
-
-		// Update the service container to have an update-to-date
-		// self reference.
-		if err := overlay("services", services); err != nil {
+		serviceContainer, err := replaceLoggerService(serviceContainer, logger.WithFields(injectable.LogFields()))
+		if err != nil {
 			return err
 		}
 
@@ -208,12 +193,14 @@ func newInjectHook(serviceContainer *ServiceContainer, logger Logger) process.In
 }
 
 func replaceLoggerService(serviceContainer *ServiceContainer, logger Logger) (*ServiceContainer, error) {
-	serviceContainer, err := overlay(service, "logger", logger)
+	// Update logger instance
+	serviceContainer, err := overlay(serviceContainer, "logger", logger)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceContainer, err := overlay(service, "services", serviceContainer)
+	// Update self-reference
+	serviceContainer, err = overlay(serviceContainer, "services", serviceContainer)
 	if err != nil {
 		return nil, err
 	}
