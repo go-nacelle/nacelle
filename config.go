@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-nacelle/config"
-	"github.com/go-nacelle/log"
+	"github.com/go-nacelle/process"
 )
 
 // ConfigurationRegistry is a wrapper around a bare configuration loader object.
@@ -26,19 +26,14 @@ type Configurable interface {
 	RegisterConfiguration(registry ConfigurationRegistry)
 }
 
-type namedInitializer interface {
-	Name() string
-	LogFields() log.LogFields
-}
-
 type registeredConfig struct {
-	meta      namedInitializer
+	meta      process.NamedInjectable
 	target    interface{}
 	loadErr   error
 	modifiers []TagModifier
 }
 
-func newConfigurationRegistry(c *Config, meta namedInitializer, f func(registeredConfig)) ConfigurationRegistry {
+func newConfigurationRegistry(c *Config, meta process.NamedInjectable, f func(registeredConfig)) ConfigurationRegistry {
 	return configurationRegisterFunc(func(target interface{}, modifiers ...TagModifier) {
 		f(registeredConfig{
 			meta:      meta,
@@ -91,7 +86,7 @@ func validateConfig(config *Config, configs []registeredConfig, logger Logger) e
 
 	var errors []error
 	for _, c := range configs {
-		logger := logger.WithFields(c.meta.LogFields())
+		logger := logger.WithFields(LogFields(c.meta.LogFields()))
 
 		if c.loadErr != nil {
 			logger.Error(
