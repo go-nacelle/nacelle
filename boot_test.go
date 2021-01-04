@@ -63,7 +63,7 @@ func TestLoggingInitError(t *testing.T) {
 		func(processes ProcessContainer, services ServiceContainer) error {
 			return nil
 		},
-		WithLoggingInitFunc(func(Config) (Logger, error) {
+		WithLoggingInitFunc(func(*Config) (Logger, error) {
 			return nil, fmt.Errorf("oops")
 		}),
 	)

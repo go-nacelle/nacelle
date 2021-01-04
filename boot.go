@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-nacelle/config"
 	"github.com/go-nacelle/log"
 	"github.com/go-nacelle/process"
 )
@@ -77,13 +78,19 @@ func NewBootstrapper(
 func (bs *Bootstrapper) Boot() int {
 	showHelp := showHelp()
 
-	baseConfig := NewConfig(bs.configSourcer)
-	if err := baseConfig.Init(); err != nil {
+	shim := &logShim{}
+	config := NewConfig(
+		bs.configSourcer,
+		config.WithLogger(shim),
+		config.WithMaskedKeys(bs.configMaskedKeys),
+	)
+
+	if err := config.Init(); err != nil {
 		LogEmergencyError("failed to initialize config (%s)", err)
 		return 1
 	}
 
-	logger, err := bs.makeLogger(baseConfig, !showHelp)
+	logger, err := bs.makeLogger(config, !showHelp)
 	if err != nil {
 		LogEmergencyError("failed to initialize logging (%s)", err)
 		return 1
@@ -94,10 +101,10 @@ func (bs *Bootstrapper) Boot() int {
 		}
 	}()
 
+	shim.setLogger(logger)
 	logger.Info("Logging initialized")
 
 	health := NewHealth()
-	config := NewLoggingConfig(baseConfig, logger, bs.configMaskedKeys)
 	processContainer := NewProcessContainer()
 
 	serviceContainer := NewServiceContainer()
@@ -158,7 +165,7 @@ func (bs *Bootstrapper) BootAndExit() {
 	os.Exit(bs.Boot())
 }
 
-func (bs *Bootstrapper) makeLogger(baseConfig Config, enable bool) (Logger, error) {
+func (bs *Bootstrapper) makeLogger(baseConfig *Config, enable bool) (Logger, error) {
 	if !enable {
 		return NewNilLogger(), nil
 	}

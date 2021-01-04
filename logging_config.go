@@ -1,21 +1,24 @@
 package nacelle
 
-import "github.com/go-nacelle/config"
+import "sync"
 
 type logShim struct {
+	sync.RWMutex
 	logger Logger
 }
 
-var newLoggingConfig = config.NewLoggingConfig
+func (s *logShim) setLogger(logger Logger) {
+	s.Lock()
+	defer s.Unlock()
 
-func (s *logShim) Printf(format string, args ...interface{}) {
-	s.logger.Info(format, args...)
+	s.logger = logger
 }
 
-func NewLoggingConfig(config Config, logger Logger, maskedKeys []string) Config {
-	return newLoggingConfig(
-		config,
-		&logShim{logger},
-		maskedKeys,
-	)
+func (s *logShim) Printf(format string, args ...interface{}) {
+	s.RLock()
+	defer s.RUnlock()
+
+	if s.logger != nil {
+		s.logger.Info(format, args...)
+	}
 }
