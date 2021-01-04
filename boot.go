@@ -8,6 +8,7 @@ import (
 	"github.com/go-nacelle/config"
 	"github.com/go-nacelle/log"
 	"github.com/go-nacelle/process"
+	"github.com/go-nacelle/service"
 )
 
 // Bootstrapper wraps the entrypoint to the program.
@@ -120,11 +121,13 @@ func (bs *Bootstrapper) Boot() int {
 
 	runner := process.NewRunner(
 		processContainer,
-		serviceContainer,
-		health,
 		append(
-			bs.runnerConfigFuncs,
-			process.WithLogger(logger),
+			[]process.RunnerConfigFunc{
+				process.WithLogger(logger),
+				process.WithHealth(health),
+				process.WithInjectHook(newInjectHook(serviceContainer, logger)),
+			},
+			bs.runnerConfigFuncs...,
 		)...,
 	)
 
@@ -176,6 +179,50 @@ func (bs *Bootstrapper) makeLogger(baseConfig *Config, enable bool) (Logger, err
 	}
 
 	return logger.WithFields(bs.loggingFields), nil
+}
+
+func newInjectHook(serviceContainer *ServiceContainer, logger Logger) process.InjectHook {
+	return func(injectable process.NamedInjectable) error {
+		services := serviceContainer
+
+		overlay := func(key, service interface{}) (err error) {
+			services, err = serviceContainer.WithValues(map[interface{}]interface{}{key: service})
+			return err
+		}
+
+		// Tag the logger with any log fields registered to this
+		// initializer or process and update the service container
+		// so that all downstream injections have the tagged logger.
+		if err := overlay("logger", logger.WithFields(injectable.LogFields())); err != nil {
+			return err
+		}
+
+		// Update the service container to have an update-to-date
+		// self reference.
+		if err := overlay("services", services); err != nil {
+			return err
+		}
+
+		return service.Inject(serviceContainer, injectable.Wrapped())
+	}
+}
+
+func replaceLoggerService(serviceContainer *ServiceContainer, logger Logger) (*ServiceContainer, error) {
+	serviceContainer, err := overlay(service, "logger", logger)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceContainer, err := overlay(service, "services", serviceContainer)
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceContainer, nil
+}
+
+func overlay(serviceContainer *ServiceContainer, key, service interface{}) (*ServiceContainer, error) {
+	return serviceContainer.WithValues(map[interface{}]interface{}{key: service})
 }
 
 func showHelp() bool {

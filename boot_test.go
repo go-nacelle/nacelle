@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-nacelle/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +37,7 @@ func TestDefaultServices(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
 		func(processes ProcessContainer, services *ServiceContainer) error {
-			return services.Inject(serviceChecker)
+			return service.Inject(services, serviceChecker)
 		},
 	)
 
