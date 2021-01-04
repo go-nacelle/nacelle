@@ -8,6 +8,7 @@ import (
 	"github.com/go-nacelle/config"
 	"github.com/go-nacelle/log"
 	"github.com/go-nacelle/process"
+	"github.com/go-nacelle/service"
 )
 
 // Bootstrapper wraps the entrypoint to the program.
@@ -34,13 +35,13 @@ type bootstrapperConfig struct {
 // configuration loading, sanity checks, and setting up loggers. This
 // function should register initializers and processes and inject values
 // into the service container where necessary.
-type AppInitFunc func(ProcessContainer, ServiceContainer) error
+type AppInitFunc func(ProcessContainer, *ServiceContainer) error
 
 // ServiceInitializerFunc is an InitializerFunc with a service container argument.
-type ServiceInitializerFunc func(ctx context.Context, container ServiceContainer) error
+type ServiceInitializerFunc func(ctx context.Context, container *ServiceContainer) error
 
 // WrapServiceInitializerFunc creates an InitializerFunc from a ServiceInitializerFunc and a container.
-func WrapServiceInitializerFunc(container ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
+func WrapServiceInitializerFunc(container *ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
 	return InitializerFunc(func(ctx context.Context) error {
 		return f(ctx, container)
 	})
@@ -120,11 +121,13 @@ func (bs *Bootstrapper) Boot() int {
 
 	runner := process.NewRunner(
 		processContainer,
-		serviceContainer,
-		health,
 		append(
-			bs.runnerConfigFuncs,
-			process.WithLogger(logger),
+			[]process.RunnerConfigFunc{
+				process.WithLogger(logger),
+				process.WithHealth(health),
+				process.WithInjectHook(newInjectHook(serviceContainer, logger)),
+			},
+			bs.runnerConfigFuncs...,
 		)...,
 	)
 
@@ -176,6 +179,37 @@ func (bs *Bootstrapper) makeLogger(baseConfig *Config, enable bool) (Logger, err
 	}
 
 	return logger.WithFields(bs.loggingFields), nil
+}
+
+func newInjectHook(serviceContainer *ServiceContainer, logger Logger) process.InjectHook {
+	return func(injectable process.NamedInjectable) error {
+		serviceContainer, err := replaceLoggerService(serviceContainer, logger.WithFields(injectable.LogFields()))
+		if err != nil {
+			return err
+		}
+
+		return service.Inject(serviceContainer, injectable.Wrapped())
+	}
+}
+
+func replaceLoggerService(serviceContainer *ServiceContainer, logger Logger) (*ServiceContainer, error) {
+	// Update logger instance
+	serviceContainer, err := overlay(serviceContainer, "logger", logger)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update self-reference
+	serviceContainer, err = overlay(serviceContainer, "services", serviceContainer)
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceContainer, nil
+}
+
+func overlay(serviceContainer *ServiceContainer, key, service interface{}) (*ServiceContainer, error) {
+	return serviceContainer.WithValues(map[interface{}]interface{}{key: service})
 }
 
 func showHelp() bool {
