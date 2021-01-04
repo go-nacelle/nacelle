@@ -12,7 +12,3 @@ require (
 	github.com/stretchr/testify v1.6.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-
-replace github.com/go-nacelle/service => ../service
-
-replace github.com/go-nacelle/process => ../process
