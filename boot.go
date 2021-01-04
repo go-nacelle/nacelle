@@ -34,13 +34,13 @@ type bootstrapperConfig struct {
 // configuration loading, sanity checks, and setting up loggers. This
 // function should register initializers and processes and inject values
 // into the service container where necessary.
-type AppInitFunc func(ProcessContainer, ServiceContainer) error
+type AppInitFunc func(ProcessContainer, *ServiceContainer) error
 
 // ServiceInitializerFunc is an InitializerFunc with a service container argument.
-type ServiceInitializerFunc func(ctx context.Context, container ServiceContainer) error
+type ServiceInitializerFunc func(ctx context.Context, container *ServiceContainer) error
 
 // WrapServiceInitializerFunc creates an InitializerFunc from a ServiceInitializerFunc and a container.
-func WrapServiceInitializerFunc(container ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
+func WrapServiceInitializerFunc(container *ServiceContainer, f ServiceInitializerFunc) InitializerFunc {
 	return InitializerFunc(func(ctx context.Context) error {
 		return f(ctx, container)
 	})

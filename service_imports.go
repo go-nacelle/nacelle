@@ -2,9 +2,9 @@ package nacelle
 
 import "github.com/go-nacelle/service"
 
-type ServiceContainer = service.ServiceContainer
+type ServiceContainer = service.Container
 
 var (
-	NewServiceContainer = service.NewServiceContainer
-	Overlay             = service.Overlay
+	NewServiceContainer        = service.New
+	NewServiceContainerOverlay = service.NewOverlay
 )
