@@ -178,7 +178,7 @@
 
 - Migrated from [efritz/nacelle](https://github.com/efritz/nacelle).
 
-[Unreleased]: https://github.com/go-nacelle/nacelle/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/go-nacelle/nacelle/compare/v2.0.0...HEAD
 [go-nacelle/config@v1.0.0]: https://github.com/go-nacelle/config/releases/tag/v1.0.0
 [go-nacelle/config@v1.1.0]: https://github.com/go-nacelle/config/releases/tag/v1.1.0
 [go-nacelle/config@v1.2.0]: https://github.com/go-nacelle/config/releases/tag/v1.2.0
@@ -205,3 +205,4 @@
 [v1.1.3]: https://github.com/go-nacelle/nacelle/compare/v1.1.2...v1.1.3
 [v1.1.4]: https://github.com/go-nacelle/nacelle/compare/v1.1.3...v1.1.4
 [v1.2.0]: https://github.com/go-nacelle/nacelle/compare/v1.1.4...v1.2.0
+[v2.0.0]: https://github.com/go-nacelle/nacelle/compare/v1.2.0...v2.0.0
