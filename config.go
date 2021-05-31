@@ -27,13 +27,13 @@ type Configurable interface {
 }
 
 type registeredConfig struct {
-	meta      process.NamedInjectable
+	meta      *process.Meta
 	target    interface{}
 	loadErr   error
 	modifiers []TagModifier
 }
 
-func newConfigurationRegistry(c *Config, meta process.NamedInjectable, f func(registeredConfig)) ConfigurationRegistry {
+func newConfigurationRegistry(c *Config, meta *process.Meta, f func(registeredConfig)) ConfigurationRegistry {
 	return configurationRegisterFunc(func(target interface{}, modifiers ...TagModifier) {
 		f(registeredConfig{
 			meta:      meta,
@@ -50,31 +50,17 @@ func (f configurationRegisterFunc) Register(target interface{}, modifiers ...Tag
 	f(target, modifiers...)
 }
 
-func loadConfig(processes ProcessContainer, config *Config, logger Logger) []registeredConfig {
+func loadConfig(processes *ProcessContainer, config *Config, logger Logger) []registeredConfig {
 	logger.Info("Loading configuration")
 
 	var configs []registeredConfig
-	for i := 0; i < processes.NumInitializerPriorities(); i++ {
-		for _, initializer := range processes.GetInitializersAtPriorityIndex(i) {
-			if configurable, ok := initializer.Wrapped().(Configurable); ok {
-				registry := newConfigurationRegistry(config, initializer, func(config registeredConfig) {
-					configs = append(configs, config)
-				})
+	for _, meta := range processes.Meta() {
+		if configurable, ok := meta.Wrapped().(Configurable); ok {
+			registry := newConfigurationRegistry(config, meta, func(config registeredConfig) {
+				configs = append(configs, config)
+			})
 
-				configurable.RegisterConfiguration(registry)
-			}
-		}
-	}
-
-	for i := 0; i < processes.NumProcessPriorities(); i++ {
-		for _, process := range processes.GetProcessesAtPriorityIndex(i) {
-			if configurable, ok := process.Wrapped().(Configurable); ok {
-				registry := newConfigurationRegistry(config, process, func(config registeredConfig) {
-					configs = append(configs, config)
-				})
-
-				configurable.RegisterConfiguration(registry)
-			}
+			configurable.RegisterConfiguration(registry)
 		}
 	}
 
@@ -86,7 +72,7 @@ func validateConfig(config *Config, configs []registeredConfig, logger Logger) e
 
 	var errors []error
 	for _, c := range configs {
-		logger := logger.WithFields(LogFields(c.meta.LogFields()))
+		logger := logger.WithFields(LogFields(c.meta.Metadata()))
 
 		if c.loadErr != nil {
 			logger.Error(
