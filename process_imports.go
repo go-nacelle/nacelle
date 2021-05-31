@@ -3,34 +3,37 @@ package nacelle
 import "github.com/go-nacelle/process/v2"
 
 type (
-	Health                = process.Health
-	Initializer           = process.Initializer
-	Finalizer             = process.Finalizer
-	InitializerConfigFunc = process.InitializerConfigFunc
-	InitializerFunc       = process.InitializerFunc
-	Process               = process.Process
-	ProcessConfigFunc     = process.ProcessConfigFunc
-	ProcessContainer      = process.ProcessContainer
-	RunnerConfigFunc      = process.RunnerConfigFunc
+	Health                  = process.Health
+	HealthComponentStatus   = process.HealthComponentStatus
+	Injecter                = process.Injecter
+	Initializer             = process.Initializer
+	Runner                  = process.Runner
+	Stopper                 = process.Stopper
+	Finalizer               = process.Finalizer
+	InitializerFunc         = process.InitializerFunc
+	InjecterFunc            = process.InjecterFunc
+	RunnerFunc              = process.RunnerFunc
+	ProcessContainer        = process.Container
+	ProcessContainerBuilder = process.ContainerBuilder
+	MachineConfigFunc       = process.MachineConfigFunc
+	MetaConfigFunc          = process.MetaConfigFunc
 )
 
 var (
-	NewHealth                    = process.NewHealth
-	NewProcessContainer          = process.NewProcessContainer
-	WithHealthCheckInterval      = process.WithHealthCheckInterval
-	WithInitializerPriority      = process.WithInitializerPriority
-	WithInitializerContextFilter = process.WithInitializerContextFilter
-	WithInitializerName          = process.WithInitializerName
-	WithInitializerLogFields     = process.WithInitializerLogFields
-	WithInitializerTimeout       = process.WithInitializerTimeout
-	WithProcessPriority          = process.WithProcessPriority
-	WithProcessInitTimeout       = process.WithProcessInitTimeout
-	WithProcessContextFilter     = process.WithProcessContextFilter
-	WithProcessName              = process.WithProcessName
-	WithProcessLogFields         = process.WithProcessLogFields
-	WithProcessShutdownTimeout   = process.WithProcessShutdownTimeout
-	WithProcessStartTimeout      = process.WithProcessStartTimeout
-	WithShutdownTimeout          = process.WithShutdownTimeout
-	WithSilentExit               = process.WithSilentExit
-	WithStartTimeout             = process.WithStartTimeout
+	NewHealth               = process.NewHealth
+	WithInjecter            = process.WithInjecter
+	WithHealth              = process.WithHealth
+	WithMetaHealth          = process.WithMetaHealth
+	WithMetaHealthKey       = process.WithMetaHealthKey
+	WithMetaContext         = process.WithMetaContext
+	WithMetaName            = process.WithMetaName
+	WithMetaPriority        = process.WithMetaPriority
+	WithMetadata            = process.WithMetadata
+	WithEarlyExit           = process.WithEarlyExit
+	WithMetaInitTimeout     = process.WithMetaInitTimeout
+	WithMetaStartupTimeout  = process.WithMetaStartupTimeout
+	WithMetaStopTimeout     = process.WithMetaStopTimeout
+	WithMetaShutdownTimeout = process.WithMetaShutdownTimeout
+	WithMetaFinalizeTimeout = process.WithMetaFinalizeTimeout
+	WithMetaLogger          = process.WithMetaLogger
 )

@@ -22,6 +22,6 @@ var (
 	LogEmergencyError  = log.LogEmergencyError
 	LogEmergencyErrors = log.LogEmergencyErrors
 	NewNilLogger       = log.NewNilLogger
-	NewReplayAdapter   = log.NewReplayAdapter
-	NewRollupAdapter   = log.NewRollupAdapter
+	NewReplayAdapter   = log.NewReplayLogger
+	NewRollupAdapter   = log.NewRollupLogger
 )
