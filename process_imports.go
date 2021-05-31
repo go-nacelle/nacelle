@@ -1,6 +1,6 @@
 package nacelle
 
-import "github.com/go-nacelle/process"
+import "github.com/go-nacelle/process/v2"
 
 type (
 	Health                = process.Health

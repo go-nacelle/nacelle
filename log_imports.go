@@ -1,6 +1,6 @@
 package nacelle
 
-import "github.com/go-nacelle/log"
+import "github.com/go-nacelle/log/v2"
 
 type (
 	LogFields    = log.LogFields

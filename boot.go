@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/go-nacelle/config"
-	"github.com/go-nacelle/log"
-	"github.com/go-nacelle/process"
-	"github.com/go-nacelle/service"
+	"github.com/go-nacelle/config/v2"
+	"github.com/go-nacelle/log/v2"
+	"github.com/go-nacelle/process/v2"
+	"github.com/go-nacelle/service/v2"
 )
 
 // Bootstrapper wraps the entrypoint to the program.

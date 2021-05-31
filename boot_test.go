@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-nacelle/service"
+	"github.com/go-nacelle/service/v2"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/go-nacelle/config"
-	"github.com/go-nacelle/process"
+	"github.com/go-nacelle/config/v2"
+	"github.com/go-nacelle/process/v2"
 )
 
 // ConfigurationRegistry is a wrapper around a bare configuration loader object.

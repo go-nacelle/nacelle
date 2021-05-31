@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-nacelle/log"
+	"github.com/go-nacelle/log/v2"
 )
 
 // LoggingInitFunc creates a factory from a config object.
