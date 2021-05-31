@@ -4,38 +4,40 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/go-nacelle/config"
-	"github.com/go-nacelle/log"
-	"github.com/go-nacelle/process"
-	"github.com/go-nacelle/service"
+	"github.com/go-nacelle/config/v2"
+	"github.com/go-nacelle/log/v2"
+	"github.com/go-nacelle/process/v2"
+	"github.com/go-nacelle/service/v2"
 )
 
 // Bootstrapper wraps the entrypoint to the program.
 type Bootstrapper struct {
-	initFunc          AppInitFunc
-	contextFilter     func(ctx context.Context) context.Context
-	configSourcer     ConfigSourcer
-	configMaskedKeys  []string
-	loggingInitFunc   LoggingInitFunc
-	loggingFields     LogFields
-	runnerConfigFuncs []RunnerConfigFunc
+	initFunc           AppInitFunc
+	contextFilter      func(ctx context.Context) context.Context
+	configSourcer      ConfigSourcer
+	configMaskedKeys   []string
+	loggingInitFunc    LoggingInitFunc
+	loggingFields      LogFields
+	machineConfigFuncs []MachineConfigFunc
 }
 
 type bootstrapperConfig struct {
-	contextFilter     func(ctx context.Context) context.Context
-	configSourcer     ConfigSourcer
-	configMaskedKeys  []string
-	loggingInitFunc   LoggingInitFunc
-	loggingFields     LogFields
-	runnerConfigFuncs []RunnerConfigFunc
+	contextFilter      func(ctx context.Context) context.Context
+	configSourcer      ConfigSourcer
+	configMaskedKeys   []string
+	loggingInitFunc    LoggingInitFunc
+	loggingFields      LogFields
+	machineConfigFuncs []MachineConfigFunc
 }
 
 // AppInitFunc is an program entrypoint called after performing initial
 // configuration loading, sanity checks, and setting up loggers. This
 // function should register initializers and processes and inject values
 // into the service container where necessary.
-type AppInitFunc func(ProcessContainer, *ServiceContainer) error
+type AppInitFunc func(context.Context, *ProcessContainerBuilder, *ServiceContainer) error
 
 // ServiceInitializerFunc is an InitializerFunc with a service container argument.
 type ServiceInitializerFunc func(ctx context.Context, container *ServiceContainer) error
@@ -63,13 +65,13 @@ func NewBootstrapper(
 	}
 
 	return &Bootstrapper{
-		initFunc:          initFunc,
-		contextFilter:     config.contextFilter,
-		configSourcer:     config.configSourcer,
-		configMaskedKeys:  config.configMaskedKeys,
-		loggingInitFunc:   config.loggingInitFunc,
-		loggingFields:     config.loggingFields,
-		runnerConfigFuncs: config.runnerConfigFuncs,
+		initFunc:           initFunc,
+		contextFilter:      config.contextFilter,
+		configSourcer:      config.configSourcer,
+		configMaskedKeys:   config.configMaskedKeys,
+		loggingInitFunc:    config.loggingInitFunc,
+		loggingFields:      config.loggingFields,
+		machineConfigFuncs: config.machineConfigFuncs,
 	}
 }
 
@@ -85,6 +87,13 @@ func (bs *Bootstrapper) Boot() int {
 		config.WithLogger(shim),
 		config.WithMaskedKeys(bs.configMaskedKeys),
 	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if bs.contextFilter != nil {
+		ctx = bs.contextFilter(ctx)
+	}
 
 	if err := config.Init(); err != nil {
 		LogEmergencyError("failed to initialize config (%s)", err)
@@ -106,35 +115,18 @@ func (bs *Bootstrapper) Boot() int {
 	logger.Info("Logging initialized")
 
 	health := NewHealth()
-	processContainer := NewProcessContainer()
-
 	serviceContainer := NewServiceContainer()
 	_ = serviceContainer.Set("health", health)
 	_ = serviceContainer.Set("logger", logger)
 	_ = serviceContainer.Set("services", serviceContainer)
 	_ = serviceContainer.Set("config", config)
 
-	if err := bs.initFunc(processContainer, serviceContainer); err != nil {
+	processContainerBuilder := process.NewContainerBuilder()
+	if err := bs.initFunc(ctx, processContainerBuilder, serviceContainer); err != nil {
 		logger.Error("Failed to run initialization function (%s)", err.Error())
 		return 1
 	}
-
-	runner := process.NewRunner(
-		processContainer,
-		append(
-			[]process.RunnerConfigFunc{
-				process.WithLogger(&logAdapter{logger}),
-				process.WithHealth(health),
-				process.WithInjectHook(newInjectHook(serviceContainer, logger)),
-			},
-			bs.runnerConfigFuncs...,
-		)...,
-	)
-
-	ctx := context.Background()
-	if bs.contextFilter != nil {
-		ctx = bs.contextFilter(ctx)
-	}
+	processContainer := processContainerBuilder.Build(process.WithMetaLogger(&logAdapter{logger}))
 
 	configs := loadConfig(processContainer, config, logger)
 
@@ -153,8 +145,32 @@ func (bs *Bootstrapper) Boot() int {
 		return 1
 	}
 
+	defaultConfigs := []process.MachineConfigFunc{
+		process.WithHealth(health),
+		process.WithInjecter(newInjectHook(serviceContainer, logger)),
+	}
+	state := process.Run(ctx, processContainer, append(defaultConfigs, bs.machineConfigFuncs...)...)
+
+	ch := make(chan os.Signal, 2)
+	for _, s := range []syscall.Signal{syscall.SIGINT, syscall.SIGTERM} {
+		signal.Notify(ch, s)
+	}
+
+	go func() {
+		<-ch
+		logger.Info("Received signal")
+		state.Shutdown(context.Background())
+
+		<-ch
+		logger.Error("Received second signal, no longer waiting for graceful exit")
+		cancel()
+
+		<-ch
+		os.Exit(1)
+	}()
+
 	statusCode := 0
-	for range runner.Run(ctx) {
+	if !state.Wait(ctx) {
 		statusCode = 1
 	}
 
@@ -181,15 +197,15 @@ func (bs *Bootstrapper) makeLogger(baseConfig *Config, enable bool) (Logger, err
 	return logger.WithFields(bs.loggingFields), nil
 }
 
-func newInjectHook(serviceContainer *ServiceContainer, logger Logger) process.InjectHook {
-	return func(injectable process.NamedInjectable) error {
-		serviceContainer, err := replaceLoggerService(serviceContainer, logger.WithFields(LogFields(injectable.LogFields())))
+func newInjectHook(serviceContainer *ServiceContainer, logger Logger) process.Injecter {
+	return process.InjecterFunc(func(ctx context.Context, meta *process.Meta) error {
+		serviceContainer, err := replaceLoggerService(serviceContainer, logger.WithFields(LogFields(meta.Metadata())))
 		if err != nil {
 			return err
 		}
 
-		return service.Inject(serviceContainer, injectable.Wrapped())
-	}
+		return service.Inject(ctx, serviceContainer, meta.Wrapped())
+	})
 }
 
 func replaceLoggerService(serviceContainer *ServiceContainer, logger Logger) (*ServiceContainer, error) {

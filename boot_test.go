@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-nacelle/service"
+	"github.com/go-nacelle/service/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +13,7 @@ func TestBoot(t *testing.T) {
 	ran := false
 	bootstrapper := NewBootstrapper(
 		"APP",
-		func(processes ProcessContainer, services *ServiceContainer) error {
+		func(ctx context.Context, processes *ProcessContainerBuilder, services *ServiceContainer) error {
 			processes.RegisterInitializer(InitializerFunc(func(ctx context.Context) error {
 				ran = true
 				return nil
@@ -29,15 +29,15 @@ func TestBoot(t *testing.T) {
 
 func TestDefaultServices(t *testing.T) {
 	serviceChecker := &struct {
-		Health   Health            `service:"health"`
+		Health   *Health           `service:"health"`
 		Logger   Logger            `service:"logger"`
 		Services *ServiceContainer `service:"services"`
 	}{}
 
 	bootstrapper := NewBootstrapper(
 		"APP",
-		func(processes ProcessContainer, services *ServiceContainer) error {
-			return service.Inject(services, serviceChecker)
+		func(ctx context.Context, processes *ProcessContainerBuilder, services *ServiceContainer) error {
+			return service.Inject(ctx, services, serviceChecker)
 		},
 	)
 
@@ -50,7 +50,7 @@ func TestDefaultServices(t *testing.T) {
 func TestInitFuncError(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
-		func(processes ProcessContainer, services *ServiceContainer) error {
+		func(ctx context.Context, processes *ProcessContainerBuilder, services *ServiceContainer) error {
 			return fmt.Errorf("oops")
 		},
 	)
@@ -61,7 +61,7 @@ func TestInitFuncError(t *testing.T) {
 func TestLoggingInitError(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
-		func(processes ProcessContainer, services *ServiceContainer) error {
+		func(ctx context.Context, processes *ProcessContainerBuilder, services *ServiceContainer) error {
 			return nil
 		},
 		WithLoggingInitFunc(func(*Config) (Logger, error) {
@@ -75,7 +75,7 @@ func TestLoggingInitError(t *testing.T) {
 func TestRunnerError(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
-		func(processes ProcessContainer, services *ServiceContainer) error {
+		func(ctx context.Context, processes *ProcessContainerBuilder, services *ServiceContainer) error {
 			processes.RegisterInitializer(InitializerFunc(func(ctx context.Context) error {
 				return fmt.Errorf("oops")
 			}))

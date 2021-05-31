@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v2.0.0] - 2021-05-31
+
 ### Added
 
 - Added config object to service container with the key `config`. This will cause a registration error in applications that previous used this key for a custom service. [#7](https://github.com/go-nacelle/nacelle/pull/7)
@@ -9,16 +11,68 @@
 - Imported `WithInitializerContextFilter`, `WithProcessContextFilter`, `WithInitializerPriority`, and `WithProcessPriority` from [go-nacelle/process](https://github.com/go-nacelle/process). [#11](https://github.com/go-nacelle/nacelle/pull/11)
 - Registered configurations are now dumped when application is invoked with `--help` flag. [#12](https://github.com/go-nacelle/nacelle/pull/12)
 - Added `Configurable` and `ConfigurationRegistry` interfaces. [#13](https://github.com/go-nacelle/nacelle/pull/13)
+- [go-nacelle/config@v1.2.1] -> [go-nacelle/config@v2.0.0]
+  - Added `Describe` method to `Config` interface. [#8](https://github.com/go-nacelle/config/pull/8)
+  - Added `WithLogger` and `WithMaskedKeys` to replace `NewLoggingConfig`. [#11](https://github.com/go-nacelle/config/pull/11)
+- [go-nacelle/log@v1.1.2] -> [go-nacelle/log@v2.0.0]
+  - Exposed the interface `MinimalLogger` and its constructor `FromMinimalLogger`. [#5](https://github.com/go-nacelle/log/pull/5)
+- [go-nacelle/process@v1.1.0] -> [go-nacelle/process@v2.0.0]
+  - The `Finalize` methods on process instances are now invoked when defined. [#5](https://github.com/go-nacelle/process/pull/5)
+  - Added `WithInjecter` and `WithHealth`. [#14](https://github.com/go-nacelle/process/pull/14), [#16](https://github.com/go-nacelle/process/pull/16)
+  - Added `Logger` interface, `LogFields` type, and `NilLogger` variable, and `WithMetaLogger` method. [#15](https://github.com/go-nacelle/process/pull/15), [#16](https://github.com/go-nacelle/process/pull/16)
+- [go-nacelle/service@v1.0.2] -> [go-nacelle/service@v2.0.0]
+  - Added `InjectableServiceKey`. [#4](https://github.com/go-nacelle/service/pull/4)
+  - Exported top-level `Inject` method. [#9](https://github.com/go-nacelle/service/pull/9)
+  - Added `WithValues` to `Container`. [#9](https://github.com/go-nacelle/service/pull/9)
 
 ### Changed
 
 - Changed signature of `ServiceInitializerFunc`. [#11](https://github.com/go-nacelle/nacelle/pull/11)
 - Changed signature of `AppInitFunc`, `ServiceInitializerFunc`, and `WrapServiceInitializerFunc`. [#17](https://github.com/go-nacelle/nacelle/pull/17)
+- Renamed `WithRunnerOptions` to `WithMachineOptions`. [#20](https://github.com/go-nacelle/nacelle/pull/20)
+- [go-nacelle/config@v1.2.1] -> [go-nacelle/config@v2.0.0]
+  - Split `Load` method in the `Config` interface into `Load` and `PostLoad` methods. [#7](https://github.com/go-nacelle/config/pull/7)
+  - The `Config` interface is now a struct with the same name and set of methods. [#12](https://github.com/go-nacelle/config/pull/12)
+- [go-nacelle/log@v1.1.2] -> [go-nacelle/log@v2.0.0]
+  - Renamed `ReplayAdapter` and `RollupAdapter` and to `ReplayLogger` and `RollupLogger`, respectively. [#5](https://github.com/go-nacelle/log/pull/5)
+- [go-nacelle/process@v1.1.0] -> [go-nacelle/process@v2.0.0]
+  - Added context parameters to `Init`, `Start`, `Stop`, and `Finalize` methods. [#5](https://github.com/go-nacelle/process/pull/5)
+  - Removed config parameters from `Init` methods. [#7](https://github.com/go-nacelle/process/pull/7)
+  - The `Init` methods of initializers and processors registered at the same priority initializer or process priority are now called concurrently. [#9](https://github.com/go-nacelle/process/pull/9)
+  - Initializers are now invoked before the processes of the same priority, but after the processes of the previous priority. [#16](https://github.com/go-nacelle/process/pull/16)
+  - Renamed `Process` to `Runner` and its `Start` method to `Run`. [#16](https://github.com/go-nacelle/process/pull/16)
+  - Extracted the `Stop` method from the `Runner` into a `Stopper` interface. [#16](https://github.com/go-nacelle/process/pull/16)
+  - The `Runner` interface was replaced with a `Run` function returning a `State` value that abstracts application shutdown. [#16](https://github.com/go-nacelle/process/pull/16)
+  - The `ProcessContainer`, `ProcessMeta`, and `InitializerMeta` interfaces were replaced with `Container`, `ContainerBuilder`, and `Meta` structs. This localizes the differences between a process and an interface to registration (and not execution). [#16](https://github.com/go-nacelle/process/pull/16)
+  - The `Health` interface was replaced with `Health` and `HealthComponentStatus` structs. [#16](https://github.com/go-nacelle/process/pull/16)
+  - Renamed `With{Initializer,Process}{Option}` to `WithMeta{Option}`, `WithProcessLogFields` to `WithMetadata`, `InjectHook` to `Injecter`, and `WithSilentExit` to `WithEarlyExit`. [#16](https://github.com/go-nacelle/process/pull/16)
+- [go-nacelle/service@v1.0.2] -> [go-nacelle/service@v2.0.0]
+  - The `Inject` function and `PostInject` interface now receives a context parameter. [#10](https://github.com/go-nacelle/service/pull/10)
+  - Change type of service keys from `string` to `interface{}`. [#4](https://github.com/go-nacelle/service/pull/4)
+  - Replaced the `ServiceContainer` interface with `Container`, a struct with the same name and set of methods. [#7](https://github.com/go-nacelle/service/pull/7)
+  - Renamed `NewServiceContainer` to `New`. [#7](https://github.com/go-nacelle/service/pull/7)
+  - Removed `Inject` method from `Container`. [#9](https://github.com/go-nacelle/service/pull/9)
 
 ### Removed
 
 - Removed mocks package. [#14](https://github.com/go-nacelle/nacelle/pull/14)
 - Removed `Overlay` import. [#17](https://github.com/go-nacelle/nacelle/pull/17)
+- [go-nacelle/config@v1.2.1] -> [go-nacelle/config@v2.0.0]
+  - Removed mocks package. [#9](https://github.com/go-nacelle/config/pull/9)
+  - Removed `MustLoad` from `Config` interface. [#10](https://github.com/go-nacelle/config/pull/10)
+  - Removed `NewLoggingConfig`. [#11](https://github.com/go-nacelle/config/pull/11)
+- [go-nacelle/log@v1.1.2] -> [go-nacelle/log@v2.0.0]
+  - Removed mocks package. [#6](https://github.com/go-nacelle/log/pull/6)
+- [go-nacelle/process@v1.1.0] -> [go-nacelle/process@v2.0.0]
+  - Removed `ParallelInitializer`. [#9](https://github.com/go-nacelle/process/pull/9)
+  - Removed mocks package. [#11](https://github.com/go-nacelle/process/pull/11)
+  - Removed dependency on [go-nacelle/service](https://github.com/go-nacelle/service). [#14](https://github.com/go-nacelle/process/pull/14)
+  - Removed dependency on [go-nacelle/log](https://github.com/go-nacelle/log). [#15](https://github.com/go-nacelle/process/pull/15)
+  - Removed now irrelevant options `WithStartTimeout`, `WithHealthCheckInterval`, and `WithShutdownTimeout`. [#16](https://github.com/go-nacelle/process/pull/16)
+- [go-nacelle/service@v1.0.2] -> [go-nacelle/service@v2.0.0]
+  - Removed `MustGet` and `MustSet` methods. [#3](https://github.com/go-nacelle/service/pull/3)
+  - Removed mocks package. [#6](https://github.com/go-nacelle/service/pull/6)
+  - Removed `Overlay`. [#9](https://github.com/go-nacelle/service/pull/9)
 
 ## [v1.2.0] - 2020-10-04
 
@@ -129,15 +183,19 @@
 [go-nacelle/config@v1.1.0]: https://github.com/go-nacelle/config/releases/tag/v1.1.0
 [go-nacelle/config@v1.2.0]: https://github.com/go-nacelle/config/releases/tag/v1.2.0
 [go-nacelle/config@v1.2.1]: https://github.com/go-nacelle/config/releases/tag/v1.2.1
+[go-nacelle/config@v2.0.0]: https://github.com/go-nacelle/config/releases/tag/v2.0.0
 [go-nacelle/log@v1.0.0]: https://github.com/go-nacelle/log/releases/tag/v1.0.0
 [go-nacelle/log@v1.0.1]: https://github.com/go-nacelle/log/releases/tag/v1.0.1
 [go-nacelle/log@v1.1.1]: https://github.com/go-nacelle/log/releases/tag/v1.1.1
 [go-nacelle/log@v1.1.2]: https://github.com/go-nacelle/log/releases/tag/v1.1.2
+[go-nacelle/log@v2.0.0]: https://github.com/go-nacelle/log/releases/tag/v2.0.0
 [go-nacelle/process@v1.0.0]: https://github.com/go-nacelle/process/releases/tag/v1.0.0
 [go-nacelle/process@v1.0.1]: https://github.com/go-nacelle/process/releases/tag/v1.0.1
 [go-nacelle/process@v1.1.0]: https://github.com/go-nacelle/process/releases/tag/v1.1.0
+[go-nacelle/process@v2.0.0]: https://github.com/go-nacelle/process/releases/tag/v2.0.0
 [go-nacelle/service@v1.0.0]: https://github.com/go-nacelle/service/releases/tag/v1.0.0
 [go-nacelle/service@v1.0.2]: https://github.com/go-nacelle/service/releases/tag/v1.0.2
+[go-nacelle/service@v2.0.0]: https://github.com/go-nacelle/service/releases/tag/v2.0.0
 [v1.0.0]: https://github.com/go-nacelle/nacelle/releases/tag/v1.0.0
 [v1.0.1]: https://github.com/go-nacelle/nacelle/compare/v1.0.0...v1.0.1
 [v1.0.2]: https://github.com/go-nacelle/nacelle/compare/v1.0.1...v1.0.2
