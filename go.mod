@@ -1,4 +1,4 @@
-module github.com/go-nacelle/nacelle
+module github.com/go-nacelle/nacelle/v2
 
 go 1.16
 
