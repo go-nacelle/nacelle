@@ -29,6 +29,7 @@
 
 - Changed signature of `ServiceInitializerFunc`. [#11](https://github.com/go-nacelle/nacelle/pull/11)
 - Changed signature of `AppInitFunc`, `ServiceInitializerFunc`, and `WrapServiceInitializerFunc`. [#17](https://github.com/go-nacelle/nacelle/pull/17)
+- Renamed `WithRunnerOptions` to `WithMachineOptions`. [#20](https://github.com/go-nacelle/nacelle/pull/20)
 - [go-nacelle/config@v1.2.1] -> [go-nacelle/config@v2.0.0]
   - Split `Load` method in the `Config` interface into `Load` and `PostLoad` methods. [#7](https://github.com/go-nacelle/config/pull/7)
   - The `Config` interface is now a struct with the same name and set of methods. [#12](https://github.com/go-nacelle/config/pull/12)
