@@ -82,7 +82,7 @@ func (bs *Bootstrapper) Boot() int {
 	showHelp := showHelp()
 
 	shim := &logShim{}
-	config := NewConfig(
+	cfg := NewConfig(
 		bs.configSourcer,
 		config.WithLogger(shim),
 		config.WithMaskedKeys(bs.configMaskedKeys),
@@ -91,16 +91,12 @@ func (bs *Bootstrapper) Boot() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if bs.contextFilter != nil {
-		ctx = bs.contextFilter(ctx)
-	}
-
-	if err := config.Init(); err != nil {
+	if err := cfg.Init(); err != nil {
 		LogEmergencyError("failed to initialize config (%s)", err)
 		return 1
 	}
 
-	logger, err := bs.makeLogger(config, !showHelp)
+	logger, err := bs.makeLogger(cfg, !showHelp)
 	if err != nil {
 		LogEmergencyError("failed to initialize logging (%s)", err)
 		return 1
@@ -115,11 +111,25 @@ func (bs *Bootstrapper) Boot() int {
 	logger.Info("Logging initialized")
 
 	health := NewHealth()
+
+	// Add default services to service container
 	serviceContainer := NewServiceContainer()
 	_ = serviceContainer.Set("health", health)
 	_ = serviceContainer.Set("logger", logger)
 	_ = serviceContainer.Set("services", serviceContainer)
-	_ = serviceContainer.Set("config", config)
+	_ = serviceContainer.Set("config", cfg)
+
+	// Add default services to context
+	ctx = process.HealthWithContext(ctx, health)
+	ctx = log.WithContext(ctx, logger)
+	ctx = service.WithContext(ctx, serviceContainer)
+	ctx = config.WithContext(ctx, cfg)
+
+	// Run the context filter after we've added the services to the context in
+	// case the user wants to tweak those services.
+	if bs.contextFilter != nil {
+		ctx = bs.contextFilter(ctx)
+	}
 
 	processContainerBuilder := process.NewContainerBuilder()
 	if err := bs.initFunc(ctx, processContainerBuilder, serviceContainer); err != nil {
@@ -128,10 +138,10 @@ func (bs *Bootstrapper) Boot() int {
 	}
 	processContainer := processContainerBuilder.Build(process.WithMetaLogger(&logAdapter{logger}))
 
-	configs := loadConfig(processContainer, config, logger)
+	configs := loadConfig(processContainer, cfg, logger)
 
 	if showHelp {
-		description, err := describeConfiguration(config, configs, logger, &log.Config{})
+		description, err := describeConfiguration(cfg, configs, logger, &log.Config{})
 		if err != nil {
 			LogEmergencyError("failed to describe configuration (%s)", err)
 			return 1
@@ -141,7 +151,7 @@ func (bs *Bootstrapper) Boot() int {
 		return 0
 	}
 
-	if validateConfig(config, configs, logger) != nil {
+	if validateConfig(cfg, configs, logger) != nil {
 		return 1
 	}
 
