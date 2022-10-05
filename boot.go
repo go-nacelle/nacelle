@@ -120,10 +120,10 @@ func (bs *Bootstrapper) Boot() int {
 	_ = serviceContainer.Set("config", cfg)
 
 	// Add default services to context
-	ctx = process.HealthWithContext(ctx, health)
-	ctx = log.WithContext(ctx, logger)
-	ctx = service.WithContext(ctx, serviceContainer)
-	ctx = config.WithContext(ctx, cfg)
+	ctx = process.ContextWithHealth(ctx, health)
+	ctx = log.WithLogger(ctx, logger)
+	ctx = service.WithContainer(ctx, serviceContainer)
+	ctx = config.WithConfig(ctx, cfg)
 
 	// Run the context filter after we've added the services to the context in
 	// case the user wants to tweak those services.
