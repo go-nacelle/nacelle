@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 
+## [v2.0.1] - 2020-10-10
+
 ### Added
 
+- Added default services to context as well as service container. [#21](https://github.com/go-nacelle/nacelle/pull/21)
 - [go-nacelle/config@v2.0.0] -> [go-nacelle/config@v2.0.1]
   - Added `WithConfig` and `FromContext`. [#15](https://github.com/go-nacelle/config/pull/15)
 - [go-nacelle/log@v2.0.0] -> [go-nacelle/log@v2.0.1]
@@ -194,7 +197,7 @@
 
 - Migrated from [efritz/nacelle](https://github.com/efritz/nacelle).
 
-[Unreleased]: https://github.com/go-nacelle/nacelle/compare/v2.0.0...HEAD
+[unreleased]: https://github.com/go-nacelle/nacelle/compare/v2.0.1...HEAD
 [go-nacelle/config@v1.0.0]: https://github.com/go-nacelle/config/releases/tag/v1.0.0
 [go-nacelle/config@v1.1.0]: https://github.com/go-nacelle/config/releases/tag/v1.1.0
 [go-nacelle/config@v1.2.0]: https://github.com/go-nacelle/config/releases/tag/v1.2.0
@@ -226,3 +229,4 @@
 [v1.1.4]: https://github.com/go-nacelle/nacelle/compare/v1.1.3...v1.1.4
 [v1.2.0]: https://github.com/go-nacelle/nacelle/compare/v1.1.4...v1.2.0
 [v2.0.0]: https://github.com/go-nacelle/nacelle/compare/v1.2.0...v2.0.0
+[v2.0.1]: https://github.com/go-nacelle/nacelle/compare/v2.0.0...v2.0.1
