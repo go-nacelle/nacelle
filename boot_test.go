@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-nacelle/config/v2"
+	"github.com/go-nacelle/log/v2"
+	"github.com/go-nacelle/process/v2"
 	"github.com/go-nacelle/service/v2"
 	"github.com/stretchr/testify/assert"
 )
@@ -37,6 +40,7 @@ func TestDefaultServices(t *testing.T) {
 	bootstrapper := NewBootstrapper(
 		"APP",
 		func(ctx context.Context, processes *ProcessContainerBuilder, services *ServiceContainer) error {
+
 			return service.Inject(ctx, services, serviceChecker)
 		},
 	)
@@ -45,6 +49,30 @@ func TestDefaultServices(t *testing.T) {
 	assert.NotNil(t, serviceChecker.Health)
 	assert.NotNil(t, serviceChecker.Logger)
 	assert.NotNil(t, serviceChecker.Services)
+}
+
+func TestDefaultServicesInContext(t *testing.T) {
+	bootstrapper := NewBootstrapper(
+		"APP",
+		func(ctx context.Context, processes *ProcessContainerBuilder, services *ServiceContainer) error {
+			assert.NotNil(t, process.HealthFromContext(ctx))
+			assert.NotEqual(t, log.NewNilLogger(), log.FromContext(ctx))
+			assert.NotNil(t, service.FromContext(ctx))
+			assert.NotNil(t, config.FromContext(ctx))
+
+			return nil
+		},
+		WithContextFilter(func(ctx context.Context) context.Context {
+			assert.NotNil(t, process.HealthFromContext(ctx))
+			assert.NotEqual(t, log.NewNilLogger(), log.FromContext(ctx))
+			assert.NotNil(t, service.FromContext(ctx))
+			assert.NotNil(t, config.FromContext(ctx))
+
+			return ctx
+		}),
+	)
+
+	assert.Equal(t, 0, bootstrapper.Boot())
 }
 
 func TestInitFuncError(t *testing.T) {
