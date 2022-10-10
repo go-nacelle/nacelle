@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- [go-nacelle/config@v2.0.0] -> [go-nacelle/config@v2.0.1]
+  - Added `WithConfig` and `FromContext`. [#15](https://github.com/go-nacelle/config/pull/15)
+- [go-nacelle/log@v2.0.0] -> [go-nacelle/log@v2.0.1]
+  - Added `WithLogger` and `FromContext`. [#8](https://github.com/go-nacelle/log/pull/8)
+- [go-nacelle/process@v2.0.0] -> [go-nacelle/process@v2.0.1]
+  - Added `ContextWithHealth` and `HealthFromContext`. [#18](https://github.com/go-nacelle/process/pull/18)
+- [go-nacelle/service@v2.0.0] -> [go-nacelle/service@v2.0.1]
+  - Added `WithContainer` and `FromContext`. [#11](https://github.com/go-nacelle/service/pull/11)
+
+### Fixed
+
+- [go-nacelle/process@v2.0.0] -> [go-nacelle/process@v2.0.1]
+  - Fixed wait group race condition. [#17](https://github.com/go-nacelle/process/pull/17)
+
 ## [v2.0.0] - 2021-05-31
 
 ### Added
@@ -184,18 +200,22 @@
 [go-nacelle/config@v1.2.0]: https://github.com/go-nacelle/config/releases/tag/v1.2.0
 [go-nacelle/config@v1.2.1]: https://github.com/go-nacelle/config/releases/tag/v1.2.1
 [go-nacelle/config@v2.0.0]: https://github.com/go-nacelle/config/releases/tag/v2.0.0
+[go-nacelle/config@v2.0.1]: https://github.com/go-nacelle/config/releases/tag/v2.0.1
 [go-nacelle/log@v1.0.0]: https://github.com/go-nacelle/log/releases/tag/v1.0.0
 [go-nacelle/log@v1.0.1]: https://github.com/go-nacelle/log/releases/tag/v1.0.1
 [go-nacelle/log@v1.1.1]: https://github.com/go-nacelle/log/releases/tag/v1.1.1
 [go-nacelle/log@v1.1.2]: https://github.com/go-nacelle/log/releases/tag/v1.1.2
 [go-nacelle/log@v2.0.0]: https://github.com/go-nacelle/log/releases/tag/v2.0.0
+[go-nacelle/log@v2.0.1]: https://github.com/go-nacelle/log/releases/tag/v2.0.1
 [go-nacelle/process@v1.0.0]: https://github.com/go-nacelle/process/releases/tag/v1.0.0
 [go-nacelle/process@v1.0.1]: https://github.com/go-nacelle/process/releases/tag/v1.0.1
 [go-nacelle/process@v1.1.0]: https://github.com/go-nacelle/process/releases/tag/v1.1.0
 [go-nacelle/process@v2.0.0]: https://github.com/go-nacelle/process/releases/tag/v2.0.0
+[go-nacelle/process@v2.0.1]: https://github.com/go-nacelle/process/releases/tag/v2.0.1
 [go-nacelle/service@v1.0.0]: https://github.com/go-nacelle/service/releases/tag/v1.0.0
 [go-nacelle/service@v1.0.2]: https://github.com/go-nacelle/service/releases/tag/v1.0.2
 [go-nacelle/service@v2.0.0]: https://github.com/go-nacelle/service/releases/tag/v2.0.0
+[go-nacelle/service@v2.0.1]: https://github.com/go-nacelle/service/releases/tag/v2.0.1
 [v1.0.0]: https://github.com/go-nacelle/nacelle/releases/tag/v1.0.0
 [v1.0.1]: https://github.com/go-nacelle/nacelle/compare/v1.0.0...v1.0.1
 [v1.0.2]: https://github.com/go-nacelle/nacelle/compare/v1.0.1...v1.0.2
