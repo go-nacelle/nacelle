@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-nacelle/config/v2"
+	"github.com/go-nacelle/config/v3"
 	"github.com/go-nacelle/log/v2"
 	"github.com/go-nacelle/process/v2"
 	"github.com/go-nacelle/service/v2"
