@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Update dependency [go-nacelle/config@v2.0.1] -> [go-nacelle/config@v3.0.0]
+
 ## [v2.0.1] - 2020-10-10
 
 ### Added
@@ -204,6 +207,7 @@
 [go-nacelle/config@v1.2.1]: https://github.com/go-nacelle/config/releases/tag/v1.2.1
 [go-nacelle/config@v2.0.0]: https://github.com/go-nacelle/config/releases/tag/v2.0.0
 [go-nacelle/config@v2.0.1]: https://github.com/go-nacelle/config/releases/tag/v2.0.1
+[go-nacelle/config@v3.0.0]: https://github.com/go-nacelle/config/releases/tag/v3.0.0
 [go-nacelle/log@v1.0.0]: https://github.com/go-nacelle/log/releases/tag/v1.0.0
 [go-nacelle/log@v1.0.1]: https://github.com/go-nacelle/log/releases/tag/v1.0.1
 [go-nacelle/log@v1.1.1]: https://github.com/go-nacelle/log/releases/tag/v1.1.1
