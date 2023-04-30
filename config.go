@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/go-nacelle/config/v2"
+	"github.com/go-nacelle/config/v3"
 	"github.com/go-nacelle/process/v2"
 )
 
@@ -83,16 +83,6 @@ func validateConfig(config *Config, configs []registeredConfig, logger Logger) e
 
 			errors = append(errors, c.loadErr)
 			continue
-		}
-
-		if err := config.PostLoad(c.target); err != nil {
-			logger.Error(
-				"PostLoad failed for configuration target in %s (%s)",
-				c.meta.Name(),
-				err.Error(),
-			)
-
-			errors = append(errors, err)
 		}
 	}
 
