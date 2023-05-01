@@ -7,7 +7,7 @@ require (
 	github.com/derision-test/glock v1.0.0 // indirect
 	github.com/go-nacelle/config/v3 v3.0.0
 	github.com/go-nacelle/log/v2 v2.0.1
-	github.com/go-nacelle/process/v2 v2.0.1
+	github.com/go-nacelle/process/v2 v2.1.0
 	github.com/go-nacelle/service/v2 v2.0.1
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-zglob v0.0.4 // indirect
