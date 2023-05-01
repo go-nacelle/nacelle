@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Update dependency [go-nacelle/process@v2.0.1] -> [go-nacelle/process@v2.1.0]
+
+### Fixed
+
+- Fixed process errors not being logged when encountered in `Bootstrapper`.
+
 ## [v2.1.0] - 2023-04-29
 
 ### Changed
@@ -221,6 +229,7 @@
 [go-nacelle/process@v1.1.0]: https://github.com/go-nacelle/process/releases/tag/v1.1.0
 [go-nacelle/process@v2.0.0]: https://github.com/go-nacelle/process/releases/tag/v2.0.0
 [go-nacelle/process@v2.0.1]: https://github.com/go-nacelle/process/releases/tag/v2.0.1
+[go-nacelle/process@v2.1.0]: https://github.com/go-nacelle/process/releases/tag/v2.1.0
 [go-nacelle/service@v1.0.0]: https://github.com/go-nacelle/service/releases/tag/v1.0.0
 [go-nacelle/service@v1.0.2]: https://github.com/go-nacelle/service/releases/tag/v1.0.2
 [go-nacelle/service@v2.0.0]: https://github.com/go-nacelle/service/releases/tag/v2.0.0

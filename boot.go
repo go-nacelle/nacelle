@@ -182,6 +182,9 @@ func (bs *Bootstrapper) Boot() int {
 	statusCode := 0
 	if !state.Wait(ctx) {
 		statusCode = 1
+		for _, err := range state.Errors() {
+			logger.Error("%s", err)
+		}
 	}
 
 	logger.Info("All processes have stopped")
