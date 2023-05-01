@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v2.1.1] - 2023-04-30
+
 ### Changed
 
 - Update dependency [go-nacelle/process@v2.0.1] -> [go-nacelle/process@v2.1.0]
@@ -210,7 +212,7 @@
 
 - Migrated from [efritz/nacelle](https://github.com/efritz/nacelle).
 
-[unreleased]: https://github.com/go-nacelle/nacelle/compare/v2.1.0...HEAD
+[unreleased]: https://github.com/go-nacelle/nacelle/compare/v2.1.1...HEAD
 [go-nacelle/config@v1.0.0]: https://github.com/go-nacelle/config/releases/tag/v1.0.0
 [go-nacelle/config@v1.1.0]: https://github.com/go-nacelle/config/releases/tag/v1.1.0
 [go-nacelle/config@v1.2.0]: https://github.com/go-nacelle/config/releases/tag/v1.2.0
@@ -246,3 +248,4 @@
 [v2.0.0]: https://github.com/go-nacelle/nacelle/compare/v1.2.0...v2.0.0
 [v2.0.1]: https://github.com/go-nacelle/nacelle/compare/v2.0.0...v2.0.1
 [v2.1.0]: https://github.com/go-nacelle/nacelle/compare/v2.0.1...v2.1.0
+[v2.1.1]: https://github.com/go-nacelle/nacelle/compare/v2.1.0...v2.1.1
