@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [v2.2.0] - 2025-02-18
+
+### Changed
+
+- Update dependency [go-nacelle/config@v3.0.0] -> [go-nacelle/config@v3.1.0]
+- As part of the update, source values are no longer logged by default when encountering a config load error.
+
 ## [v2.1.1] - 2023-04-30
 
 ### Changed
